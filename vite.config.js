@@ -1,0 +1,1 @@
+import{defineConfig}from'vite';import react from'@vitejs/plugin-react';import{VitePWA}from'vite-plugin-pwa';export default defineConfig({plugins:[react(),VitePWA({registerType:'autoUpdate',manifest:{name:'Claudina Clean',short_name:'Claudina Clean',description:'Convivimos, cuidamos y transformamos',theme_color:'#146b4a',background_color:'#ffffff',display:'standalone'}})]});
