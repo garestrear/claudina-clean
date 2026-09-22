@@ -39,3 +39,11 @@ Ejecutar `supabase/participacion-estudiantil.sql` **después** de `supabase/secu
 ## Fecha de valoración y foto del turno
 
 Ejecutar `supabase/fechas-y-evidencia-aseo.sql` después de `participacion-estudiantil.sql`. La valoración se limita a los días calendario 1 a 4 posteriores al registro oficial y muestra ayer por defecto. El estudiante asignado a un turno puede enviar una sola foto de su propio aseo durante ese mismo día (hora de Colombia), incluso antes de que el docente guarde el registro oficial. La foto queda en el bucket privado `evidencias` y se muestra en **Reportes** al profesor.
+
+## Grados 1.º a 8.º y carga masiva
+
+Ejecutar primero `supabase/grados-uno-a-ocho.sql` en Supabase SQL Editor. En **Estudiantes → Carga masiva**, seleccionar un `.xlsx` con columnas **Nombre del estudiante**, **Correo** y **Grado** (número del 1 al 8). Los encabezados pueden estar en cualquiera de las primeras 25 filas. Si el libro tiene varias hojas, se intentan leer todas las que tengan las tres columnas; se informa cuáles se omiten. Cada fila debe incluir su propio grado; ya no se deduce del nombre de la hoja. Ejemplo: `YEREMY JOSUE ALVAREZ PEREIRA | yeremyalvarezp@claudinamunera.edu.co | 1`.
+
+La vista previa permite corregir filas, omitir registros y vincular alumnos ya existentes para conservar su historial. La importación solo ocurre al pulsar **Confirmar**; se valida y guarda todo el lote en una transacción. Registrar una dirección en Claudina Clean no crea un buzón de correo ni una cuenta de Google: esos servicios deben existir aparte.
+
+El listado original suministrado contiene columnas de matrícula y nombres, pero no las tres columnas requeridas. Se debe preparar con correo y grado antes de importarlo. Las hojas de jardín y transición no se incluyen porque la aplicación se extiende de primero a octavo.
