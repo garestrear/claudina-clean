@@ -35,3 +35,7 @@ No introducir claves privadas de Google en el repositorio ni en las variables p�
 ## Valoraciones y reportes estudiantiles
 
 Ejecutar `supabase/participacion-estudiantil.sql` **después** de `supabase/security.sql` y `supabase/cuentas-estudiantes.sql`. La migración limita los nuevos reportes y valoraciones a cuentas estudiantiles vinculadas y activas. El estudiante puede valorar de 1 a 5 el registro oficial de aseo de hoy, actualizar su valoración, enviar un reporte con foto opcional y consultar el estado de sus reportes. El profesor ve reportes, fotos y valoraciones en la pestaña **Reportes**, y puede cambiar el estado a pendiente, revisado o descartado. La calificación oficial de 1 a 10 sigue independiente.
+
+## Fecha de valoración y foto del turno
+
+Ejecutar `supabase/fechas-y-evidencia-aseo.sql` después de `participacion-estudiantil.sql`. La valoración se limita a los días calendario 1 a 4 posteriores al registro oficial y muestra ayer por defecto. El estudiante asignado a un turno puede enviar una sola foto de su propio aseo durante ese mismo día (hora de Colombia), incluso antes de que el docente guarde el registro oficial. La foto queda en el bucket privado `evidencias` y se muestra en **Reportes** al profesor.
