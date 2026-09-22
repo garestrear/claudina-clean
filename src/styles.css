@@ -21,3 +21,5 @@ header{position:relative}.logout{margin-left:auto;background:#ffffff22;color:whi
 
 .studentForm{grid-template-columns:minmax(130px,1fr) minmax(160px,1fr) 75px 110px}
 @media(max-width:600px){.studentForm{grid-template-columns:1fr 85px}.studentForm input[type=email]{grid-column:1/-1;grid-row:2}.studentForm select{grid-column:2;grid-row:1}.studentForm .save{grid-column:1/-1}}
+
+.ratingChoices,.reportActions{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.ratingChoices button{flex:1;min-width:50px}.reportForm{display:grid;gap:14px}.reportForm label,.card form label{display:grid;gap:7px}.reportForm select,.reportForm input{padding:12px;border:1px solid #ccd9d0;border-radius:12px;background:white}.studentReport{padding:12px 0;border-top:1px solid #e3ebe6}.studentReport p{margin:6px 0}.reportActions button{flex:1}

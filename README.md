@@ -31,3 +31,7 @@ PWA escolar para organizar, verificar y valorar el aseo de los salones del C.E.R
 4. El profesor registra el correo exacto de cada estudiante en **Estudiantes**. El estudiante entra con Google o crea cuenta con ese correo, confirma el mensaje recibido y luego ingresa. La pantalla indica si la ficha aún no está vinculada. No se usa un enlace de invitación docente.
 
 No introducir claves privadas de Google en el repositorio ni en las variables públicas `VITE_` de Vercel. Configurarlas solamente en el panel de Supabase.
+
+## Valoraciones y reportes estudiantiles
+
+Ejecutar `supabase/participacion-estudiantil.sql` **después** de `supabase/security.sql` y `supabase/cuentas-estudiantes.sql`. La migración limita los nuevos reportes y valoraciones a cuentas estudiantiles vinculadas y activas. El estudiante puede valorar de 1 a 5 el registro oficial de aseo de hoy, actualizar su valoración, enviar un reporte con foto opcional y consultar el estado de sus reportes. El profesor ve reportes, fotos y valoraciones en la pestaña **Reportes**, y puede cambiar el estado a pendiente, revisado o descartado. La calificación oficial de 1 a 10 sigue independiente.
