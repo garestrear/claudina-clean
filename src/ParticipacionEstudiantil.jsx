@@ -1,7 +1,7 @@
 import React,{useEffect,useState} from 'react';
 import {supabase} from './lib/supabase';
 
-const grupoDe=grado=>grado===6?'6':'7-8';
+const grupoDe=grado=>String(grado);
 const fechaLocal=(diasAtras=0)=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-diasAtras);return d.toLocaleDateString('en-CA')};
 const diaDeSemana=()=>{const d=new Date().getDay();return d===0?7:d};
 const imagenValida=f=>!f||(['image/jpeg','image/png','image/webp'].includes(f.type)&&f.size<=10*1024*1024);
@@ -13,11 +13,11 @@ export function ParticipacionEstudiantil({ficha}){
   const[descripcion,setDescripcion]=useState(''),[foto,setFoto]=useState(null),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
   async function cargar(){const{data:{user}}=await supabase.auth.getUser();if(!user)return;
     const [{data:r,error:re},{data:rs,error:rse}]=await Promise.all([
-      supabase.from('registros_aseo').select('id,fecha').eq('fecha',fecha).eq('grupo',grupoDe(ficha.grado)).maybeSingle(),
+      supabase.from('registros_aseo').select('id,fecha,grupo').eq('fecha',fecha).in('grupo',[grupoDe(ficha.grado),...([7,8].includes(ficha.grado)?['7-8']:[])]).order('grupo',{ascending:true}),
       supabase.from('reportes').select('id,tipo,descripcion,estado,created_at').eq('autor',user.id).order('created_at',{ascending:false}).limit(20)]);
     if(re||rse){setMsg('No se pudieron cargar los registros. '+(re||rse).message);return}
-    setRegistro(r);setReportes(rs||[]);
-    if(r){const{data:v}=await supabase.from('valoraciones').select('valor,comentario').eq('registro_id',r.id).eq('autor',user.id).maybeSingle();setValoracion(v);setValor(v?.valor||0);setComentario(v?.comentario||'')}else{setValoracion(null);setValor(0);setComentario('')}
+    const seleccionado=(r||[]).find(x=>x.grupo===grupoDe(ficha.grado))||(r||[])[0]||null;setRegistro(seleccionado);setReportes(rs||[]);
+    if(seleccionado){const{data:v}=await supabase.from('valoraciones').select('valor,comentario').eq('registro_id',seleccionado.id).eq('autor',user.id).maybeSingle();setValoracion(v);setValor(v?.valor||0);setComentario(v?.comentario||'')}else{setValoracion(null);setValor(0);setComentario('')}
   }
   async function cargarFotos(){const [{data:a},{data:ev,error:evError}]=await Promise.all([supabase.from('asignaciones').select('id').eq('estudiante_id',ficha.id).eq('dia',diaDeSemana()).limit(1),supabase.from('evidencias_aseo_estudiante').select('id,path,fecha').eq('estudiante_id',ficha.id).order('created_at',{ascending:false}).limit(20)]);setTurnoHoy(!!a?.length);setFotosListas(!evError);const urls=[];for(const item of ev||[]){const{data:u}=await supabase.storage.from('evidencias').createSignedUrl(item.path,3600);urls.push({...item,url:u?.signedUrl})}setMisFotos(urls)}
   useEffect(()=>{cargar()},[ficha.id,ficha.grado,fecha]);
