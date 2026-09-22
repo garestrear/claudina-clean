@@ -1,32 +1,18 @@
-import React,{useState}from'react';
+import React,{useEffect,useState}from'react';
+import {supabase} from './lib/supabase';
 
 const tareas=['🧹 Barrer','🪣 Trapear','🗑️ Basura','🪑 Puestos','🧽 Tablero','📺 TV','⭐ Aporte especial'];
 const demo={sexto:['Isabella','Maximiliano','Samantha'],juntos:['Estudiante 7°','Estudiante 8°']};
 
-function Caritas(){
- const [n,setN]=useState(null);
- const face=n==null?'—':n<=2?'😞':n<=4?'🙁':n<=6?'😐':n<=8?'🙂':'😁';
- return <div className="rating"><b>{face} {n??'Sin calificar'}</b><div className="nums">{[1,2,3,4,5,6,7,8,9,10].map(x=><button key={x} className={n===x?'on':''} onClick={()=>setN(x)}>{x}</button>)}</div></div>
+function Login(){
+ const[email,setEmail]=useState(''); const[password,setPassword]=useState(''); const[msg,setMsg]=useState(''); const[loading,setLoading]=useState(false);
+ async function entrar(e){e.preventDefault();setLoading(true);setMsg('');const{error}=await supabase.auth.signInWithPassword({email,password});if(error)setMsg('No fue posible iniciar sesión. Revisa correo y contraseña.');setLoading(false)}
+ return <main className="loginPage"><header><div className="brand">✨</div><div><h1>Claudina Clean</h1><p>Convivimos, cuidamos y transformamos</p></div></header><section><div className="loginCard"><h2>Bienvenido</h2><p>Ingresa con tu cuenta de Claudina Clean.</p><form onSubmit={entrar}><label>Correo</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/><label>Contraseña</label><input type="password" value={password} onChange={e=>setPassword(e.target.value)} required/><button className="save" disabled={loading}>{loading?'Ingresando…':'Ingresar'}</button>{msg&&<p className="error">{msg}</p>}</form></div></section></main>
 }
+function Caritas(){const[n,setN]=useState(null);const face=n==null?'—':n<=2?'😞':n<=4?'🙁':n<=6?'😐':n<=8?'🙂':'😁';return <div className="rating"><b>{face} {n??'Sin calificar'}</b><div className="nums">{[1,2,3,4,5,6,7,8,9,10].map(x=><button key={x} className={n===x?'on':''} onClick={()=>setN(x)}>{x}</button>)}</div></div>}
 
-export default function App(){
- const [tab,setTab]=useState('hoy'); const [grupo,setGrupo]=useState('sexto');
- const alumnos=demo[grupo];
- return <main>
-  <header><div className="brand">✨</div><div><h1>Claudina Clean</h1><p>Convivimos, cuidamos y transformamos</p></div></header>
-  <nav>{[['hoy','🏠 Hoy'],['asignacion','📅 Asignación'],['reportes','🚨 Reportes'],['historial','📋 Historial']].map(([k,t])=><button onClick={()=>setTab(k)} className={tab===k?'active':''}>{t}</button>)}</nav>
-  {tab==='hoy'&&<section>
-   <div className="hero"><span>ASEO DE HOY</span><h2>Martes · 22 de septiembre</h2></div>
-   <div className="switch"><button className={grupo==='sexto'?'active':''} onClick={()=>setGrupo('sexto')}>6°</button><button className={grupo==='juntos'?'active':''} onClick={()=>setGrupo('juntos')}>7° y 8°</button></div>
-   <h3>Estudiantes asignados</h3>
-   {alumnos.map(a=><article className="card"><h3>{a}</h3><div className="chips">{tareas.map(t=><button>{t}</button>)}</div><Caritas/><div className="status"><button>✅ Cumplió</button><button>❌ No cumplió</button><button>🚫 Ausente</button></div></article>)}
-   <article className="card"><h3>📸 Evidencias</h3><p>Toma una foto o selecciónala desde la galería.</p><input type="file" accept="image/*" multiple/></article>
-   <article className="card"><h3>📝 Observaciones</h3><textarea placeholder="¿Hay algo importante sobre el aseo de hoy?"/></article>
-   <button className="save">Guardar aseo</button>
-  </section>}
-  {tab==='asignacion'&&<section><h2>Asignación de aseo</h2><p>Selecciona el grupo y marca los días correspondientes. Los estudiantes retirados se conservarán en el historial.</p><div className="switch"><button>6°</button><button>7° y 8°</button></div><div className="placeholder">➕ Agregar estudiante<br/><small>La tabla editable se conectará a Supabase en el siguiente paso.</small></div></section>}
-  {tab==='reportes'&&<section><h2>Reportes</h2><div className="placeholder">🚨 Los estudiantes podrán reportar piso sucio, basura, puestos, tablero, TV u otro problema y adjuntar evidencia. El profesor revisará cada reporte.</div></section>}
-  {tab==='historial'&&<section><h2>Historial y estadísticas</h2><div className="placeholder">📊 Turnos, cumplimiento, promedio oficial y ⭐ aportes especiales.</div></section>}
-  <footer>Claudina Clean · C.E.R. Claudina Múnera</footer>
- </main>
-}
+function Profesor({perfil}){const[tab,setTab]=useState('hoy');const[grupo,setGrupo]=useState('sexto');const alumnos=demo[grupo];return <main><header><div className="brand">✨</div><div><h1>Claudina Clean</h1><p>👨‍🏫 {perfil.nombre} · Administrador</p></div><button className="logout" onClick={()=>supabase.auth.signOut()}>Salir</button></header><nav>{[['hoy','🏠 Hoy'],['asignacion','📅 Asignación'],['estudiantes','👥 Estudiantes'],['reportes','🚨 Reportes'],['historial','📊 Historial']].map(([k,t])=><button key={k} onClick={()=>setTab(k)} className={tab===k?'active':''}>{t}</button>)}</nav>{tab==='hoy'&&<section><div className="hero"><span>ASEO DE HOY</span><h2>Registro diario</h2></div><div className="switch"><button className={grupo==='sexto'?'active':''} onClick={()=>setGrupo('sexto')}>6°</button><button className={grupo==='juntos'?'active':''} onClick={()=>setGrupo('juntos')}>7° y 8°</button></div><h3>Estudiantes asignados</h3>{alumnos.map(a=><article className="card" key={a}><h3>{a}</h3><div className="chips">{tareas.map(t=><button key={t}>{t}</button>)}</div><Caritas/><div className="status"><button>✅ Cumplió</button><button>❌ No cumplió</button><button>🚫 Ausente</button></div></article>)}<article className="card"><h3>📸 Evidencias</h3><p>Toma fotos o selecciónalas desde la galería.</p><input type="file" accept="image/jpeg,image/png,image/webp" multiple/></article><article className="card"><h3>📝 Observaciones</h3><textarea placeholder="¿Hay algo importante sobre el aseo de hoy?"/></article><button className="save">Guardar aseo</button></section>}{tab==='asignacion'&&<section><h2>Asignación de aseo</h2><div className="placeholder">📅 Próximo paso: conectar la tabla semanal editable a Supabase.</div></section>}{tab==='estudiantes'&&<section><h2>Estudiantes</h2><div className="placeholder">➕ Agregar · ✏️ Editar · ⏸️ Retirar estudiante</div></section>}{tab==='reportes'&&<section><h2>Reportes</h2><div className="placeholder">🚨 Aquí revisarás los reportes enviados por estudiantes.</div></section>}{tab==='historial'&&<section><h2>Historial y estadísticas</h2><div className="placeholder">📊 Cumplimiento, promedios oficiales y ⭐ aportes especiales.</div></section>}<footer>Claudina Clean · C.E.R. Claudina Múnera</footer></main>}
+
+function Estudiante({perfil}){return <main><header><div className="brand">✨</div><div><h1>Claudina Clean</h1><p>🎒 {perfil.nombre}</p></div><button className="logout" onClick={()=>supabase.auth.signOut()}>Salir</button></header><section><div className="hero"><span>HOY</span><h2>Cuidamos juntos nuestro salón</h2></div><article className="card"><h3>🧹 Aseo de hoy</h3><p>Consulta quiénes tienen el turno y cómo quedó el salón.</p></article><article className="card"><h3>🙂 Calificar el aseo</h3><p>Tu valoración es independiente de la nota oficial del profesor.</p></article><article className="card"><h3>🚨 Reportar un problema</h3><p>Reporta piso sucio, basura, puestos, tablero, TV u otro problema. Podrás adjuntar una fotografía.</p></article></section></main>}
+
+export default function App(){const[session,setSession]=useState(null);const[perfil,setPerfil]=useState(null);const[loading,setLoading]=useState(true);useEffect(()=>{supabase.auth.getSession().then(({data})=>setSession(data.session));const{data:{subscription}}=supabase.auth.onAuthStateChange((_e,s)=>setSession(s));return()=>subscription.unsubscribe()},[]);useEffect(()=>{async function cargar(){if(!session){setPerfil(null);setLoading(false);return}setLoading(true);const{data,error}=await supabase.from('perfiles').select('nombre,rol').eq('id',session.user.id).single();if(!error)setPerfil(data);setLoading(false)}cargar()},[session]);if(loading)return <div className="loading">✨ Cargando Claudina Clean…</div>;if(!session)return <Login/>;if(!perfil)return <main><section><div className="placeholder">Tu cuenta existe, pero aún no tiene un perfil autorizado. Consulta al profesor.</div><button className="save" onClick={()=>supabase.auth.signOut()}>Salir</button></section></main>;return perfil.rol==='profesor'?<Profesor perfil={perfil}/>:<Estudiante perfil={perfil}/>}
