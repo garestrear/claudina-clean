@@ -29,3 +29,13 @@ header{position:relative}.logout{margin-left:auto;background:#ffffff22;color:whi
 .dangerButton{border:1px solid #b84646;color:#a32525;background:#fff;border-radius:9px;cursor:pointer;padding:8px}.dangerButton:hover{background:#fff0f0}.deleteRecord{margin:0 16px 12px}
 
 .brandShield{width:58px;height:68px;flex:none;object-fit:contain;background:#fff;border-radius:10px;padding:3px}header h1{font-size:clamp(21px,5vw,28px)}.designCredit{display:block;margin-top:5px;font-size:11px;letter-spacing:.025em;color:#60776b}.loginPage{display:flex;flex-direction:column}.loginPage>section{flex:1}
+.gradesFilters{display:flex;flex-wrap:wrap;gap:1rem;margin:1rem 0}
+.gradesFilters label{display:flex;flex-direction:column;gap:.35rem}
+.gradesFilters input{padding:.65rem;border:1px solid #cbd5e1;border-radius:.5rem}
+.gradesTableWrap{overflow-x:auto;margin:1rem 0}
+.gradesTable{width:100%;border-collapse:collapse;text-align:left}
+.gradesTable th,.gradesTable td{padding:.7rem;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+.gradesTable th{background:#eef7f3}
+.gradesClickable{cursor:pointer}
+.gradesClickable:hover{background:#f1f8f5}
+.gradesClickable button{border:0;background:none;color:#17614b;font:inherit;text-align:left;text-decoration:underline;cursor:pointer}
