@@ -79,3 +79,31 @@ header{position:relative}.logout{margin-left:auto;background:#ffffff22;color:whi
 .studentLessonCancelled{background:#fff0ee;border-color:#e2a5a0}
 .studentBreak{text-align:center;background:#eaf1ff;border-radius:.7rem;padding:.65rem;color:#324c74;font-weight:600}
 .studentScheduleUpdated{font-size:.8rem;color:#52635c;text-align:right}
+.teacherSchedule{max-width:1200px;margin:0 auto}
+.teacherScheduleHeader{border-radius:1rem;background:#eaf6f0;padding:1.1rem;color:#173f31;margin-bottom:1rem}
+.teacherScheduleHeader span{font-size:.78rem;font-weight:800;letter-spacing:.08em}
+.teacherScheduleHeader h2{margin:.3rem 0}
+.teacherScheduleHeader p{margin:0}
+.teacherScheduleToolbar{display:flex;align-items:end;flex-wrap:wrap;gap:.75rem;margin:1rem 0}
+.teacherScheduleToolbar label{display:grid;gap:.3rem;font-size:.85rem;font-weight:600}
+.teacherScheduleToolbar select{min-width:145px;padding:.65rem;border:1px solid #b8cec3;border-radius:.65rem;background:white}
+.teacherViewSwitch{display:flex;border:1px solid #b8cec3;border-radius:.7rem;overflow:hidden}
+.teacherViewSwitch button{border:0;background:white;padding:.7rem 1rem;cursor:pointer}
+.teacherViewSwitch button.selected{background:#166448;color:white}
+.teacherDay,.teacherFiltered{background:#fff;border:1px solid #e2e8e5;border-radius:1rem;padding:1rem;margin:1rem 0}
+.teacherDay h3 small{font-size:.75rem;font-weight:normal;color:#52635c}
+.teacherWeekGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.7rem}
+.teacherWeekGrid .teacherDay{margin:0;padding:.7rem}
+.teacherWeekGrid .teacherSlot{display:block}
+.teacherWeekGrid .teacherSlotTime{border:0}
+.teacherWeekGrid .teacherSlotActions{margin-top:.5rem}
+.teacherSlot{display:grid;grid-template-columns:minmax(95px,125px) minmax(0,1fr) auto;gap:.7rem;align-items:center;padding:.8rem;border:1px solid #e2e8e5;border-radius:.7rem;margin:.55rem 0}
+.teacherSlotTime{border-right:1px solid #e2e8e5}
+.teacherSlot small,.teacherSlot span{display:block;color:#52635c;font-size:.8rem;margin-top:.2rem}
+.teacherSlotSubject{min-width:0}
+.teacherSlotChanged{background:#fff8e5;border-color:#e4b953}
+.teacherSlotCancelled{background:#fff0ee;border-color:#e2a5a0}
+.teacherSlotActions{display:flex;flex-wrap:wrap;gap:.35rem}
+.teacherSlotActions button{border:1px solid #b8cec3;background:white;border-radius:.5rem;padding:.4rem .55rem;cursor:pointer;font-size:.78rem}
+.scheduleEditor{scroll-margin-top:1rem}
+@media(max-width:650px){.teacherSlot{grid-template-columns:80px minmax(0,1fr)}.teacherSlotActions{grid-column:1/-1}.teacherWeekGrid{grid-template-columns:1fr}.teacherScheduleToolbar label{flex:1 1 130px}}
