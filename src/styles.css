@@ -39,3 +39,17 @@ header{position:relative}.logout{margin-left:auto;background:#ffffff22;color:whi
 .gradesClickable{cursor:pointer}
 .gradesClickable:hover{background:#f1f8f5}
 .gradesClickable button{border:0;background:none;color:#17614b;font:inherit;text-align:left;text-decoration:underline;cursor:pointer}
+.scheduleControls{display:flex;align-items:center;flex-wrap:wrap;gap:.7rem;margin:1rem 0}
+.scheduleControls>button,.scheduleActions button{padding:.5rem .7rem;border-radius:.6rem;border:1px solid #cbd5e1;cursor:pointer}
+.scheduleDays{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+.scheduleDay{min-width:0}
+.scheduleDay h3 small{display:block;font-size:.8rem;font-weight:normal}
+.scheduleSlot{display:grid;grid-template-columns:80px 1fr;gap:.5rem;padding:.65rem .25rem;border-top:1px solid #ddd}
+.scheduleSlot small{display:block;font-size:.78rem;color:#4b5563;margin-top:.2rem}
+.scheduleChanged{background:#fff6dc;border-left:3px solid #e7ad24;padding-left:.5rem}
+.scheduleActions{display:flex;gap:.45rem;flex-wrap:wrap;grid-column:1/-1}
+.scheduleActions button{font-size:.8rem}
+.scheduleEditor{margin:1rem 0;display:grid;gap:.8rem}
+.scheduleEditor label{display:grid;gap:.35rem}
+.scheduleEditor label:has(input[type=checkbox]){display:flex;align-items:center}
+.scheduleEditor input:not([type=checkbox]),.scheduleEditor select{padding:.6rem;border:1px solid #cbd5e1;border-radius:.5rem}
