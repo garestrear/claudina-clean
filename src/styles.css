@@ -58,3 +58,24 @@ header{position:relative}.logout{margin-left:auto;background:#ffffff22;color:whi
 .studentNav button{flex:0 0 auto}
 .teacherScheduleFilter{display:flex;align-items:center;gap:.4rem}
 .teacherScheduleFilter select{padding:.55rem;border:1px solid #cbd5e1;border-radius:.5rem;max-width:180px}
+.studentSchedule{max-width:760px;margin:0 auto}
+.studentScheduleHeading{padding:1.2rem;border-radius:1rem;background:#eaf6f0;color:#173f31}
+.studentScheduleHeading span{font-size:.78rem;font-weight:800;letter-spacing:.08em}
+.studentScheduleHeading h2{margin:.3rem 0}
+.studentScheduleHeading p{margin:0}
+.studentWeekControls{display:flex;justify-content:space-between;gap:.4rem;flex-wrap:wrap;margin:1rem 0}
+.studentWeekControls button{border:1px solid #b8cec3;background:white;border-radius:.7rem;padding:.6rem;cursor:pointer}
+.studentDayTabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.35rem;margin:1rem 0}
+.studentDayTabs button{border:1px solid #cbd5d1;background:#fff;border-radius:.75rem;padding:.65rem .2rem;cursor:pointer;display:grid;gap:.2rem}
+.studentDayTabs button.selected{background:#166448;color:white;border-color:#166448}
+.studentDayTabs small{font-size:.73rem}
+.studentScheduleAlert{background:#fff3cd;border-left:4px solid #d59b16;border-radius:.6rem;padding:.8rem 1rem;margin:1rem 0}
+.studentScheduleAlert p{margin:.45rem 0 0}
+.studentLessonList{display:grid;gap:.6rem;margin:1rem 0}
+.studentLesson{display:grid;grid-template-columns:minmax(85px,120px) 1fr;gap:.8rem;background:white;border:1px solid #e2e8e5;border-radius:.85rem;padding:.9rem}
+.studentLessonTime{border-right:1px solid #e2e8e5;padding-right:.5rem}
+.studentLesson small,.studentLesson span{display:block;color:#52635c;font-size:.83rem;margin-top:.22rem}
+.studentLessonChanged{background:#fff8e5;border-color:#e4b953}
+.studentLessonCancelled{background:#fff0ee;border-color:#e2a5a0}
+.studentBreak{text-align:center;background:#eaf1ff;border-radius:.7rem;padding:.65rem;color:#324c74;font-weight:600}
+.studentScheduleUpdated{font-size:.8rem;color:#52635c;text-align:right}
