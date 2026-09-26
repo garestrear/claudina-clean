@@ -34,6 +34,6 @@ export default function ActivarNotificaciones(){
     }catch(error){setMensaje('No se pudieron activar las alertas: '+error.message)}
     setBusy(false);
   }
-  if(estado==='no_configurado'||estado==='comprobando')return null;
+  if(estado==='no_configurado'||estado==='comprobando'||estado==='activo')return null;
   return <aside className="pushEnrollment"><b>📱 Alertas de evacuación</b>{estado==='incompatible'?<p>Este navegador no admite avisos al celular. Sigue siempre el timbre y las indicaciones del profesor.</p>:<><p>{estado==='activo'?'Este celular tiene las notificaciones activadas.':'Activa los avisos de Claudina Clean en este celular. En iPhone, añade primero la app a la pantalla de inicio.'}</p><button type="button" disabled={busy} onClick={activar}>{busy?'Activando…':estado==='activo'?'Comprobar suscripción':'Activar avisos en este celular'}</button></>}{mensaje&&<p role="status">{mensaje}</p>}</aside>;
 }
