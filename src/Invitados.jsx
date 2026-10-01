@@ -25,6 +25,16 @@ export function PortalInvitados({salir}){
  <article className="card"><h2>🤝 Así resolvemos nuestros conflictos</h2><p>Experiencias de diálogo, acuerdos y aprendizaje compartidas por el equipo docente.</p>{datos?.casos?.length?datos.casos.map((c,i)=><div className="guestEntry" key={i}><small>{c.fecha}</small><h3>{c.titulo}</h3><h4>¿Qué ocurrió?</h4><p>{c.situacion}</p><h4>¿Cómo lo solucionamos?</h4><p>{c.solucion}</p><h4>Nuestros acuerdos</h4><p>{c.acuerdos}</p><h4>¿Qué aprendimos?</h4><p>{c.aprendizaje}</p></div>):<p>Aún no hay experiencias publicadas.</p>}</article></>}
  </section><footer>Claudina App · C.E.R. Claudina Múnera <span className="designCredit">Designed by Ghost</span></footer></main>;
 }
+
+export function ConvivenciaEstudiante(){
+ const[datos,setDatos]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+ useEffect(()=>{let vigente=true;supabase.rpc('portal_invitados').then(({data,error})=>{if(!vigente)return;if(error)setError('No se pudo cargar el seguimiento de convivencia.');else setDatos(data);setLoading(false)}).catch(()=>{if(vigente){setError('No se pudo cargar el seguimiento de convivencia.');setLoading(false)}});return()=>{vigente=false}},[]);
+ const dias=diasConvivencia(datos?.seguimiento);
+ return <div className="guestPortal"><h2>🤝 Nuestra convivencia</h2> <article className="card guestCounter"><span>🌱 DÍAS CONSECUTIVOS SIN INCIDENTES CONFIRMADOS</span><strong>{loading?'…':dias==null?'Por iniciar':dias}</strong><p>{dias==null?'El equipo docente confirmará la fecha de inicio y el seguimiento.':'Seguimos construyendo una convivencia respetuosa.'}</p>{datos?.seguimiento?.verificado_hasta&&<small>Actualizado al {datos.seguimiento.verificado_hasta} · Días calendario hasta la última revisión docente.</small>}</article>
+ {loading?<p role="status">Cargando experiencias…</p>:error?<p className="error" role="status">{error}</p>:<> <article className="card"><h2>🤝 Así resolvemos nuestros conflictos</h2><p>Experiencias de diálogo, acuerdos y aprendizaje compartidas por el equipo docente.</p>{datos?.casos?.length?datos.casos.map((c,i)=><div className="guestEntry" key={i}><small>{c.fecha}</small><h3>{c.titulo}</h3><h4>¿Qué ocurrió?</h4><p>{c.situacion}</p><h4>¿Cómo lo solucionamos?</h4><p>{c.solucion}</p><h4>Nuestros acuerdos</h4><p>{c.acuerdos}</p><h4>¿Qué aprendimos?</h4><p>{c.aprendizaje}</p></div>):<p>Aún no hay experiencias publicadas.</p>}</article></>}
+ </div>;
+}
+
 const nuevo=()=>({fecha:fechaBogota(),titulo:'',situacion:'',solucion:'',acuerdos:'',aprendizaje:'',confirmado:true,publicado:false});
 export function ConvivenciaProfesor(){
  const[lista,setLista]=useState([]),[seguimiento,setSeguimiento]=useState({inicio:'',verificado_hasta:''}),[form,setForm]=useState(nuevo),[id,setId]=useState(null),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false),[listo,setListo]=useState(false);
