@@ -16,11 +16,11 @@ create table if not exists public.convivencia_publicaciones(
  check(not publicado or (length(trim(solucion))>0 and length(trim(acuerdos))>0 and length(trim(aprendizaje))>0))
 );
 alter table public.convivencia_publicaciones add column if not exists fecha_hora timestamptz;
-do $ begin
+do $$ begin
  if not exists(select 1 from pg_constraint where conname='convivencia_fecha_hora_valida' and conrelid='public.convivencia_publicaciones'::regclass) then
   alter table public.convivencia_publicaciones add constraint convivencia_fecha_hora_valida check(fecha_hora is null or (fecha_hora<=now() and timezone('America/Bogota',fecha_hora)::date=fecha));
  end if;
-end $;
+end $$;
 create table if not exists public.convivencia_seguimiento(
  id smallint primary key default 1 check(id=1),
  inicio date,
