@@ -15,6 +15,12 @@ create table if not exists public.convivencia_publicaciones(
  created_at timestamptz not null default now(),
  check(not publicado or (length(trim(solucion))>0 and length(trim(acuerdos))>0 and length(trim(aprendizaje))>0))
 );
+alter table public.convivencia_publicaciones add column if not exists fecha_hora timestamptz;
+do $ begin
+ if not exists(select 1 from pg_constraint where conname='convivencia_fecha_hora_valida' and conrelid='public.convivencia_publicaciones'::regclass) then
+  alter table public.convivencia_publicaciones add constraint convivencia_fecha_hora_valida check(fecha_hora is null or (fecha_hora<=now() and timezone('America/Bogota',fecha_hora)::date=fecha));
+ end if;
+end $;
 create table if not exists public.convivencia_seguimiento(
  id smallint primary key default 1 check(id=1),
  inicio date,
@@ -40,7 +46,7 @@ as $$
  select jsonb_build_object(
  'avisos',coalesce((select jsonb_agg(to_jsonb(a)) from (select titulo,contenido,tipo,fecha_evento from public.avisos where publicado and visible_invitados order by created_at desc limit 30)a),'[]'::jsonb),
  'casos',coalesce((select jsonb_agg(to_jsonb(c)) from (select fecha,titulo,situacion,solucion,acuerdos,aprendizaje from public.convivencia_publicaciones where publicado order by fecha desc,created_at desc limit 30)c),'[]'::jsonb),
- 'seguimiento',(select jsonb_build_object('inicio',s.inicio,'verificado_hasta',s.verificado_hasta,'ultimo_incidente',(select max(fecha) from public.convivencia_publicaciones where confirmado)) from public.convivencia_seguimiento s where id=1)
+ 'seguimiento',(select jsonb_build_object('inicio',s.inicio,'verificado_hasta',s.verificado_hasta,'ultimo_incidente',(select max(fecha) from public.convivencia_publicaciones where confirmado),'ultimo_incidente_hora',(select fecha_hora from public.convivencia_publicaciones where confirmado order by coalesce(fecha_hora,fecha::timestamp at time zone 'America/Bogota') desc,created_at desc limit 1)) from public.convivencia_seguimiento s where id=1)
  );
 $$;
 revoke all on function public.portal_invitados() from public;
