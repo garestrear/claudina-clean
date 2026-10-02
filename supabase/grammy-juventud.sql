@@ -95,7 +95,7 @@ begin
  'categorias',coalesce((select jsonb_agg(to_jsonb(c) order by orden) from public.grammy_categorias c where profesor or habilitada),'[]'::jsonb),
  'candidatos',coalesce((select jsonb_agg(to_jsonb(e) order by nombre) from (select id,nombre,grado from public.estudiantes where activo and grado in(6,7,8)) e),'[]'::jsonb),
  'mis_votos',coalesce((select jsonb_object_agg(categoria_id::text,candidato_id::text) from public.grammy_votos where autor=auth.uid()),'{}'::jsonb),
- 'conteo',case when profesor then conteo else null end,
+ 'conteo',conteo,
  'ganadores',ganadores,
  'votantes',case when profesor then (select count(distinct autor) from public.grammy_votos v where exists(select 1 from public.estudiantes e where e.auth_user_id=v.autor and e.activo and e.grado in(6,7,8))) else null end
  );
