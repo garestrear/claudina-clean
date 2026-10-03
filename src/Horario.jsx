@@ -1,9 +1,10 @@
+import {materiasEscolares} from './materias';
 import React,{useEffect,useMemo,useState} from 'react';
 import {supabase} from './lib/supabase';
 
 const dias=['Lunes','Martes','Miércoles','Jueves','Viernes'];
 const horas=['7:00–7:55','7:55–8:50','8:50–9:45','10:15–11:10','11:10–12:05','12:05–1:00'];
-const materias=['','Matemáticas','Inglés','Tecnología, informática y emprendimiento','Español','Ciencias Naturales','Ciencias Sociales','Educación Ética','Educación Religiosa'];
+const materias=['',...materiasEscolares];
 const docente=m=>['Matemáticas','Inglés','Tecnología, informática y emprendimiento'].includes(m)?'Gustavo':m?'Johana':'';
 const hoyBogota=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Bogota',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const fechaSemana=(lunes,offset)=>{const d=new Date(`${lunes}T12:00:00Z`);d.setUTCDate(d.getUTCDate()+offset);return d.toISOString().slice(0,10)};
