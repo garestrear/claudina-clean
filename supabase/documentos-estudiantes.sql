@@ -54,4 +54,13 @@ end;
 $$;
 revoke all on function public.importar_estudiantes(jsonb) from public,anon;
 grant execute on function public.importar_estudiantes(jsonb) to authenticated;
+create or replace function public.documentos_estudiantes_version()
+returns integer language plpgsql stable security definer set search_path=public as $$
+begin
+ if auth.uid() is null or not public.es_profesor() then raise exception 'Solo profesores pueden comprobar la importación.';end if;
+ return 1;
+end;
+$$;
+revoke all on function public.documentos_estudiantes_version() from public,anon;
+grant execute on function public.documentos_estudiantes_version() to authenticated;
 commit;
