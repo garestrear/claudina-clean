@@ -1,0 +1,40 @@
+import {PGlite} from '@electric-sql/pglite';
+import {readFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const db=new PGlite();
+await db.exec(`create role anon;create role authenticated;create schema auth;
+create table auth.users(id uuid primary key);
+create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
+create function public.es_profesor() returns boolean language sql stable as $$select current_setting('test.profesor',true)='true'$$;
+create table public.estudiantes(id uuid primary key,nombre text,grado integer,activo boolean,auth_user_id uuid);
+create table public.grammy_votos(marca text);insert into public.grammy_votos values('conservar');
+insert into auth.users values('00000000-0000-0000-0000-000000000001'),('00000000-0000-0000-0000-000000000002'),('00000000-0000-0000-0000-000000000003');
+insert into estudiantes values('10000000-0000-0000-0000-000000000001','Sexto activo',6,true,'00000000-0000-0000-0000-000000000002'),('10000000-0000-0000-0000-000000000002','Séptimo activo',7,true,'00000000-0000-0000-0000-000000000003'),('10000000-0000-0000-0000-000000000003','Octavo inactivo',8,false,null);
+`);
+const sql=await readFile(new URL('../supabase/encuestas.sql',import.meta.url),'utf8');
+await db.exec(sql);await db.exec(sql); // Instalación repetible.
+async function identity(uid,teacher){await db.query("select set_config('test.uid',$1,false),set_config('test.profesor',$2,false)",[uid,teacher?'true':'false'])}
+async function rpc(name,args=[],casts=[]){return (await db.query(`select public.${name}(${args.map((_,i)=>'$'+(i+1)+(casts[i]?'::'+casts[i]:'')).join(',')}) value`,args)).rows[0].value}
+const teacher='00000000-0000-0000-0000-000000000001',student='00000000-0000-0000-0000-000000000002',other='00000000-0000-0000-0000-000000000003',candidate='10000000-0000-0000-0000-000000000002';
+await identity(teacher,true);
+const survey=await rpc('encuesta_guardar',[null,{titulo:'Compañerismo',descripcion:'Prueba',grados_participantes:[6],grados_candidatos:[7]}],['uuid','jsonb']);
+const question=await rpc('encuesta_pregunta_guardar',[survey,null,{titulo:'¿Quién ayuda más?'}],['uuid','uuid','jsonb']);
+const deleted=await rpc('encuesta_pregunta_guardar',[survey,null,{titulo:'Temporal'}],['uuid','uuid','jsonb']);
+await rpc('encuesta_pregunta_eliminar',[survey,deleted],['uuid','uuid']);
+await identity(student,false);assert.deepEqual(await rpc('encuestas_listar'),[],'Borradores ocultos');
+await assert.rejects(rpc('encuesta_guardar',[null,{titulo:'No autorizado',grados_participantes:[6],grados_candidatos:[7]}],['uuid','jsonb']));
+await identity(teacher,true);await rpc('encuesta_administrar',[survey,'abrir'],['uuid','text']);
+await identity(student,false);
+let data=await rpc('encuesta_contexto',[survey],['uuid']);assert.equal(data.puede_responder,true);assert.equal(data.candidatos.length,1);assert.equal(data.candidatos[0].grado,7);assert.equal(data.conteo,null);
+await rpc('encuesta_responder',[survey,{[question]:candidate}],['uuid','jsonb']);
+await assert.rejects(rpc('encuesta_responder',[survey,{[question]:'10000000-0000-0000-0000-000000000001'}],['uuid','jsonb']));
+assert.equal((await rpc('encuesta_contexto',[survey],['uuid'])).mis_respuestas[question].nombre,'Séptimo activo','Respuesta inválida no borra la anterior');
+await identity(other,false);assert.deepEqual(await rpc('encuestas_listar'),[],'Otro grado no puede ver');await assert.rejects(rpc('encuesta_contexto',[survey],['uuid']));await assert.rejects(rpc('encuesta_responder',[survey,{[question]:candidate}],['uuid','jsonb']));
+await identity(teacher,true);data=await rpc('encuesta_contexto',[survey],['uuid']);assert.equal(data.participantes,1);assert.equal(data.conteo[0].votos,1);assert.equal(data.editable,false);
+await rpc('encuesta_administrar',[survey,'cerrar'],['uuid','text']);await assert.rejects(rpc('encuesta_pregunta_eliminar',[survey,question],['uuid','uuid']));await rpc('encuesta_administrar',[survey,'publicar'],['uuid','text']);
+await identity(student,false);data=await rpc('encuesta_contexto',[survey],['uuid']);assert.equal(data.puede_responder,false);assert.equal(data.conteo[0].votos,1);assert.equal((await rpc('encuestas_listar'))[0].estado,'cerrada');await assert.rejects(rpc('encuesta_responder',[survey,{}],['uuid','jsonb']));
+await db.query('delete from estudiantes where id=$1',[candidate]);data=await rpc('encuesta_contexto',[survey],['uuid']);assert.equal(data.mis_respuestas[question].nombre,'Séptimo activo');assert.equal(data.conteo[0].nombre,'Séptimo activo','Archivo conserva nombres');
+await db.exec('set role authenticated');await assert.rejects(db.query('select * from encuesta_respuestas'),'Sin acceso directo a votos individuales');await db.exec('reset role');
+assert.equal((await db.query('select marca from grammy_votos')).rows[0].marca,'conservar');
+console.log('PASS: SQL repetible, roles, grados, candidatos, privacidad, voto válido, cierre, publicación y archivo; Grammy intacto');
+await db.close();
