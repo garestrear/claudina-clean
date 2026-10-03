@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node tests/grammyResultados.test.mjs && node tests/camaraAseo.test.mjs && node tests/encuestasSql.test.mjs && node tests/encuestasUi.test.mjs && node tests/documentosEstudiantes.test.mjs && node tests/documentosImportadorUi.test.mjs"
+    "test": "node tests/grammyResultados.test.mjs && node tests/camaraAseo.test.mjs && node tests/encuestasSql.test.mjs && node tests/encuestasUi.test.mjs && node tests/documentosEstudiantes.test.mjs && node tests/documentosImportadorUi.test.mjs && node tests/acudientesSql.test.mjs && node tests/acudientesApi.test.mjs && node tests/acudientesUi.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
