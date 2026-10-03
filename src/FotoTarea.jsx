@@ -1,0 +1,3 @@
+import React,{useEffect,useState} from 'react';
+import {supabase} from './lib/supabase';
+export default function FotoTarea({path}){const[url,setUrl]=useState(''),[error,setError]=useState(false);useEffect(()=>{let vigente=true;setUrl('');setError(false);if(path)supabase.storage.from('tareas-fotos').createSignedUrl(path,300).then(({data,error})=>{if(vigente){if(error)setError(true);else setUrl(data.signedUrl)}}).catch(()=>{if(vigente)setError(true)});return()=>{vigente=false}},[path]);return !path?null:error?<p>No se pudo abrir la foto.</p>:url?<div className="evidenceGrid"><a href={url} target="_blank" rel="noreferrer"><img src={url} loading="lazy" alt="Foto de la tarea"/></a></div>:<p>Cargando foto…</p>}

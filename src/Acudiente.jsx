@@ -1,3 +1,4 @@
+import FotoTarea from './FotoTarea';
 import GeneroEstudiante,{referenciaFamiliar as referencia} from './GeneroEstudiante';
 import React,{useEffect,useState} from 'react';
 import {supabase} from './lib/supabase';
@@ -31,7 +32,7 @@ function AseosAcudiente({filas,hijo}){
 }
 function AvisosAcudiente({avisos,mensajes,hijo}){
  const tareas=avisos.filter(a=>a.tipo==='tarea').sort((a,b)=>a.fecha_evento&&b.fecha_evento?a.fecha_evento.localeCompare(b.fecha_evento):a.fecha_evento?-1:b.fecha_evento?1:0),publicaciones=avisos.filter(a=>a.tipo!=='tarea'),hoy=fechaBogota();
- const tarjeta=(a,tarea=false)=><article className="card" key={a.id}><small>{a.grado?`Grado ${a.grado}°`:'Todos los grados'}</small><h4>{a.titulo}</h4><p>{a.contenido}</p>{a.fecha_evento&&<b>{tarea?'Fecha de entrega':'Fecha'}: {a.fecha_evento}{tarea&&a.fecha_evento<hoy?' · Fecha vencida':tarea&&a.fecha_evento===hoy?' · Para hoy':''}</b>}</article>;
+ const tarjeta=(a,tarea=false)=><article className="card" key={a.id}><small>{a.grado?`Grado ${a.grado}°`:'Todos los grados'}</small><h4>{a.titulo}</h4><p>{a.contenido}</p><FotoTarea path={a.foto_path}/>{a.fecha_evento&&<b>{tarea?'Fecha de entrega':'Fecha'}: {a.fecha_evento}{tarea&&a.fecha_evento<hoy?' · Fecha vencida':tarea&&a.fecha_evento===hoy?' · Para hoy':''}</b>}</article>;
  return <section><h2>📚 Tareas y Avisos</h2><p>Información publicada para el grado de tu {referencia(hijo)} y para toda la institución.</p><section aria-label="Tareas pendientes"><h3>📚 Tareas pendientes</h3><p>Tareas publicadas por los profesores. Permanecen visibles mientras el profesor mantenga la publicación activa.</p>{tareas.length?tareas.map(a=>tarjeta(a,true)):<p>No hay tareas pendientes publicadas.</p>}</section><section aria-label="Avisos para la familia"><h3>📣 Avisos para la familia</h3>{publicaciones.length?publicaciones.map(a=>tarjeta(a)):<p>No hay avisos publicados.</p>}{mensajes.length>0&&<><h4>Mensajes aprobados de la comunidad</h4>{mensajes.map(m=><article className="card" key={m.id}><h4>{m.titulo}</h4><p>{m.contenido}</p></article>)}</>}</section></section>;
 }
 function HorarioAcudiente({datos}){
