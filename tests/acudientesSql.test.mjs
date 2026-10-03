@@ -44,4 +44,14 @@ assert.deepEqual(await rpc('acudiente_encuestas'),{encuestas:[],grammy:null});
 await db.exec('reset role');await db.query("select set_config('test.uid',$1,false)",[child]);await db.exec('set role authenticated');assert.equal(await rpc('es_acudiente'),false);assert.equal((await db.query('select * from estudiantes')).rows.length,2,'Políticas estudiantiles originales no alteradas');await assert.rejects(rpc('acudiente_contexto'));
 await db.exec('reset role');await db.query('update estudiantes set activo=false where id=$1',[student]);await db.query("select set_config('test.uid',$1,false)",[parent]);await assert.rejects(rpc('acudiente_contexto'));assert.equal(await rpc('acudiente_puede_ver_foto',['propia.jpg'],['text']),false);
 for(let i=0;i<12;i++)assert.equal(await rpc('acudiente_registrar_intento',['hash'],['text']),true);assert.equal(await rpc('acudiente_registrar_intento',['hash'],['text']),false);
+
+const nombresSql=await readFile(new URL('../supabase/nombres-y-tratamiento.sql',import.meta.url),'utf8');await db.exec(nombresSql);await db.exec(nombresSql);
+assert.equal(await rpc('nombre_primero',['PÉREZ GÓMEZ ANA MARÍA','anaperezg@example.edu'],['text','text']),'ANA MARÍA PÉREZ GÓMEZ');
+assert.equal(await rpc('nombre_primero',['ANA MARÍA PÉREZ GÓMEZ','anaperezg@example.edu'],['text','text']),'ANA MARÍA PÉREZ GÓMEZ');
+assert.equal(await rpc('nombre_primero',['NOMBRE SIN IDENTIFICAR',null],['text','text']),'NOMBRE SIN IDENTIFICAR');
+await db.query('update estudiantes set activo=true where id=$1',[student]);await db.query("select set_config('test.uid',$1,false)",[parent]);await db.exec('set role authenticated');
+await rpc('acudiente_tratamiento',['hija'],['text']);assert.equal((await rpc('acudiente_contexto')).estudiante.tratamiento_familiar,'hija');await assert.rejects(rpc('acudiente_contexto_base'));await assert.rejects(rpc('acudiente_tratamiento',['otro'],['text']));
+await db.exec('reset role');assert.equal((await db.query('select tratamiento_familiar from estudiantes where id=$1',[other])).rows[0].tratamiento_familiar,null);
+await db.query("select set_config('test.uid',$1,false)",[child]);await db.exec('set role authenticated');await assert.rejects(rpc('acudiente_tratamiento',['hija'],['text']));await db.exec('reset role');
+console.log('PASS: nombres primero sin doble rotación; nombres ambiguos intactos; tratamiento familiar persistente exclusivo del propio acudiente; contexto repetible');
 console.log('PASS: SQL repetible; cuenta independiente; hijo propio; notas/fotos/avisos/horario/reportes; restricciones aun con permisos antiguos; Google intacto; inactivos y límites');await db.close();
