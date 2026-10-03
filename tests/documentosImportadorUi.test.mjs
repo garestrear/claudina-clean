@@ -1,0 +1,14 @@
+import {build} from 'esbuild';
+import React from 'react';
+import {create,act} from 'react-test-renderer';
+import assert from 'node:assert/strict';
+import {unlink} from 'node:fs/promises';
+const root=new URL('..',import.meta.url).pathname.replace(/\/$/,'');const outfile=root+'/node_modules/documentos-importador-test.mjs';globalThis.IS_REACT_ACT_ENVIRONMENT=true;globalThis.importCall=null;
+await build({entryPoints:[root+'/src/ImportarEstudiantes.jsx'],bundle:true,format:'esm',outfile,packages:'external',plugins:[{name:'fixtures',setup(b){b.onResolve({filter:/^read-excel-file\/browser$/},()=>({path:'fake-reader',namespace:'fixture'}));b.onLoad({filter:/.*/,namespace:'fixture'},()=>({contents:`export default async()=>[{sheet:'6°',data:[['Nombre del estudiante','Correo','Grado','Documento'],['ANA RUIZ','ana@example.edu',6,'001234'],['LUIS RÍOS','luis@example.edu',6,'N123456']]}]`}));b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:`export const supabase={rpc:async(name,args)=>{globalThis.importCall={name,args};return{data:{creados:0,actualizados:args.filas.length}}}};`}))}}]});
+const {ImportarEstudiantes}=await import(outfile);let completed=false,view;await act(async()=>{view=create(React.createElement(ImportarEstudiantes,{existentes:[{id:'s1',nombre:'RUIZ ANA',email:'ana@example.edu',grado:6}],alTerminar:async()=>{completed=true}}))});
+await act(async()=>view.root.findByProps({type:'file'}).props.onChange({target:{files:[{name:'documentos.xlsx'}]}}));
+const checkbox=view.root.findAllByType('input').filter(i=>i.props.type==='checkbox');assert.equal(checkbox[0].props.checked,true);assert.equal(checkbox[1].props.checked,false);assert.equal(checkbox[2].props.checked,true);
+assert.equal(view.root.findAllByType('input').find(i=>i.props['aria-label']==='Documento fila 2').props.value,'001234');
+const save=view.root.findAllByType('button').find(b=>b.props.className==='save');assert.equal(save.props.disabled,false);await act(async()=>save.props.onClick());
+assert.equal(globalThis.importCall.name,'importar_estudiantes');assert.equal(globalThis.importCall.args.filas.length,1);assert.equal(globalThis.importCall.args.filas[0].id,'s1');assert.equal(globalThis.importCall.args.filas[0].documento,'001234');assert.equal(globalThis.importCall.args.filas[0].solo_documento,true);assert.equal(completed,true);
+await act(async()=>view.unmount());await unlink(outfile);console.log('PASS: vista previa selecciona ficha existente, omite nuevas y envía documento con modo de actualización');
