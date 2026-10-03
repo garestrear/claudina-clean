@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node tests/grammyResultados.test.mjs && node tests/camaraAseo.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
@@ -18,5 +19,10 @@
     "vite-plugin-pwa": "^1.0.3",
     "web-push": "^3.6.7",
     "workbox-precaching": "^7.4.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "fake-indexeddb": "^6.2.5",
+    "react-test-renderer": "^19.1.1"
   }
 }

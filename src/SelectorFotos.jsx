@@ -1,6 +1,6 @@
 import React,{useEffect,useRef,useState} from 'react';
 
-export default function SelectorFotos({archivos=[],onSeleccionar,multiple=false,disabled=false}){
+export default function SelectorFotos({archivos=[],onSeleccionar,multiple=false,disabled=false,onPreparar}){
   const camara=useRef(null),galeria=useRef(null),[vistas,setVistas]=useState([]);
   useEffect(()=>{
     const urls=archivos.map(f=>({nombre:f.name,url:URL.createObjectURL(f)}));
@@ -15,8 +15,8 @@ export default function SelectorFotos({archivos=[],onSeleccionar,multiple=false,
   }
   return <div>
     <div className="chips">
-      <button type="button" disabled={disabled} onClick={()=>camara.current?.click()}>📷 Tomar foto</button>
-      <button type="button" disabled={disabled} onClick={()=>galeria.current?.click()}>🖼️ Elegir de la galería</button>
+      <button type="button" disabled={disabled} onClick={()=>{onPreparar?.();camara.current?.click()}}>📷 Tomar foto</button>
+      <button type="button" disabled={disabled} onClick={()=>{onPreparar?.();galeria.current?.click()}}>🖼️ Elegir de la galería</button>
     </div>
     <input ref={camara} hidden type="file" accept="image/jpeg,image/png,image/webp" capture="environment" disabled={disabled} onChange={seleccionar}/>
     <input ref={galeria} hidden type="file" accept="image/jpeg,image/png,image/webp" multiple={multiple} disabled={disabled} onChange={seleccionar}/>

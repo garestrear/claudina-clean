@@ -1,0 +1,28 @@
+import {build} from 'esbuild';
+import React from 'react';
+import {create,act} from 'react-test-renderer';
+import {indexedDB} from 'fake-indexeddb';
+import assert from 'node:assert/strict';
+const root=new URL('..',import.meta.url).pathname.replace(/\/$/,'');
+const mem=new Map();globalThis.localStorage={getItem:k=>mem.get(k)||null,setItem:(k,v)=>mem.set(k,v),removeItem:k=>mem.delete(k)};globalThis.indexedDB=indexedDB;globalThis.window={localStorage,location:{search:''}};globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+const fixture=`let cb;const user={id:'teacher-test'};globalThis.emitAuth=()=>cb('TOKEN_REFRESHED',{user});globalThis.profileLoads=0;export const supabase={auth:{getSession:async()=>({data:{session:{user}}}),onAuthStateChange:f=>{cb=f;return{data:{subscription:{unsubscribe(){}}}}}},from(table){return new Proxy({},{get(_,prop){if(prop==='then')return done=>{let data=[];if(table==='perfiles'){globalThis.profileLoads++;data={id:user.id,nombre:'Profesor prueba',rol:'profesor'}}if(table==='estudiantes')data=[{id:'student-test',nombre:'Estudiante prueba',grado:6,activo:true}];if(table==='asignaciones')data=[{estudiante_id:'student-test',dia:5}];if(table==='registros_aseo')data=null;return Promise.resolve({data,error:null}).then(done)};return ()=>supabase.from(table)}})}};`;
+await build({entryPoints:[root+'/src/App.jsx'],bundle:true,format:'esm',outfile:root+'/node_modules/camera-test-bundle.mjs',packages:'external',loader:{'.png':'dataurl','.css':'empty'},plugins:[{name:'fixtures',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:fixture}));b.onLoad({filter:/\/(Grammy|Invitados|ParticipacionEstudiantil|ImportarEstudiantes|CalificacionesAseo|Horario|Avisos|AlertaEvacuacion)\.jsx$/},()=>({contents:`export default ()=>null;${['PortalInvitados','ConvivenciaProfesor','ConvivenciaEstudiante','ParticipacionEstudiantil','ReportesProfesor','ImportarEstudiantes','ConsolidadoAseo','CalificacionesEstudiante','AvisosEstudiante','AvisosProfesor','MensajesEstudiante'].map(n=>'export const '+n+'=()=>null;').join('')}`}))}}]});
+const {default:App}=await import(root+'/node_modules/camera-test-bundle.mjs');let view;
+const mount=async()=>{await act(async()=>{view=create(React.createElement(App));await new Promise(r=>setTimeout(r,20))})};
+const find=(type,test)=>view.root.findAllByType(type).find(test);
+const change=async(input,value)=>act(async()=>input.props.onChange({target:{value}}));
+await mount();await change(find('input',x=>x.props.type==='date'),'2026-10-02');
+await change(find('textarea',()=>true),'Observación antes de cámara');
+await change(find('input',x=>x.props.type==='range'),'9');
+await act(async()=>find('button',x=>x.props['aria-pressed']!==undefined).props.onClick());
+const foto=new File(['photo'],'foto.jpg',{type:'image/jpeg'});
+await act(async()=>{find('input',x=>x.props.capture).props.onChange({target:{files:[foto],value:''}});await new Promise(r=>setTimeout(r,20))});
+await act(async()=>globalThis.emitAuth());
+assert.equal(globalThis.profileLoads,1);assert.equal(find('textarea',()=>true).props.value,'Observación antes de cámara');assert.equal(find('input',x=>x.props.type==='range').props.value,'9');assert.equal(view.root.findAllByType('img').filter(x=>x.props.alt?.startsWith('Foto seleccionada')).length,1);
+await act(async()=>view.unmount());await mount();await act(async()=>{await new Promise(r=>setTimeout(r,50))});
+assert.equal(find('input',x=>x.props.type==='date').props.value,'2026-10-02');assert.equal(find('textarea',()=>true).props.value,'Observación antes de cámara');assert.equal(find('input',x=>x.props.type==='range').props.value,'9');assert.equal(find('button',x=>x.props['aria-pressed']!==undefined).props['aria-pressed'],true);assert.equal(view.root.findAllByType('img').filter(x=>x.props.alt?.startsWith('Foto seleccionada')).length,1);
+await act(async()=>view.unmount());
+const draft=await import(root+'/src/borradorAseo.js');await draft.borrarBorrador('claudina-clean:borrador-aseo:teacher-test:2026-10-02:6');assert.equal(draft.leerBorrador('claudina-clean:borrador-aseo:teacher-test:2026-10-02:6'),null);assert.deepEqual(await draft.leerFotosBorrador('claudina-clean:borrador-aseo:teacher-test:2026-10-02:6'),[]);
+console.log('PASS: session refresh preserves form/photo; remount restores date, task, score, observations and photo; completed draft clears fields/files');
+
+await (await import('node:fs/promises')).unlink(root+'/node_modules/camera-test-bundle.mjs');
