@@ -54,4 +54,17 @@ await rpc('acudiente_tratamiento',['hija'],['text']);assert.equal((await rpc('ac
 await db.exec('reset role');assert.equal((await db.query('select tratamiento_familiar from estudiantes where id=$1',[other])).rows[0].tratamiento_familiar,null);
 await db.query("select set_config('test.uid',$1,false)",[child]);await db.exec('set role authenticated');await assert.rejects(rpc('acudiente_tratamiento',['hija'],['text']));await db.exec('reset role');
 console.log('PASS: nombres primero sin doble rotación; nombres ambiguos intactos; tratamiento familiar persistente exclusivo del propio acudiente; contexto repetible');
+
+const generoSql=await readFile(new URL('../supabase/genero-estudiantes.sql',import.meta.url),'utf8');await db.exec(generoSql);await db.exec(generoSql);
+assert.equal((await db.query('select genero from estudiantes where id=$1',[student])).rows[0].genero,'F','Conserva elección previa');
+for(const identidad of [parent,child,teacher]){
+ await db.query("select set_config('test.uid',$1,false)",[identidad]);await db.exec('set role authenticated');
+ for(const genero of ['M','F','NB',null]){await rpc('estudiante_genero',[student,genero],['uuid','text']);if(identidad===parent)assert.equal((await rpc('acudiente_contexto')).estudiante.genero,genero)}
+ await assert.rejects(rpc('estudiante_genero',[student,'X'],['uuid','text']));
+ if(identidad!==teacher)await assert.rejects(rpc('estudiante_genero',[other,'F'],['uuid','text']));
+ await db.exec('reset role');
+}
+await db.query('update estudiantes set activo=false where id=$1',[student]);await db.query("select set_config('test.uid',$1,false)",[parent]);await db.exec('set role authenticated');await assert.rejects(rpc('estudiante_genero',[student,'F'],['uuid','text']));await db.exec('reset role');
+await db.exec('set role anon');await assert.rejects(rpc('estudiante_genero',[other,'F'],['uuid','text']));await db.exec('reset role');
+console.log('PASS: género M/F/NB/sin seleccionar; migración repetible; profesor, estudiante y acudiente autorizados; fichas ajenas/inactivas y anónimos bloqueados');
 console.log('PASS: SQL repetible; cuenta independiente; hijo propio; notas/fotos/avisos/horario/reportes; restricciones aun con permisos antiguos; Google intacto; inactivos y límites');await db.close();
