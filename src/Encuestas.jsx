@@ -1,3 +1,4 @@
+import {useGruposDocente} from './GruposDocente';
 import React,{useEffect,useState} from 'react';
 import {supabase} from './lib/supabase';
 import Grammy from './Grammy';
@@ -43,14 +44,15 @@ function DetalleEncuesta({id,profesor,onVolver,onCambiar}){
  </article>})}{!admin&&datos.puede_responder&&datos.preguntas.length>0&&<button className="save" disabled={busy}>{busy?'Guardando…':'💾 Guardar mis respuestas'}</button>}</form>
  {!admin&&datos.conteo===null&&<p>El profesor aún no ha publicado los resultados.</p>}</section>;
 }
-export default function Encuestas({profesor=false,grado}){
+export default function Encuestas({profesor=false,grado}){const {incluye}=useGruposDocente();
  const[lista,setLista]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[seleccion,setSeleccion]=useState(null),[creando,setCreando]=useState(false),[busy,setBusy]=useState(false),[msg,setMsg]=useState('');
  async function cargar(){try{const{data,error}=await supabase.rpc('encuestas_listar');if(error)setError('No se pudieron cargar las encuestas: '+error.message);else{setLista(data||[]);setError('')}}catch(e){setError('No se pudieron cargar las encuestas: '+e.message)}finally{setLoading(false)}}
  useEffect(()=>{cargar()},[]);
  async function crear(form){if(busy)return;setBusy(true);setMsg('');try{const{data,error}=await supabase.rpc('encuesta_guardar',{encuesta:null,datos:form});if(error)setMsg(error.message);else{setCreando(false);await cargar();setSeleccion(data)}}catch(e){setMsg(e.message)}finally{setBusy(false)}}
  if(seleccion==='grammy')return <><section><button onClick={()=>setSeleccion(null)}>← Volver a Encuestas</button></section><Grammy profesor={profesor}/></>;
  if(seleccion)return <DetalleEncuesta key={seleccion} id={seleccion} profesor={profesor} onVolver={()=>{setSeleccion(null);cargar()}} onCambiar={cargar}/>;
- const abiertas=lista.filter(e=>e.estado==='abierta'),cerradas=lista.filter(e=>e.estado==='cerrada'),borradores=lista.filter(e=>e.estado==='borrador');
+ const pertinentes=lista.filter(e=>!profesor||!e.grados_participantes?.length||e.grados_participantes.some(incluye));
+ const abiertas=pertinentes.filter(e=>e.estado==='abierta'),cerradas=pertinentes.filter(e=>e.estado==='cerrada'),borradores=pertinentes.filter(e=>e.estado==='borrador');
  const tarjeta=e=><article className="card surveyCard" key={e.id}><div><h3>{e.titulo}</h3><span className={'surveyBadge '+e.estado}>{etiqueta[e.estado]}</span></div>{e.descripcion&&<p>{e.descripcion}</p>}<p>{e.preguntas} preguntas · Participan: {gradosTexto(e.grados_participantes)}</p><small>Candidatos: {gradosTexto(e.grados_candidatos)}{e.resultados_publicados?' · Resultados publicados':''}</small><button onClick={()=>setSeleccion(e.id)}>{profesor?'Administrar encuesta':e.estado==='abierta'?'Responder encuesta':'Ver encuesta y mis respuestas'}</button></article>;
  return <section><div className="hero"><span>📋 PARTICIPACIÓN CLAUDINISTA</span><h2>Encuestas</h2><p>Elige a tus compañeros y participa en las decisiones del colegio.</p></div><button type="button" disabled={loading||busy} onClick={cargar}>Actualizar encuestas</button>{profesor&&<button className="save" disabled={!!error||loading} onClick={()=>{setMsg('');setCreando(true)}}>+ Crear encuesta</button>}{creando&&<EditorEncuesta datos={nueva()} onGuardar={crear} onCancelar={()=>setCreando(false)} busy={busy}/>} {msg&&<p className="notice" role="status">{msg}</p>}{loading?<p role="status">Cargando encuestas…</p>:error?<article className="card"><p className="error">{error}</p>{profesor&&<p>Para habilitar este módulo, ejecuta la actualización <b>encuestas.sql</b> en Supabase.</p>}<button onClick={cargar}>Reintentar</button></article>:<><h3>Encuestas abiertas</h3>{abiertas.length?abiertas.map(tarjeta):<p className="placeholder">No tienes encuestas abiertas en este momento.</p>}{profesor&&<><h3>En preparación</h3>{borradores.length?borradores.map(tarjeta):<p>No hay borradores.</p>}</>}</>}
  <h3>Encuestas anteriores</h3>{cerradas.map(tarjeta)}{(profesor||[6,7,8].includes(Number(grado)))&&<article className="card surveyCard"><h3>🏆 Grammy de la Juventud Claudinista</h3><p>Consulta la votación y los premios que ya realizamos.</p><button onClick={()=>setSeleccion('grammy')}>Ver Grammy y resultados</button></article>}{!cerradas.length&&!profesor&&![6,7,8].includes(Number(grado))&&<p>Todavía no tienes encuestas anteriores.</p>}</section>;

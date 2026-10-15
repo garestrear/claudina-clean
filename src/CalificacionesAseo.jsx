@@ -1,3 +1,4 @@
+import {useGruposDocente} from './GruposDocente';
 import React,{useEffect,useMemo,useState} from 'react';
 import {supabase} from './lib/supabase';
 import {cargarParticipacionesAseo,notasConRecuperaciones} from './recuperacionesAseo';
@@ -18,7 +19,7 @@ export function CalificacionesEstudiante({ficha}){
   return <article className="card"><h3>📈 Mis calificaciones de aseo</h3>{cargando?<p>Cargando notas…</p>:error?<p className="error">No se pudieron cargar las calificaciones: {error}</p>:<><p><b>Promedio: {promedio(filas)}/10</b> · {filas.length} aseo(s) calificado(s)</p>{filas.length?<div className="gradesTableWrap"><table className="gradesTable"><thead><tr><th>Fecha</th><th>Resultado</th><th>Calificación</th></tr></thead><tbody>{filas.map(p=><tr key={p.registro_id}><td>{p.registros_aseo.fecha}</td><td>{etiqueta[p.estado]||'Sin estado'}{p.recuperacion&&<small> · Recuperado el {p.recuperacion.registros_aseo.fecha} (antes: 2/10)</small>}</td><td><b>{nota(p)??'—'}/10</b></td></tr>)}</tbody></table></div>:<p>Aún no tienes aseos calificados.</p>}</>}</article>;
 }
 
-export function ConsolidadoAseo(){
+export function ConsolidadoAseo(){const {coincideGrado}=useGruposDocente();
   const[estudiantes,setEstudiantes]=useState([]),[filas,setFilas]=useState([]),[grado,setGrado]=useState('todos'),[desde,setDesde]=useState(''),[hasta,setHasta]=useState(''),[seleccion,setSeleccion]=useState(null),[error,setError]=useState(''),[cargando,setCargando]=useState(true);
   useEffect(()=>{let activo=true;(async()=>{try{const [{data,error:e},datos]=await Promise.all([supabase.from('estudiantes').select('id,nombre,grado,activo').order('nombre'),todasParticipaciones()]);if(e)throw e;if(activo){setEstudiantes(data||[]);setFilas(datos)}}catch(e){if(activo)setError(e.message)}finally{if(activo)setCargando(false)}})();return()=>{activo=false}},[]);
   const filtradas=useMemo(()=>filas.filter(p=>nota(p)!=null&&(!desde||p.registros_aseo.fecha>=desde)&&(!hasta||p.registros_aseo.fecha<=hasta)),[filas,desde,hasta]);
