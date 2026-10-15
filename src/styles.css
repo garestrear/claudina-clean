@@ -114,3 +114,5 @@ header{position:relative}.logout{margin-left:auto;background:#ffffff22;color:whi
 .pushEnrollment{margin:1rem 1rem 0;padding:.8rem 1rem;border:1px solid #bed5c8;background:#f1f8f4;border-radius:.8rem;color:#183e2b}.pushEnrollment p{margin:.4rem 0;font-size:.9rem;line-height:1.45}.pushEnrollment button{background:#176d4b;color:#fff;font-weight:700;margin-top:.35rem}.emergencySendStatus{font-size:1rem!important;background:#ffffff22;border-radius:.7rem;padding:.7rem}
 
 .appUpdateNotice{position:fixed;bottom:16px;left:16px;right:16px;max-width:760px;margin:0 auto;z-index:10000;display:flex;align-items:center;gap:16px;background:#effff4;color:#173f2a;border:2px solid #12b878;border-radius:16px;padding:16px;box-shadow:0 8px 30px #0003}.appUpdateNotice p{margin:6px 0;font-size:.9rem}.appUpdateNotice button{flex-shrink:0;background:#087d47;color:white;font-weight:700}@media(max-width:550px){.appUpdateNotice{flex-direction:column;align-items:stretch;bottom:8px;left:8px;right:8px}}
+
+.myGroups{display:flex;flex-wrap:wrap;gap:1rem;margin:1rem 0}.myGroups label{display:flex;align-items:center;gap:.4rem}.myGroups input{width:auto}

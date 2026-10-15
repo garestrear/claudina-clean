@@ -1,3 +1,4 @@
+import {useGruposDocente} from './GruposDocente';
 import React,{useEffect,useState} from 'react';
 import {supabase} from './lib/supabase';
 import {materiasEscolares} from './materias';
@@ -23,7 +24,7 @@ function Caso({caso:c,rol,onGuardar}){
  {rol==='acudiente'&&<form className="convForm" onSubmit={e=>{e.preventDefault();actuar('convivencia_acompanar',{caso:c.id,comentario:comentario.trim()})}}><label>¿Cómo podemos acompañar desde casa? (opcional)<textarea maxLength={1000} value={comentario} onChange={e=>setComentario(e.target.value)}/></label><small>Este comentario será visible solo para el docente y tu cuenta de acudiente.</small><button disabled={busy}>{c.leido_en?'Actualizar acompañamiento':'He leído el reporte'}</button></form>}
  {rol!=='estudiante'&&c.leido_en&&<p><small>Leído por el acudiente: {fecha(c.leido_en)}</small>{rol==='profesor'&&c.acompanamiento&&<span className="convText"> · {c.acompanamiento}</span>}</p>}{msg&&<p role="status">{msg}</p>}</article>
 }
-export default function ConvivenciaClase({rol='estudiante'}){
+export default function ConvivenciaClase({rol='estudiante'}){const {coincideGrado}=useGruposDocente();
  const[contexto,setContexto]=useState(null),[casos,setCasos]=useState([]),[error,setError]=useState(''),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[grado,setGrado]=useState('todos'),[estado,setEstado]=useState('todos'),[nombre,setNombre]=useState(''),[materia,setMateria]=useState(''),[dia,setDia]=useState('');
  async function cargar(){setError('');try{const[c,x]=await Promise.all([rpc('convivencia_listar'),rol==='acudiente'?Promise.resolve(null):rpc('convivencia_contexto')]);setCasos(Array.isArray(c)?c:[]);setContexto(x)}catch(e){setError(e.code==='PGRST202'?'Falta activar el módulo de convivencia en la base de datos. Solicita ayuda al administrador.':'No se pudo cargar Convivencia en clase: '+e.message)}finally{setLoading(false)}}
  useEffect(()=>{cargar()},[rol]);
