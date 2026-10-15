@@ -61,3 +61,13 @@ El protocolo del C.E.R. Claudina Múnera indica evacuar hacia la manga frente al
 5. Realizar un **simulacro** y comprobar el timbre, la pantalla dentro de la app, la notificación push, la finalización de la alerta y el recuento de envíos. El recuento confirma respuestas de los servicios de push, no que cada persona haya leído el aviso.
 
 La función `/api/emergency` comprueba la sesión y el rol docente, activa una única alerta y envía avisos a los dispositivos suscritos. Si falla el envío, la alerta puede seguir activa dentro de la app y la pantalla docente informa el fallo. Mientras la app esté abierta, consulta el estado cada tres segundos y también al volver a primer plano. El modo de simulacro se distingue visualmente de una emergencia real.
+
+### Convivencia en clase
+
+Antes de utilizar el módulo, ejecutar completo `supabase/convivencia-clase.sql` en el SQL Editor de Supabase, después de `acudientes.sql`. El script es transaccional y repetible. No se requieren nuevas variables de entorno.
+
+En **Convivencia → Habilitar estudiantes para reportar**, el docente activa o retira permisos individuales. Los responsables pueden reportar compañeros activos de su mismo grado (7° y 8° se consideran un grupo). Cada involucrado recibe un caso separado; el docente debe retirar referencias a terceros antes de publicar.
+
+Los reportes nuevos solo se entregan al docente. Tras revisar y compartir, el estudiante puede aclarar o reconocer lo sucedido con un compromiso obligatorio; la respuesta se conserva con fecha y no cierra automáticamente el caso. El acudiente vinculado puede consultar el caso y la respuesta, confirmar lectura y aportar un comentario privado al docente. El autor del reporte y la descripción original nunca se entregan al estudiante reportado ni al acudiente. La descripción publicada se conserva; las correcciones se registran en la observación docente. Descartar un reporte sin publicarlo lo mantiene privado; si ya fue compartido, el estudiante y su acudiente ven su resolución.
+
+Verificación: `npm test` incluye pruebas de autorización con PostgreSQL embebido y de las tres interfaces; `npm run build` genera la PWA. Las pruebas no sustituyen la comprobación con cuentas reales tras aplicar la migración.
