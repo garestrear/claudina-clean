@@ -24,3 +24,7 @@ Vercel empaqueta el binario de `@sparticuz/chromium` con la función `api/master
 - La consulta desde el servidor desplegado debe verificarse desde una cuenta estudiantil activa autorizada. La prueba previa de lectura en el navegador de trabajo no sustituye esa validación.
 
 Una ficha retirada/inactiva no se reactiva para realizar pruebas. Las notas temporales que se introdujeron en Master para probar la lectura no se incluyen en el repositorio.
+
+## Diagnóstico de consulta
+
+Los fallos técnicos muestran un código de etapa `MASTER_ARRANQUE`, `MASTER_CONEXION`, `MASTER_FORMULARIO`, `MASTER_ACCESO`, `MASTER_IDENTIDAD`, `MASTER_PERIODO`, `MASTER_NOTAS`, `MASTER_LECTURA` o `MASTER_ACTIVIDADES`. El registro del servidor contiene solo la etapa y la clase de error, sin valores de excepción, credenciales ni datos académicos. Los recursos oficiales de reCAPTCHA se permiten exclusivamente en `www.google.com/recaptcha/` y `www.gstatic.com/recaptcha/`. No se resuelven desafíos humanos, no se inyectan tokens y no se alteran huellas del navegador. Si Master solicita verificación humana, se indica abrir su sitio directamente.

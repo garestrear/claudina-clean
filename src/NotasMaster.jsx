@@ -13,7 +13,7 @@ export default function NotasMaster(){
    const body={periodo:Number(periodo),apellido:apellido.trim(),...(manual?{password}:{}),...(materia?{materia}:{})};
    const r=await fetch('/api/master2000',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.access_token},body:JSON.stringify(body),signal:controller.signal});
    const d=await r.json().catch(()=>{throw new Error('Master tardó demasiado en responder. Inténtalo más tarde.')});
-   if(!r.ok)throw new Error(d.error||'No fue posible consultar Master.');
+   if(!r.ok)throw new Error((d.error||'No fue posible consultar Master.')+(d.codigo?' (Código: '+d.codigo+')':''));
    if(!vigente.current||controller.signal.aborted)return;
    if(materia){setDetalles(v=>({...v,[materia]:d.materias[0]}));setAbierta(materia)}else{setDatos(d);setDetalles({});setAbierta(null)}
   }catch(e){if(vigente.current&&e.name!=='AbortError')setError(e.message)}finally{if(vigente.current)setBusy(false)}
