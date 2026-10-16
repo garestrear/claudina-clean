@@ -1,6 +1,8 @@
 import {precacheAndRoute} from 'workbox-precaching';
 import {clientsClaim} from 'workbox-core';
 clientsClaim();
+// Actualiza el receptor push sin recargar formularios abiertos.
+self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
 
 precacheAndRoute(self.__WB_MANIFEST);
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});
