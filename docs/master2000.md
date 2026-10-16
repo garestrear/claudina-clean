@@ -9,7 +9,7 @@ La pestaña «Notas de Master» pertenece a la cuenta del estudiante. El servido
 3. Se abre el enlace institucional estable `https://login.master2000.net/ingreso/?A=205129000156`. Los parámetros AB/DC son temporales y no se reutilizan.
 4. El resumen trae notas, valores de Master y faltas. Abrir una materia realiza una consulta nueva y lee la descripción de cada actividad calificada. No confunde el número de actividad del detalle con el valor de la calificación.
 5. Se conserva el apellido en los metadatos de la cuenta solo después de una consulta correcta. No se conservan cookies ni sesiones de Master entre peticiones. Cada petición crea y cierra su propio contexto.
-6. Los términos pendientes, la identidad diferente, los períodos cerrados y las claves rechazadas producen un mensaje, sin aceptar términos ni modificar la cuenta. La sugerencia opcional de registrar correo puede posponerse con el control ofrecido por Master.
+6. Con autorización institucional, los dos documentos obligatorios se aceptan mediante sus casillas y «Confirmar y continuar». Si aparece «Ya tienes una sesión activa», se usa «Cerrar la sesión activa»; esto puede cerrar el acceso abierto en otro dispositivo. Ambos pasos pueden aparecer en cualquier orden. Después del ingreso se cierra el visor informativo mediante su botón «Cerrar», cuando está visible. La identidad diferente, los períodos cerrados y las claves rechazadas producen un mensaje. La sugerencia opcional de registrar correo puede posponerse con el control ofrecido por Master.
 
 ## Despliegue
 
