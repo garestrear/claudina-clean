@@ -1,0 +1,18 @@
+import {build} from 'esbuild';import React from 'react';import {create,act} from 'react-test-renderer';import assert from 'node:assert/strict';import {unlink} from 'node:fs/promises';
+const root=new URL('..',import.meta.url).pathname.replace(/\/$/,'');const outfile=root+'/node_modules/inicio-estudiante-test.mjs';globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+globalThis.inicioFixture={avisos:[{id:'aviso',titulo:'Aviso publicado',contenido:'Información para el estudiante',grado:6,tipo:'evento',fecha_evento:'2026-10-20',created_at:'2026-10-15T12:00:00Z'}],mensajes:[{id:'mensaje',titulo:'Mensaje aprobado',contenido:'Contenido aprobado',autor:'peer',created_at:'2026-10-15T13:00:00Z'}],propuestas:[{id:'propuesta',titulo:'Propuesta pendiente',grado:6,estado:'pendiente'}],tareas:[{id:'tarea',titulo:'Tarea publicada',contenido:'Realizar actividad',grado:6,fecha_evento:'2026-10-20'}]};
+await build({stdin:{contents:`export {AvisosEstudiante,AvisosProfesor} from './src/Avisos.jsx';export {TareasEstudiante,TareasProfesor} from './src/Tareas.jsx';export {GruposDocenteProvider} from './src/GruposDocente.jsx';`,resolveDir:root},bundle:true,format:'esm',outfile,packages:'external',plugins:[{name:'fixture',setup(b){
+ b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:`export const supabase={auth:{getUser:async()=>({data:{user:{id:'student'}}})},rpc:async()=>({data:globalThis.inicioFixture.propuestas}),from(table){const filtros=[];const q={select(){return q},eq(k,v){filtros.push([k,v]);return q},neq(){return q},in(){return q},order(){return q},limit(){return q},then(ok,bad){const f=globalThis.inicioFixture;let data=table==='avisos'?(filtros.some(x=>x[0]==='tipo'&&x[1]==='tarea')?f.tareas:f.avisos):table==='mensajes_estudiantes'?f.mensajes:table==='estudiantes'?[{auth_user_id:'peer',nombre:'Compañero',grado:6}]:[];return Promise.resolve({data}).then(ok,bad)}};return q}};` }));
+ b.onLoad({filter:/borradorAseo.js$/},()=>({contents:`export const leerBorrador=()=>null,guardarBorrador=()=>{},leerFotosBorrador=async()=>[],guardarFotosBorrador=async()=>{},borrarBorrador=async()=>{};`}));
+ b.onLoad({filter:/(FotoTarea|SelectorFotos)\.jsx$/},()=>({contents:'export default function Fixture(){return null}'}));
+}}]});
+const{AvisosEstudiante,TareasEstudiante,AvisosProfesor,TareasProfesor,GruposDocenteProvider}=await import(outfile);let v;
+// Mount the actual student-home modules and let asynchronous Supabase data arrive.
+await act(async()=>{v=create(React.createElement(React.Fragment,null,React.createElement(AvisosEstudiante),React.createElement(TareasEstudiante,{ficha:{id:'student',grado:6}})))});
+let tree=JSON.stringify(v.toJSON());for(const texto of ['Aviso publicado','Mensaje aprobado','Propuesta pendiente','En revisión','Tarea publicada'])assert(tree.includes(texto),texto);
+await act(async()=>v.unmount());
+// Teacher filtering must remain in place when the student-only references are removed.
+globalThis.inicioFixture.avisos.push({...globalThis.inicioFixture.avisos[0],id:'otro',titulo:'Aviso de otro grado',grado:5});
+globalThis.inicioFixture.propuestas.push({id:'otra',titulo:'Propuesta de otro grado',grado:5,estado:'pendiente'});
+await act(async()=>{v=create(React.createElement(GruposDocenteProvider,{inicial:['6']},React.createElement(AvisosProfesor),React.createElement(TareasProfesor)))});tree=JSON.stringify(v.toJSON());assert(tree.includes('Aviso publicado'));assert(!tree.includes('Aviso de otro grado'));assert(tree.includes('Propuesta pendiente'));assert(!tree.includes('Propuesta de otro grado'));await act(async()=>v.unmount());
+await unlink(outfile);console.log('PASS inicio estudiante: avisos, mensajes, tareas y propuestas con carga asíncrona; filtros docentes conservados.');
