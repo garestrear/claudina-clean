@@ -1,16 +1,7 @@
 import {createClient} from '@supabase/supabase-js';
 import webpush from 'web-push';
 
-function endpointConocido(endpoint){
-  try{
-    const url=new URL(endpoint),host=url.hostname.toLowerCase();
-    return url.protocol==='https:'&&!url.username&&!url.password&&(!url.port||url.port==='443')&&(
-      host==='fcm.googleapis.com'||host==='updates.push.services.mozilla.com'||
-      host==='web.push.apple.com'||host.endsWith('.push.apple.com')||
-      host.endsWith('.notify.windows.com')
-    );
-  }catch{return false}
-}
+import {endpointConocido} from '../lib/push.js';
 
 export default async function handler(req,res){
   if(req.method!=='POST')return res.status(405).json({error:'Método no permitido'});

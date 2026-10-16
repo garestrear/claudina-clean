@@ -7,6 +7,11 @@ self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')sel
 
 self.addEventListener('push',event=>{
   let dato={};try{dato=event.data?.json()||{}}catch{return}
+  if(dato.type==='aviso'){
+    if(typeof dato.title!=='string'||typeof dato.body!=='string'||!Number.isFinite(dato.sentAt)||Date.now()-dato.sentAt>86400000)return;
+    event.waitUntil(self.registration.showNotification(dato.title,{body:dato.body,tag:`aviso-${dato.id}`,data:{url:'/?aviso='+encodeURIComponent(dato.id)}}));
+    return;
+  }
   if(dato.type!=='evacuacion'||!['real','simulacro'].includes(dato.modo)||Date.now()-Number(dato.sentAt)>60000)return;
   const titulo=dato.modo==='real'?'ALERTA ROJA · EVACUAR':'SIMULACRO · EVACUACIÓN';
   const cuerpo='Sal a la manga frente al colegio por la salida indicada. Precaución al cruzar la calle.';
@@ -18,7 +23,9 @@ self.addEventListener('notificationclick',event=>{
   event.waitUntil((async()=>{
     const ventanas=await self.clients.matchAll({type:'window',includeUncontrolled:true});
     const actual=ventanas.find(v=>new URL(v.url).origin===self.location.origin);
-    if(actual)return actual.focus();
-    return self.clients.openWindow('/');
+    const destino=new URL(event.notification.data?.url||'/',self.location.origin);
+    if(destino.origin!==self.location.origin)return;
+    if(actual){if(destino.searchParams.has('aviso'))await actual.navigate(destino.href);return actual.focus()}
+    return self.clients.openWindow(destino.href);
   })());
 });
