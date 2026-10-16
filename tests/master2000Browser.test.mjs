@@ -16,7 +16,7 @@ async function launch(){
   if(u.hostname==='login.master2000.net')html=`<select id="asunto1"><option>Seleccionar</option><option>Estudiante</option></select><input name="Usuario"><input name="Passwd" type="password"><button onclick="location.href='https://s67.master2000.net/academicoestudiante/panel.php'">Acceder</button>`;
   else if(u.pathname.endsWith('panel.php'))html=`<div id="InfoEstudiante">Estudiante: ${scenario==='identity'?'OTRA PERSONA':'PRUEBA UNO PERSONA'}\nMatrícula: fixture</div>`;
   else if(u.pathname.endsWith('index.php'))html=`<select id="txt_periodo_opciones"><option>1</option><option>2</option><option>3</option><option>4</option></select><button onclick="location.href='seguimiento.php'">Aceptar</button>`;
-  else if(u.pathname.endsWith('seguimiento.php'))html=scenario==='closed'?'La institución ha establecido que el seguimiento del período está cerrado.':`<div class="planilla_numerica">${planilla}</div>`;
+  else if(u.pathname.endsWith('seguimiento.php'))html=scenario==='closed'?'La institución ha establecido que el seguimiento del período está cerrado.':`<div id="planilla_numerica">${planilla}</div>`;
   else throw new Error('Unexpected fixture URL');
   await r.fulfill({status:200,contentType:'text/html',body:'<!doctype html><meta charset="utf-8">'+html});
  });return c};return b;
