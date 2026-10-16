@@ -6,7 +6,7 @@ La pestaña «Notas de Master» pertenece a la cuenta del estudiante. El servido
 
 1. La primera vez se confirma el primer apellido: no se infiere de un nombre completo cuyo orden puede variar. El acceso inicial usa documento + inicial en mayúscula. No hay intentos automáticos con variantes de contraseñas.
 2. Si la clave cambió, el estudiante puede introducir la actual. Solo permanece en la memoria de la vista mientras está abierta. Nunca se almacena en Supabase, localStorage o archivos.
-3. Se abre el enlace institucional estable `https://login.master2000.net/ingreso/?A=205129000156`. Los parámetros AB/DC son temporales y no se reutilizan.
+3. Se abre primero `https://www.claudinamunera.edu.co/`, se valida su enlace a Master (institución 205129000156) y se pulsa en la misma pestaña, conservando el referente de navegación. Los parámetros AB/DC son temporales y no se reutilizan.
 4. El resumen trae notas, valores de Master y faltas. Abrir una materia realiza una consulta nueva y lee la descripción de cada actividad calificada. No confunde el número de actividad del detalle con el valor de la calificación.
 5. Se conserva el apellido en los metadatos de la cuenta solo después de una consulta correcta. No se conservan cookies ni sesiones de Master entre peticiones. Cada petición crea y cierra su propio contexto.
 6. Con autorización institucional, los dos documentos obligatorios se aceptan mediante sus casillas y «Confirmar y continuar». Si aparece «Ya tienes una sesión activa», se usa «Cerrar la sesión activa»; esto puede cerrar el acceso abierto en otro dispositivo. Ambos pasos pueden aparecer en cualquier orden. Después del ingreso se cierra el visor informativo mediante su botón «Cerrar», cuando está visible. La identidad diferente, los períodos cerrados y las claves rechazadas producen un mensaje. La sugerencia opcional de registrar correo puede posponerse con el control ofrecido por Master.
@@ -28,3 +28,7 @@ Una ficha retirada/inactiva no se reactiva para realizar pruebas. Las notas temp
 ## Diagnóstico de consulta
 
 Los fallos técnicos muestran un código de etapa `MASTER_ARRANQUE`, `MASTER_CONEXION`, `MASTER_FORMULARIO`, `MASTER_ACCESO`, `MASTER_IDENTIDAD`, `MASTER_PERIODO`, `MASTER_NOTAS`, `MASTER_LECTURA` o `MASTER_ACTIVIDADES`. El registro del servidor contiene solo la etapa y la clase de error, sin valores de excepción, credenciales ni datos académicos. Los recursos oficiales de reCAPTCHA se permiten exclusivamente en `www.google.com/recaptcha/` y `www.gstatic.com/recaptcha/`. No se resuelven desafíos humanos, no se inyectan tokens y no se alteran huellas del navegador. Si Master solicita verificación humana, se indica abrir su sitio directamente.
+
+## Progreso visible
+
+La interfaz solicita `application/x-ndjson`. Después de verificar cuenta, ficha y límite, la API transmite pasos reales del navegador (colegio, enlace, conexión, selector, campos, acceso y lectura), seguidos del resultado o un error. El historial queda debajo del botón y se conserva cuando falla. No se transmiten documentos, contraseñas, cookies, HTML ni URL de sesión. Clientes sin esa cabecera conservan la respuesta JSON. Una interrupción de la transmisión informa el último paso recibido.

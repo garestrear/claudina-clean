@@ -15,6 +15,8 @@ export function crearHandlerMaster(factory=createClient,consulta=consultarMaster
  if(['documento','estudiante','estudiante_id','url','nombre'].some(k=>Object.hasOwn(req.body||{},k)))return res.status(400).json({error:'Solo puedes consultar tu propia ficha.'});
  let password=req.body?.password;
  if(password!==undefined&&(typeof password!=='string'||!password||password.length>128))return res.status(400).json({error:'Contraseña inválida.'});
+ let streaming=false;
+ const emitir=evento=>res.write(JSON.stringify(evento)+'\n');
  const admin=factory(url,secret,opciones);
  try{
   const{data:identidad,error:authError}=await admin.auth.getUser(token),user=identidad?.user;
@@ -33,10 +35,13 @@ export function crearHandlerMaster(factory=createClient,consulta=consultarMaster
   const{data:permiso,error:limite}=await admin.rpc('acudiente_registrar_intento',{clave});
   if(limite)return res.status(503).json({error:'No fue posible comprobar el límite de consultas.'});
   if(!permiso)return res.status(429).json({error:'Alcanzaste el límite de consultas. Espera diez minutos antes de volver a consultar.'});
-  const datos=await consulta({documento:ficha.documento,password,nombre:ficha.nombre,periodo,materia});
+  const onProgress=req.headers?.accept==='application/x-ndjson'?paso=>emitir({tipo:'progreso',...paso}):undefined;
+  if(onProgress){streaming=true;res.status(200);res.setHeader('Content-Type','application/x-ndjson; charset=utf-8');res.setHeader('X-Accel-Buffering','no');res.flushHeaders?.();emitir({tipo:'progreso',codigo:'FICHA',mensaje:'Cuenta y ficha verificadas; iniciando la consulta'})}
+  const datos=await consulta({documento:ficha.documento,password,nombre:ficha.nombre,periodo,materia,...(onProgress?{onProgress}:{})});
   // Surname is a profile preference. Passwords and Master sessions are never persisted.
   if(apellido&&apellido!==user.user_metadata?.master2000_apellido)await admin.auth.admin.updateUserById(user.id,{user_metadata:{...user.user_metadata,master2000_apellido:apellido}});
+  if(streaming){emitir({tipo:'resultado',datos});return res.end()}
   return res.status(200).json(datos);
- }catch(e){return res.status(e instanceof ErrorMaster?e.status:503).json({codigo:e instanceof ErrorMaster?e.codigo:'NO_DISPONIBLE',error:e instanceof ErrorMaster?e.message:'No fue posible consultar Master. Inténtalo más tarde.'})}finally{password=undefined}
+ }catch(e){if(streaming){emitir({tipo:'error',codigo:e instanceof ErrorMaster?e.codigo:'NO_DISPONIBLE',error:e instanceof ErrorMaster?e.message:'No fue posible consultar Master. Inténtalo más tarde.'});return res.end()}return res.status(e instanceof ErrorMaster?e.status:503).json({codigo:e instanceof ErrorMaster?e.codigo:'NO_DISPONIBLE',error:e instanceof ErrorMaster?e.message:'No fue posible consultar Master. Inténtalo más tarde.'})}finally{password=undefined}
 }}
 export default crearHandlerMaster();

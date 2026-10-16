@@ -10,4 +10,8 @@ await act(async()=>v.root.findAllByType('button').find(b=>b.children.includes('V
 await act(async()=>v.root.findByProps({type:'checkbox'}).props.onChange({target:{checked:true}}));assert(!JSON.stringify(v.toJSON()).includes('Tarea de prueba'));await act(async()=>v.root.findByProps({type:'password'}).props.onChange({target:{value:'private-password'}}));
 await act(async()=>v.root.findByType('form').props.onSubmit({preventDefault(){}}));assert.equal(calls.at(-1).body.password,'private-password');
 await act(async()=>v.root.findByType('select').props.onChange({target:{value:'2'}}));assert(!JSON.stringify(v.toJSON()).includes('Inglés'));
+const eventos=[{tipo:'progreso',codigo:'COLEGIO',mensaje:'Abriendo el colegio'},{tipo:'progreso',codigo:'SELECTOR',mensaje:'Seleccionando Estudiante'},{tipo:'error',codigo:'MASTER_SELECTOR',error:'Falló el selector'}];
+const bytes=new TextEncoder().encode(eventos.map(e=>JSON.stringify(e)).join('\n')+'\n');
+globalThis.fetch=async()=>({ok:true,headers:new Headers({'content-type':'application/x-ndjson'}),body:new ReadableStream({start(c){c.enqueue(bytes.slice(0,35));c.enqueue(bytes.slice(35));c.close()}})});
+await act(async()=>v.root.findByType('form').props.onSubmit({preventDefault(){}}));assert.match(JSON.stringify(v.toJSON()),/Abriendo el colegio/);assert.match(JSON.stringify(v.toJSON()),/MASTER_SELECTOR/);assert.match(JSON.stringify(v.toJSON()),/se detuvo en el último paso/);
 await act(async()=>v.unmount());await unlink(outfile);console.log('PASS Master UI: período, consultas autenticadas, cero distinto de vacío, actividades, clave privada solo en petición y limpieza al cambiar acceso/período.');
