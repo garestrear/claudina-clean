@@ -32,3 +32,5 @@ Los fallos técnicos muestran un código de etapa `MASTER_ARRANQUE`, `MASTER_CON
 ## Progreso visible
 
 La interfaz solicita `application/x-ndjson`. Después de verificar cuenta, ficha y límite, la API transmite pasos reales del navegador (colegio, enlace, conexión, selector, campos, acceso y lectura), seguidos del resultado o un error. El historial queda debajo del botón y se conserva cuando falla. No se transmiten documentos, contraseñas, cookies, HTML ni URL de sesión. Clientes sin esa cabecera conservan la respuesta JSON. Una interrupción de la transmisión informa el último paso recibido.
+
+La búsqueda del enlace institucional valida el destino y el código de institución en el documento principal y en marcos del colegio. Si no aparece, reintenta una sola vez en la página pública de inicio `index.php`. El progreso muestra el estado HTTP y confirma el enlace encontrado. Si falta después del reintento, detiene la consulta antes de enviar credenciales.

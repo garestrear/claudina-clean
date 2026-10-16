@@ -14,7 +14,10 @@ async function launch(){
   // Every request is fulfilled in memory. These tests never contact Master or another host.
   const u=new URL(r.request().url());let html='';
   if(u.hostname==='accounts.google.com'){await new Promise(resolve=>setTimeout(resolve,250));await r.fulfill({status:200,contentType:'application/javascript',body:'window.google={accounts:{}};'});return}
-  if(u.hostname==='www.claudinamunera.edu.co')html='<a href="https://login.master2000.net/ingreso/?A=205129000156" target="_blank">Master 2000</a>';
+  if(u.hostname==='www.claudinamunera.edu.co'&&scenario==='frame'&&u.pathname==='/')html='<iframe src="/marco.php"></iframe>';
+  else if(u.hostname==='www.claudinamunera.edu.co'&&scenario==='retry'&&u.pathname==='/')html='<p>Inicio cargando</p>';
+  else if(u.hostname==='www.claudinamunera.edu.co'&&scenario==='missing')html='<p>Sin enlace</p>';
+  else if(u.hostname==='www.claudinamunera.edu.co')html='<a href="https://login.master2000.net/ingreso/?A=205129000156" target="_blank">Master 2000</a>';
   else if(u.hostname==='login.master2000.net')html=`<script async src="https://accounts.google.com/gsi/client"></script><select id="asunto1"><option>Seleccionar</option><option>Estudiante</option></select><div id="campos" hidden><input name="Usuario"><input name="Passwd" type="password"><button onclick="location.href='https://s67.master2000.net/academicoestudiante/panel.php'">Acceder</button></div><script>window.addEventListener('load',()=>{if(!window.google)throw Error('client missing');document.getElementById('asunto1').addEventListener('change',()=>document.getElementById('campos').hidden=false)});</script>`;
   else if(u.pathname.endsWith('panel.php')&&['terms','both','reverse'].includes(scenario)&&!u.searchParams.has('terms')&&!(scenario==='reverse'&&!u.searchParams.has('session')))html=`<div><h2>Por favor acepta nuestros términos de servicio</h2><div>Política de privacidad y tratamiento de datos<input type="checkbox"></div><div>Términos y condiciones de uso<input type="checkbox"></div><button onclick="if(document.querySelectorAll('input:checked').length===2)location.search+='${u.search?'&':'?'}terms=1'">Confirmar y continuar</button></div>`;
   else if(u.pathname.endsWith('panel.php')&&['session','both','reverse'].includes(scenario)&&!u.searchParams.has('session'))html=`<h2>Ya tienes una sesión activa</h2><button onclick="location.search+='${u.search?'&':'?'}session=1'">Cerrar la sesión activa</button>`;
@@ -26,10 +29,11 @@ async function launch(){
  });return c};return b;
 }
 const input={documento:'1234567',password:'fixture-secret',nombre:'Persona Prueba Uno',periodo:3};
-const progreso=[];let r=await consultarMaster({...input,onProgress:p=>progreso.push(p.codigo)},launch);assert.deepEqual(progreso.slice(0,5),['ARRANQUE','COLEGIO','ENLACE_MASTER','CONEXION','SELECTOR']);assert.equal(r.materias.length,1);assert.deepEqual(r.materias[0].actividades.slice(0,4).map(a=>a.nota),['1','3','4',null]);assert.equal(r.materias[0].resumen[2].valor,'2.7');assert(!JSON.stringify(r).includes('note0'));assert(!JSON.stringify(r).includes('fixture-secret'));
+const progreso=[];let r=await consultarMaster({...input,onProgress:p=>progreso.push(p.codigo)},launch);assert.deepEqual(progreso.slice(0,5),['ARRANQUE','COLEGIO','COLEGIO_HTTP','ENLACE_MASTER','ENLACE_ENCONTRADO']);assert.equal(r.materias.length,1);assert.deepEqual(r.materias[0].actividades.slice(0,4).map(a=>a.nota),['1','3','4',null]);assert.equal(r.materias[0].resumen[2].valor,'2.7');assert(!JSON.stringify(r).includes('note0'));assert(!JSON.stringify(r).includes('fixture-secret'));
 r=await consultarMaster({...input,materia:'072'},launch);assert.deepEqual(r.materias[0].actividades.slice(0,3).map(a=>a.descripcion),['Actividad 1','Actividad 2','Actividad 3']);
 await assert.rejects(consultarMaster({...input,materia:'other'},launch),e=>e.codigo==='MATERIA');
-for(const caso of ['terms','session','both','reverse','notice']){scenario=caso;r=await consultarMaster(input,launch);assert.equal(r.materias.length,1)}
+for(const caso of ['terms','session','both','reverse','notice','frame','retry']){scenario=caso;r=await consultarMaster(input,launch);assert.equal(r.materias.length,1)}
+scenario='missing';await assert.rejects(consultarMaster(input,launch),e=>e.codigo==='ENLACE_MASTER'&&e.message.includes('HTTP 200'));
 scenario='identity';await assert.rejects(consultarMaster(input,launch),e=>e.codigo==='IDENTIDAD');
 scenario='closed';await assert.rejects(consultarMaster(input,launch),e=>e.codigo==='PERIODO_CERRADO');
 assert.equal(launches,closed);console.log('PASS Master navegador: Chromium ejecutable, ingreso simulado, extracción de notas y descripción diferida sin mezclar actividades, identidad, período cerrado y cierre de navegador. Sin red externa.');
