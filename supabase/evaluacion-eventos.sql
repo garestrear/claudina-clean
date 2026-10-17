@@ -48,8 +48,8 @@ declare nuevo uuid;
 begin
  if auth.uid() is null or not public.es_profesor() then raise exception 'Solo docentes'; end if;
  if length(trim(coalesce(nombre,''))) not between 1 and 150 or length(coalesce(detalle,''))>1000 then raise exception 'Datos inválidos'; end if;
- if tipos is null or cardinality(tipos)=0 or exists(select 1 from unnest(tipos) t where t not in ('estudiante','acudiente','profesor')) then raise exception 'Roles inválidos'; end if;
- if destinatarios is null or cardinality(destinatarios)=0 or exists(select 1 from unnest(destinatarios) g where g not between 1 and 8) then raise exception 'Grados inválidos'; end if;
+ if tipos is null or cardinality(tipos)=0 or exists(select 1 from unnest(tipos) t where t is null or t not in ('estudiante','acudiente','profesor')) then raise exception 'Roles inválidos'; end if;
+ if destinatarios is null or cardinality(destinatarios)=0 or exists(select 1 from unnest(destinatarios) g where g is null or g not between 1 and 8) then raise exception 'Grados inválidos'; end if;
  insert into public.eventos_evaluables(titulo,descripcion,grados,roles) values(trim(nombre),coalesce(detalle,''),destinatarios,tipos) returning id into nuevo;
  return nuevo;
 end $$;
@@ -69,7 +69,7 @@ begin
  select * into ficha from public.eventos_evaluables where id=evento for share;
  if ficha.id is null or ficha.estado<>'abierto' then raise exception 'Evaluación no disponible'; end if;
  if not public.evento_habilitado(ficha) then raise exception 'No estás habilitado para responder'; end if;
- if calificacion not between 1 and 10 or length(coalesce(opinion,''))>1000 then raise exception 'Respuesta inválida'; end if;
+ if calificacion is null or calificacion not between 1 and 10 or length(coalesce(opinion,''))>1000 then raise exception 'Respuesta inválida'; end if;
  insert into public.evento_participantes(evento_id,usuario_id) values(evento,auth.uid());
  insert into public.evento_respuestas(evento_id,nota,comentario) values(evento,calificacion,trim(coalesce(opinion,'')));
 end $$;
@@ -86,5 +86,5 @@ begin
 end $$;
 revoke all on function public.evento_habilitado(public.eventos_evaluables) from public,anon,authenticated;
 revoke all on function public.eventos_listar(),public.evento_crear(text,text,integer[],text[]),public.evento_estado(uuid,text),public.evento_responder(uuid,integer,text),public.evento_resultados(uuid) from public,anon;
-grant execute on function public.eventos_listar(),public.evento_crear(text,text,integer[]),public.evento_estado(uuid,text),public.evento_responder(uuid,integer,text),public.evento_resultados(uuid) to authenticated;
+grant execute on function public.eventos_listar(),public.evento_crear(text,text,integer[],text[]),public.evento_estado(uuid,text),public.evento_responder(uuid,integer,text),public.evento_resultados(uuid) to authenticated;
 commit;
