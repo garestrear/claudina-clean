@@ -4,7 +4,7 @@ create table if not exists public.avisos (
   tipo text not null check (tipo in ('evento','tarea','motivacion')),
   titulo text not null check (char_length(trim(titulo)) between 1 and 120),
   contenido text not null check (char_length(trim(contenido)) between 1 and 1000),
-  grado integer check (grado between 1 and 8), -- NULL: todos los grados
+  grado integer check (grado between 0 and 8), -- NULL: todos los grados
   fecha_evento date,
   publicado boolean not null default true,
   creado_por uuid not null references auth.users(id),

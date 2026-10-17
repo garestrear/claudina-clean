@@ -9,11 +9,11 @@ globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 globalThis.saved=[];globalThis.failSave=false;
 await build({entryPoints:[root+'/src/GruposDocente.jsx'],bundle:true,format:'esm',outfile,packages:'external',plugins:[{name:'fixture',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:`export const supabase={auth:{updateUser:async(value)=>{globalThis.saved.push(value);return {error:globalThis.failSave?new Error('offline'):null}}}};`}))}}]});
 const{GruposDocenteProvider,MisGrupos,useGruposDocente,incluyeGrupo,normalizarGrupos}=await import(outfile);
-assert.equal(incluyeGrupo(['7-8'],7),true);assert.equal(incluyeGrupo(['7-8'],8),true);assert.equal(incluyeGrupo(['7-8'],6),false);assert.equal(incluyeGrupo(['6'],null),true);assert.equal(normalizarGrupos([]).length,7);
+assert.equal(incluyeGrupo(['0'],0),true);assert.equal(incluyeGrupo(['0'],1),false);assert.equal(normalizarGrupos([]).includes('0'),true);assert.equal(incluyeGrupo(['7-8'],7),true);assert.equal(incluyeGrupo(['7-8'],8),true);assert.equal(incluyeGrupo(['7-8'],6),false);assert.equal(incluyeGrupo(['6'],null),true);assert.equal(normalizarGrupos([]).length,8);
 let scope;function Probe(){scope=useGruposDocente();return null}
 let view;await act(async()=>{view=create(React.createElement(GruposDocenteProvider,{inicial:['6']},React.createElement(MisGrupos),React.createElement(Probe)))});
 assert.equal(scope.coincideGrado('todos',7),false);assert.equal(scope.coincideGrado('todos',6),true);
-await act(async()=>view.root.findAllByType('input')[6].props.onChange({target:{checked:true}}));
+await act(async()=>view.root.findAllByType('input')[7].props.onChange({target:{checked:true}}));
 globalThis.failSave=true;await act(async()=>view.root.findByType('form').props.onSubmit({preventDefault(){}}));assert.deepEqual(scope.grupos,['6']);
 globalThis.failSave=false;await act(async()=>view.root.findByType('form').props.onSubmit({preventDefault(){}}));assert.deepEqual(scope.grupos,['6','7-8']);assert.deepEqual(globalThis.saved.at(-1),{data:{grupos_interes:['6','7-8']}});
 assert.equal(scope.coincideGrado('todos',8),true);assert.equal(scope.coincideGrado('6',8),false);assert.equal(scope.incluye(null),true);

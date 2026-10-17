@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {PGlite} from '@electric-sql/pglite';
+import {interpretarHojas} from '../src/importarExcel.js';
+const parsed=interpretarHojas([{sheet:'TS y JR',data:[['Nombre','Correo','Grado'],['Estudiante cero','cero@example.edu',0],['Cero texto','texto@example.edu','0'],['Sin grado','falta@example.edu','']]}]).filas;
+assert.equal(parsed[0].grado,0);assert.equal(parsed[1].grado,0);assert.ok(Number.isNaN(parsed[2].grado));
+const db=new PGlite();
+await db.exec(`create schema auth;create role anon;create role authenticated;
+create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
+create table perfiles(id uuid primary key,rol text);
+create function es_profesor() returns boolean language sql stable as $$select exists(select 1 from public.perfiles where id=auth.uid() and rol='profesor')$$;
+create table estudiantes(id uuid primary key default gen_random_uuid(),nombre text,grado integer not null check(grado between 1 and 8),email text unique,auth_user_id uuid,activo boolean default true);
+create table acudientes(id uuid primary key,auth_user_id uuid,estudiante_id uuid);
+create table avisos(grado integer check(grado between 1 and 8));
+create table propuestas_tareas(grado integer check(grado between 1 and 8));
+create table registros_aseo(grupo text check(grupo in ('1','2','3','4','5','6','7','8','7-8')));
+create table horario_base(grupo text check(grupo in ('6','7-8')));
+create table horario_cambios(grupo text check(grupo in ('6','7-8')));
+create table encuestas(grados_participantes int[] check(cardinality(grados_participantes)>0 and grados_participantes <@ array[1,2,3,4,5,6,7,8]),grados_candidatos int[] check(cardinality(grados_candidatos)>0 and grados_candidatos <@ array[1,2,3,4,5,6,7,8]));
+insert into estudiantes(nombre,grado,email) values('Alumno existente',6,'anterior@example.edu');
+insert into registros_aseo values('7-8');`);
+const read=p=>readFile(new URL('../supabase/'+p,import.meta.url),'utf8');
+await db.exec((await read('documentos-estudiantes.sql')).replaceAll('^[0-8]$','^[1-8]$'));
+await db.exec((await read('evaluacion-eventos.sql')).replaceAll('between 0 and 8','between 1 and 8'));
+const uid='11111111-1111-4111-8111-111111111111';await db.query("insert into perfiles values($1,'profesor')",[uid]);await db.query("select set_config('test.uid',$1,false)",[uid]);
+const migration=await read('grado-cero.sql');await db.exec(migration);await db.exec(migration);
+const imported=await db.query('select importar_estudiantes($1::jsonb) r',[[{nombre:'Estudiante de TS',email:'cero@example.edu',grado:0,documento:'123456'}]]);assert.equal(imported.rows[0].r.creados,1);
+assert.equal((await db.query("select grado from estudiantes where email='cero@example.edu'")).rows[0].grado,0);
+assert.equal((await db.query("select nombre from estudiantes where email='anterior@example.edu'")).rows[0].nombre,'Alumno existente');
+for(const table of ['avisos','propuestas_tareas']){await db.exec(`insert into ${table}(grado) values(0)`);await assert.rejects(()=>db.exec(`insert into ${table}(grado) values(9)`));}
+for(const table of ['registros_aseo','horario_base','horario_cambios']){await db.exec(`insert into ${table}(grupo) values('0')`);await assert.rejects(()=>db.exec(`insert into ${table}(grupo) values('9')`));}
+await db.exec('insert into encuestas values(array[0],array[0,1,8])');await assert.rejects(()=>db.exec('insert into encuestas values(array[9],array[0])'));
+const event=(await db.query("select evento_crear('TS y JR','Prueba',array[0],array['estudiante','acudiente','profesor']) id")).rows[0].id;
+await db.query("select evento_editar($1,'Evento corregido','',array[0,1],array['estudiante'])",[event]);
+await assert.rejects(()=>db.query("select evento_crear('Inválido','',array[9],array['estudiante'])"));
+await assert.rejects(()=>db.query('select importar_estudiantes($1::jsonb)',[[{nombre:'No válido',email:'invalido@example.edu',grado:9}]]));
+assert.equal((await db.query("select count(*)::int n from registros_aseo where grupo='7-8'")).rows[0].n,1);
+await db.close();console.log('PASS: grado 0 numérico/texto, vacío rechazado; migración repetible; registro/importación; avisos/tareas/horario/encuestas/eventos; grado 9 rechazado; históricos conservados');

@@ -37,7 +37,7 @@ begin
    where t is null or t not in ('estudiante','acudiente','profesor')
  ) then raise exception 'Roles inválidos'; end if;
  if destinatarios is null or cardinality(destinatarios)=0 or exists(
-   select 1 from unnest(destinatarios) g where g is null or g not between 1 and 8
+   select 1 from unnest(destinatarios) g where g is null or g not between 0 and 8
  ) then raise exception 'Grados inválidos'; end if;
  update public.eventos_evaluables
  set titulo=trim(nombre),descripcion=coalesce(detalle,''),

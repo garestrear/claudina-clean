@@ -4,7 +4,7 @@ create table if not exists public.eventos_evaluables (
  id uuid primary key default gen_random_uuid(),
  titulo text not null check (length(trim(titulo)) between 1 and 150),
  descripcion text not null default '',
- grados integer[] not null default array[1,2,3,4,5,6,7,8],
+ grados integer[] not null default array[0,1,2,3,4,5,6,7,8],
  roles text[] not null default array['estudiante','acudiente','profesor']::text[],
  estado text not null default 'borrador' check (estado in ('borrador','abierto','cerrado')),
  creado_por uuid not null default auth.uid(),
@@ -70,7 +70,7 @@ begin
    where t is null or t not in ('estudiante','acudiente','profesor')
  ) then raise exception 'Roles inválidos'; end if;
  if destinatarios is null or cardinality(destinatarios)=0 or exists(
-   select 1 from unnest(destinatarios) g where g is null or g not between 1 and 8
+   select 1 from unnest(destinatarios) g where g is null or g not between 0 and 8
  ) then raise exception 'Grados inválidos'; end if;
  update public.eventos_evaluables
  set titulo=trim(nombre),descripcion=coalesce(detalle,''),
@@ -86,7 +86,7 @@ begin
  if auth.uid() is null or not public.es_profesor() then raise exception 'Solo docentes'; end if;
  if length(trim(coalesce(nombre,''))) not between 1 and 150 or length(coalesce(detalle,''))>1000 then raise exception 'Datos inválidos'; end if;
  if tipos is null or cardinality(tipos)=0 or exists(select 1 from unnest(tipos) t where t is null or t not in ('estudiante','acudiente','profesor')) then raise exception 'Roles inválidos'; end if;
- if destinatarios is null or cardinality(destinatarios)=0 or exists(select 1 from unnest(destinatarios) g where g is null or g not between 1 and 8) then raise exception 'Grados inválidos'; end if;
+ if destinatarios is null or cardinality(destinatarios)=0 or exists(select 1 from unnest(destinatarios) g where g is null or g not between 0 and 8) then raise exception 'Grados inválidos'; end if;
  insert into public.eventos_evaluables(titulo,descripcion,grados,roles) values(trim(nombre),coalesce(detalle,''),destinatarios,tipos) returning id into nuevo;
  return nuevo;
 end $$;

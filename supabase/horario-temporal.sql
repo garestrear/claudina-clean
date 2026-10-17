@@ -1,7 +1,7 @@
 -- Ejecutar una vez en el SQL Editor de Supabase.
 create table if not exists public.horario_base (
   id uuid primary key default gen_random_uuid(),
-  grupo text not null check (grupo in ('6','7-8')),
+  grupo text not null check (grupo in ('0','6','7-8')),
   dia smallint not null check (dia between 1 and 5),
   bloque smallint not null check (bloque between 1 and 6),
   materia text not null default '',
@@ -12,7 +12,7 @@ create table if not exists public.horario_base (
 create table if not exists public.horario_cambios (
   id uuid primary key default gen_random_uuid(),
   fecha date not null,
-  grupo text not null check (grupo in ('6','7-8')),
+  grupo text not null check (grupo in ('0','6','7-8')),
   bloque smallint not null check (bloque between 1 and 6),
   materia text not null default '',
   profesor text not null default '',

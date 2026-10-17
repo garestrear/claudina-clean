@@ -12,8 +12,8 @@ create table if not exists public.encuestas (
  creado_por uuid references auth.users(id) on delete set null,
  created_at timestamptz not null default now(),
  cerrada_at timestamptz,
- check(cardinality(grados_participantes)>0 and grados_participantes <@ array[1,2,3,4,5,6,7,8]),
- check(cardinality(grados_candidatos)>0 and grados_candidatos <@ array[1,2,3,4,5,6,7,8]),
+ check(cardinality(grados_participantes)>0 and grados_participantes <@ array[0,1,2,3,4,5,6,7,8]),
+ check(cardinality(grados_candidatos)>0 and grados_candidatos <@ array[0,1,2,3,4,5,6,7,8]),
  check(not resultados_publicados or estado='cerrada')
 );
 create table if not exists public.encuesta_preguntas (

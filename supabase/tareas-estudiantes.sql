@@ -3,7 +3,7 @@ begin;
 create table if not exists public.propuestas_tareas(
  id uuid primary key default gen_random_uuid(),autor uuid not null references auth.users(id),
  estudiante_id uuid not null references public.estudiantes(id) on delete cascade,
- grado integer not null check(grado between 1 and 8),
+ grado integer not null check(grado between 0 and 8),
  titulo text not null check(length(trim(titulo)) between 1 and 120),
  contenido text not null check(length(trim(contenido)) between 1 and 1000),
  fecha_entrega date not null,estado text not null default 'pendiente' check(estado in('pendiente','publicada','rechazada')),
@@ -37,7 +37,7 @@ begin
  if ficha.id is null or ficha.estado<>'pendiente' then raise exception 'La propuesta ya fue revisada o no existe.';end if;
  if publicar is null then raise exception 'Selecciona publicar o rechazar.';end if;
  if publicar then
-  if fecha is null or grado_destino is null or grado_destino not between 1 and 8 then raise exception 'Revisa fecha y grado.';end if;
+  if fecha is null or grado_destino is null or grado_destino not between 0 and 8 then raise exception 'Revisa fecha y grado.';end if;
   insert into public.avisos(tipo,titulo,contenido,grado,fecha_evento,creado_por,publicado) values('tarea',trim(titulo),trim(contenido),grado_destino,fecha,auth.uid(),true) returning id into aviso;
   update public.propuestas_tareas set titulo=trim(tarea_revisar.titulo),contenido=trim(tarea_revisar.contenido),fecha_entrega=fecha,grado=grado_destino,estado='publicada',aviso_id=aviso,revisado_por=auth.uid() where id=propuesta;
  else

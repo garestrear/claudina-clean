@@ -1,10 +1,10 @@
 -- Ejecutar UNA VEZ antes de habilitar la carga masiva desde Excel.
 -- Conserva los registros históricos del grupo 7-8 y separa los nuevos grados.
 alter table public.estudiantes drop constraint if exists estudiantes_grado_check;
-alter table public.estudiantes add constraint estudiantes_grado_check check (grado between 1 and 8);
+alter table public.estudiantes add constraint estudiantes_grado_check check (grado between 0 and 8);
 alter table public.registros_aseo drop constraint if exists registros_aseo_grupo_check;
 alter table public.registros_aseo add constraint registros_aseo_grupo_check
-  check (grupo in ('1','2','3','4','5','6','7','8','7-8'));
+  check (grupo in ('0','1','2','3','4','5','6','7','8','7-8'));
 
 -- Ajustar las políticas que antes solo reconocían los grupos 6 y 7-8.
 drop policy if exists "crear valoracion estudiante activo" on public.valoraciones;
@@ -56,8 +56,8 @@ begin
  for fila in select value from jsonb_array_elements(filas) loop
    v_nombre:=trim(fila->>'nombre'); v_correo:=lower(trim(fila->>'email'));
    if v_nombre is null or length(v_nombre)<3 or v_correo is null or v_correo !~ '^[^@ ]+@[^@ ]+\.[^@ ]+$'
-      or (fila->>'grado') !~ '^[1-8]$' then
-     raise exception 'Fila inválida: nombre, correo y grado (1–8) son obligatorios'; end if;
+      or (fila->>'grado') !~ '^[0-8]$' then
+     raise exception 'Fila inválida: nombre, correo y grado (0–8) son obligatorios'; end if;
    ficha_id:=nullif(fila->>'id','')::uuid;
    if ficha_id is not null and not exists(select 1 from public.estudiantes where id=ficha_id) then
      raise exception 'La ficha seleccionada ya no existe: %',ficha_id; end if;

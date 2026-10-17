@@ -11,7 +11,7 @@ export function interpretarHojas(hojas){
   let cantidad=0;
   for(const [i,r] of hoja.data.entries()){
    if(i<=cabecera.i)continue;
-   const nombre=String(r[cabecera.indices.nombre]??'').trim().replace(/\s+/g,' '),email=String(r[cabecera.indices.email]??'').trim().toLowerCase(),grado=Number(r[cabecera.indices.grado]);
+   const nombre=String(r[cabecera.indices.nombre]??'').trim().replace(/\s+/g,' '),email=String(r[cabecera.indices.email]??'').trim().toLowerCase(),grado=String(r[cabecera.indices.grado]??'').trim()===''?NaN:Number(r[cabecera.indices.grado]);
    if(!nombre&&!email&&!r[cabecera.indices.grado])continue;
    const tieneDocumento=cabecera.indices.documento>=0;
    filas.push({clave:`${hoja.sheet}-${i+1}`,hoja:hoja.sheet,fila:i+1,nombre,email,grado,documento:tieneDocumento?normalizarDocumento(r[cabecera.indices.documento]):'',tieneDocumento,id:'',omitir:false});cantidad++;
