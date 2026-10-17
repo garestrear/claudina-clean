@@ -10,6 +10,7 @@ export async function cargarNovedades(db,{rol,id,ficha,grupos}){
  const delGrupo=grado=>!docente||incluyeGrupo(grupos,grado);
  guardar('eventos',async()=>{const filas=await rpc('eventos_listar');return filas.filter(e=>docente?e.grados?.some(delGrupo):e.estado==='abierto'&&!e.respondido)});
  guardar('convivencia',async()=>(await rpc('convivencia_listar')).filter(c=>delGrupo(c.grado)));
+ if(rol!=='acudiente')guardar('ingles',async()=>{const filas=await rpc('ingles_contexto');return filas.filter(a=>!docente||a.grados?.some(delGrupo)).map(({mi_progreso,...a})=>a)});
  if(rol==='acudiente'){
   const contexto=consulta(db.rpc('acudiente_contexto'));
   guardar('avisos',async()=>{const d=await contexto;return [...conClave('aviso',d.avisos),...conClave('mensaje',d.mensajes)]});
