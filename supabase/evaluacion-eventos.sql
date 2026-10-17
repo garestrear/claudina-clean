@@ -27,11 +27,11 @@ alter table public.evento_participantes enable row level security;
 alter table public.evento_respuestas enable row level security;
 revoke all on public.eventos_evaluables,public.evento_participantes,public.evento_respuestas from anon,authenticated;
 create or replace function public.evento_habilitado(ficha public.eventos_evaluables)
-returns boolean language sql stable security definer set search_path='' as $
+returns boolean language sql stable security definer set search_path='' as $$
  select (('estudiante'=any(ficha.roles) and exists(select 1 from public.estudiantes s where s.auth_user_id=auth.uid() and s.activo and s.grado=any(ficha.grados)))
  or ('acudiente'=any(ficha.roles) and exists(select 1 from public.acudientes a join public.estudiantes s on s.id=a.estudiante_id where a.auth_user_id=auth.uid() and s.activo and s.grado=any(ficha.grados)))
  or ('profesor'=any(ficha.roles) and public.es_profesor()));
-$;
+$$;
 create or replace function public.eventos_listar()
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare resultado jsonb;
