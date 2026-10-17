@@ -32,7 +32,7 @@ const tabsEstudiante=['eventos','encuestas','inicio','horario','calificaciones',
 function usePestanaRecordada(perfil,rol,inicial,permitidas){
   const clave=`claudina-clean:pestana:${rol}:${perfil.id}`;
   const[tab,setTab]=useState(()=>{
-    try{if(new URLSearchParams(window.location.search).has('aviso'))return rol==='profesor'?'avisos':'inicio';const guardada=window.localStorage.getItem(clave);return guardada==='grammy'?'encuestas':rol==='estudiante'&&guardada==='reportes'?'evidencias':permitidas.includes(guardada)?guardada:inicial}
+    try{if(new URLSearchParams(window.location.search).has('evaluacion'))return 'eventos';if(new URLSearchParams(window.location.search).has('aviso'))return rol==='profesor'?'avisos':'inicio';const guardada=window.localStorage.getItem(clave);return guardada==='grammy'?'encuestas':rol==='estudiante'&&guardada==='reportes'?'evidencias':permitidas.includes(guardada)?guardada:inicial}
     catch{return inicial}
   });
   function seleccionar(nueva){
