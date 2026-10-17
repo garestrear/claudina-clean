@@ -22,7 +22,7 @@ begin
  for fila in select value from jsonb_array_elements(filas) loop
   v_nombre:=trim(fila->>'nombre');v_correo:=lower(trim(fila->>'email'));v_documento:=nullif(upper(trim(fila->>'documento')),'');
   solo_documento:=coalesce((fila->>'solo_documento')::boolean,false);
-  if v_nombre is null or length(v_nombre)<3 or v_correo is null or v_correo !~ '^[^@ ]+@[^@ ]+\.[^@ ]+$' or coalesce(fila->>'grado','') !~ '^[1-8]$' then raise exception 'Fila inválida: revisa nombre, correo y grado (1–8).';end if;
+  if v_nombre is null or length(v_nombre)<3 or v_correo is null or v_correo !~ '^[^@ ]+@[^@ ]+\.[^@ ]+$' or coalesce(fila->>'grado','') !~ '^[0-8]$' then raise exception 'Fila inválida: revisa nombre, correo y grado (0–8).';end if;
   if v_documento is not null and v_documento !~ '^[A-Z0-9-]{3,30}$' then raise exception 'Documento inválido para %.',v_nombre;end if;
   ficha_id:=nullif(fila->>'id','')::uuid;
   if ficha_id is null then select id into ficha_id from public.estudiantes where email=v_correo;end if;

@@ -8,7 +8,7 @@ const gradosTexto=grados=>(grados||[]).map(g=>`${g}°`).join(', ');
 const nueva=()=>({titulo:'',descripcion:'',grados_participantes:[6,7,8],grados_candidatos:[6,7,8]});
 const etiqueta={borrador:'Borrador',abierta:'Abierta',cerrada:'Cerrada'};
 function Grados({titulo,value,onChange,disabled}){
- return <fieldset className="surveyGrades"><legend>{titulo}</legend>{Array.from({length:8},(_,i)=>i+1).map(g=><label key={g}><input type="checkbox" disabled={disabled} checked={value.includes(g)} onChange={()=>onChange(value.includes(g)?value.filter(n=>n!==g):[...value,g].sort((a,b)=>a-b))}/>{g}°</label>)}</fieldset>;
+ return <fieldset className="surveyGrades"><legend>{titulo}</legend>{Array.from({length:9},(_,i)=>i).map(g=><label key={g}><input type="checkbox" disabled={disabled} checked={value.includes(g)} onChange={()=>onChange(value.includes(g)?value.filter(n=>n!==g):[...value,g].sort((a,b)=>a-b))}/>{g}°</label>)}</fieldset>;
 }
 function EditorEncuesta({datos,onGuardar,onCancelar,busy}){
  const[form,setForm]=useState(datos);

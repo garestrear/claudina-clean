@@ -23,7 +23,7 @@ assert.deepEqual(globalThis.surveyCalls.find(c=>c.name==='encuesta_responder').a
 await act(async()=>buttons('Volver a Encuestas')[0].props.onClick());await act(async()=>buttons('Ver encuesta y mis respuestas')[0].props.onClick());assert.equal(view.root.findAllByType('select').length,0);assert.equal(buttons('Guardar mis respuestas').length,0);assert.match(JSON.stringify(view.toJSON()),/María/);assert.match(JSON.stringify(view.toJSON()),/Resultados/);
 await act(async()=>view.unmount());await mount({profesor:true});await act(async()=>buttons('Crear encuesta')[0].props.onClick());
 await act(async()=>view.root.findAllByType('input').find(i=>!i.props.type).props.onChange({target:{value:'Nueva votación'}}));
-const fields=view.root.findAllByType('fieldset');const candidates=fields[1].findAllByType('input');await act(async()=>candidates[5].props.onChange());
+const fields=view.root.findAllByType('fieldset');const candidates=fields[1].findAllByType('input');await act(async()=>candidates[6].props.onChange());
 await act(async()=>view.root.findByType('form').props.onSubmit({preventDefault(){}}));
 const created=globalThis.surveyCalls.find(c=>c.name==='encuesta_guardar');assert.equal(created.args.datos.titulo,'Nueva votación');assert.deepEqual(created.args.datos.grados_participantes,[6,7,8]);assert.deepEqual(created.args.datos.grados_candidatos,[7,8]);
 await act(async()=>view.unmount());await unlink(outfile);

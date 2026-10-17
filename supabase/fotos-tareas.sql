@@ -4,7 +4,7 @@ alter table public.avisos add column if not exists foto_path text;
 create table if not exists public.propuestas_tareas(
  id uuid primary key default gen_random_uuid(),autor uuid not null references auth.users(id),
  estudiante_id uuid not null references public.estudiantes(id) on delete cascade,
- grado integer not null check(grado between 1 and 8),
+ grado integer not null check(grado between 0 and 8),
  titulo text not null check(length(trim(titulo)) between 1 and 120),
  contenido text not null check(length(trim(contenido)) between 1 and 1000),
  fecha_entrega date not null,estado text not null default 'pendiente' check(estado in('pendiente','publicada','rechazada')),
@@ -46,7 +46,7 @@ begin
  if publicar is null then raise exception 'Selecciona publicar o rechazar.';end if;
  if publicar then
   if materia_asignada is not null and materia_asignada not in ('Matemáticas','Inglés','Tecnología, informática y emprendimiento','Español','Ciencias Naturales','Ciencias Sociales','Educación Ética','Educación Religiosa') then raise exception 'Selecciona una materia válida.';end if;
-  if fecha is null or grado_destino is null or grado_destino not between 1 and 8 then raise exception 'Revisa fecha y grado.';end if;
+  if fecha is null or grado_destino is null or grado_destino not between 0 and 8 then raise exception 'Revisa fecha y grado.';end if;
   insert into public.avisos(tipo,titulo,contenido,grado,fecha_evento,creado_por,publicado,foto_path) values('tarea',case when materia_asignada is null then trim(titulo) else materia_asignada||' · '||trim(titulo) end,trim(contenido),grado_destino,fecha,auth.uid(),true,ficha.foto_path) returning id into aviso;
   update public.propuestas_tareas set materia=materia_asignada,titulo=trim(tarea_revisar.titulo),contenido=trim(tarea_revisar.contenido),fecha_entrega=fecha,grado=grado_destino,estado='publicada',aviso_id=aviso,revisado_por=auth.uid() where id=propuesta;
  else
