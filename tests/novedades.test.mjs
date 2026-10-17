@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {instantanea,diferencias,claveNovedades,leerVisto} from '../src/estadoNovedades.js';
+const previo=instantanea([{id:1,texto:'Hola'},{id:2,texto:'A'}]);
+assert.deepEqual(diferencias(instantanea([{texto:'Hola',id:1},{id:2,texto:'A'}]),previo),{cantidad:0,cambio:false});
+assert.deepEqual(diferencias(instantanea([{id:1,texto:'Editado'},{id:3,texto:'Nuevo'}]),previo),{cantidad:2,cambio:true});
+assert.deepEqual(diferencias({},previo),{cantidad:0,cambio:true});
+assert.notEqual(claveNovedades('a','0','avisos'),claveNovedades('b','0','avisos'));
+assert.notEqual(claveNovedades('a','0','avisos'),claveNovedades('a','6','avisos'));
+assert.equal(leerVisto({getItem(){throw Error()}},'a'),null);
+assert.equal(leerVisto({getItem:()=>'{corrupto'},'a'),null);
+assert.deepEqual(leerVisto({getItem:()=>JSON.stringify(previo)},'a'),previo);
+console.log('PASS: cambios, edición, eliminación, persistencia y aislamiento por cuenta y grupo');
