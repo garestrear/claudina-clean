@@ -1,0 +1,13 @@
+import {build} from 'esbuild';
+import assert from 'node:assert/strict';
+import {unlink} from 'node:fs/promises';
+const root=new URL('..',import.meta.url).pathname.replace(/\/$/,'');const outfile=root+'/node_modules/novedades-fuentes-test.mjs';
+await build({entryPoints:[root+'/src/fuentesNovedades.js'],bundle:true,format:'esm',outfile,plugins:[{name:'groups',setup(b){b.onLoad({filter:/GruposDocente.jsx$/},()=>({contents:`export const incluyeGrupo=(grupos,grado)=>grado==null||grupos.some(g=>g==='7-8'?[7,8].includes(Number(grado)):String(g)===String(grado));`}))}}]});
+const{cargarNovedades}=await import(outfile);
+const tablas={estudiantes:[{id:'s0',grado:0,auth_user_id:'u0'},{id:'s6',grado:6,auth_user_id:'u6'}],avisos:[{id:1,grado:0},{id:2,grado:6},{id:3,grado:null}],reportes:[{id:'r0',autor:'u0'},{id:'r6',autor:'u6'}],asignaciones:[{id:'a0',estudiante_id:'s0'},{id:'a6',estudiante_id:'s6'}]};
+const db={rpc:async n=>({data:n==='eventos_listar'?[{id:'e0',grados:[0]},{id:'e6',grados:[6]}]:n==='convivencia_listar'?[{id:'c0',grado:0},{id:'c6',grado:6}]:[],error:null})};
+db.from=n=>{const q=new Proxy({then:(resolve,reject)=>Promise.resolve({data:tablas[n]||[],error:null}).then(resolve,reject)},{get(t,k){return k in t?t[k]:()=>q}});return q};
+const r=await cargarNovedades(db,{rol:'profesor',id:'profe',grupos:['0']});
+assert.deepEqual(r.eventos.filas.map(x=>x.id),['e0']);assert.deepEqual(r.convivencia.filas.map(x=>x.id),['c0']);assert.deepEqual(r.avisos.filas.map(x=>x.id),['aviso:1','aviso:3']);assert.deepEqual(r.reportes.filas.map(x=>x.id),['r0']);assert.deepEqual(r.asignacion.filas.map(x=>x.id),['a0']);
+db.rpc=async()=>({data:null,error:Error('Sin permiso')});const parcial=await cargarNovedades(db,{rol:'profesor',id:'profe',grupos:['0']});assert.equal(parcial.eventos,undefined);assert.equal(parcial.convivencia,undefined);assert.equal(parcial.reportes.filas.length,1);
+await unlink(outfile);console.log('PASS: filtros TS/JR, avisos generales, reportes, asignaciones y fallos parciales');

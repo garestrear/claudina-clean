@@ -1,0 +1,21 @@
+import {build} from 'esbuild';
+import React from 'react';
+import {create,act} from 'react-test-renderer';
+import assert from 'node:assert/strict';
+import {unlink} from 'node:fs/promises';
+const root=new URL('..',import.meta.url).pathname.replace(/\/$/,'');const outfile=root+'/node_modules/novedades-ui-test.mjs';
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+globalThis.window=new EventTarget();globalThis.document=new EventTarget();document.visibilityState='visible';
+const guardado=new Map();globalThis.localStorage={getItem:k=>guardado.get(k)||null,setItem:(k,v)=>guardado.set(k,v)};
+let tick;const original=globalThis.setInterval;globalThis.setInterval=f=>{tick=f;return 1};globalThis.clearInterval=()=>{};
+globalThis.datos={avisos:{filas:[{id:1,texto:'Nuevo'}]},horario:{filas:[{id:2,hora:8}],silencioso:true}};
+await build({entryPoints:[root+'/src/Novedades.jsx'],bundle:true,format:'esm',outfile,packages:'external',loader:{'.css':'empty'},plugins:[{name:'db',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:'export const supabase={};'}));b.onLoad({filter:/fuentesNovedades.js$/},()=>({contents:'export async function cargarNovedades(){return globalThis.datos}'}))}}]});
+const {useNovedades,IndicadorNovedades}=await import(outfile);let estado;
+function Prueba({tab='inicio',id='a'}){estado=useNovedades({id,rol:'profesor'},tab);return React.createElement(IndicadorNovedades,{dato:estado.avisos})}
+let view;await act(async()=>{view=create(React.createElement(Prueba,{}))});assert.equal(estado.avisos.cantidad,1);assert.equal(estado.horario.cantidad,0);assert.match(view.toJSON().props['aria-label'],/1 novedad/);
+await act(async()=>view.update(React.createElement(Prueba,{tab:'avisos'})));assert.equal(estado.avisos.cantidad,0);
+globalThis.datos.avisos.filas[0].texto='Editado';await act(async()=>tick());assert.equal(estado.avisos.cantidad,1,'un cambio con la sección abierta sigue pendiente');
+await act(async()=>view.update(React.createElement(Prueba,{tab:'horario'})));await act(async()=>view.update(React.createElement(Prueba,{tab:'avisos'})));assert.equal(estado.avisos.cantidad,0);
+await act(async()=>view.unmount());await act(async()=>{view=create(React.createElement(Prueba,{}))});assert.equal(estado.avisos.cantidad,0,'recargar conserva lo visto');
+await act(async()=>view.update(React.createElement(Prueba,{id:'b'})));assert.equal(estado.avisos.cantidad,1,'otra cuenta tiene su propio estado');
+await act(async()=>view.unmount());globalThis.setInterval=original;await unlink(outfile);console.log('PASS: navegación, cambios abiertos, recarga, cuentas y accesibilidad');
