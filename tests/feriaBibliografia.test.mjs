@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {crearFeriaDb,uid,uuid} from './fixtures/feriaDb.mjs';
+import {datosFeria,leerBorradorFeria} from '../src/feriaCiencia.js';
+const{db,identity,rpc}=await crearFeriaDb();await identity(3);
+const datos={...datosFeria(),titulo:'Proyecto con fuentes',areas:['science'],asesor_id:uid(1),integrantes_ids:[],propuesta:'Investigar el crecimiento de semillas',procedimiento:'Comparar muestras',bibliografia:'Libro de Ciencias · capítulo 2\nGuía del colegio · 2026'};
+const guardar=(d,v,n)=>rpc('feria_guardar',[uuid(700),d,v,true,uuid(710+n)],['uuid','jsonb','integer','boolean','uuid']);
+let p=await guardar(datos,0,1);assert.equal(p.proyecto.bibliografia,datos.bibliografia);await identity(1);assert.equal((await rpc('feria_proyecto',[uuid(700)],['uuid'])).proyecto.bibliografia,datos.bibliografia);await identity(3);
+await assert.rejects(guardar({...datos,bibliografia:null},1,2));await assert.rejects(guardar({...datos,bibliografia:'x'.repeat(4001)},1,2));
+const anterior={...datos};delete anterior.bibliografia;p=await guardar(anterior,1,2);assert.equal(p.proyecto.bibliografia,datos.bibliografia,'cliente anterior no borra fuentes existentes');
+const borrador=leerBorradorFeria({getItem:()=>JSON.stringify({proyectoId:uuid(700),versionBase:2,datos:anterior})},'draft');assert.equal(borrador.datos.bibliografia,'');assert.equal(borrador.datos.titulo,datos.titulo);
+await db.exec('alter table public.feria_proyectos drop column bibliografia;');const sql=await readFile(new URL('../supabase/feria-bibliografia.sql',import.meta.url),'utf8');await db.exec(sql);await db.exec(sql);p=await rpc('feria_proyecto',[uuid(700)],['uuid']);assert.equal(p.proyecto.titulo,datos.titulo);assert.equal(p.proyecto.bibliografia,'');assert.equal(p.proyecto.version,2);p=await guardar({...datos,bibliografia:'Nuevas fuentes'},2,3);assert.equal(p.proyecto.bibliografia,'Nuevas fuentes');
+console.log('PASS: bibliografía guardada y visible para docente, límites, cliente y borrador anteriores, migración repetible sin borrar proyectos');await db.close();

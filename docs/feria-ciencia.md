@@ -8,7 +8,7 @@ Ejecutar completo `supabase/feria-ciencia.sql` en el SQL Editor del proyecto Sup
 
 Un integrante registra el proyecto desde su cuenta de estudiante. Se incluye automáticamente a quien registra y se agregan los demás integrantes desde una lista de compañeros activos del mismo grado o mediante «Agregar estudiante de otro grado». Séptimo y octavo comparten la lista porque pertenecen al mismo salón. El grado utilizado en los filtros es el de quien lo registra.
 
-Al inicio se escogen una o varias áreas STEAM (Science, Technology, Engineering, Arts o Mathematics) y un profesor asesor de la lista real de docentes registrados. Después se escogen los integrantes desde la lista de compañeros y se escriben el nombre del proyecto, qué quieren hacer y cómo lo harán. Materiales, resultados esperados y apoyo necesario son opcionales. Para guardar un borrador se requieren áreas, asesor y nombre. Al enviar también se comprueban integrantes, qué harán y cómo lo harán.
+Al inicio se escogen una o varias áreas STEAM (Science, Technology, Engineering, Arts o Mathematics) y un profesor asesor de la lista real de docentes registrados. Después se escogen los integrantes desde la lista de compañeros y se escriben el nombre del proyecto, qué quieren hacer y cómo lo harán. Materiales, resultados esperados, bibliografía y apoyo necesario son opcionales. Para guardar un borrador se requieren áreas, asesor y nombre. Al enviar también se comprueban integrantes, qué harán y cómo lo harán.
 
 Solo la cuenta que registra el proyecto puede editarlo. Sus borradores no son visibles para otros estudiantes ni docentes. Los textos sin guardar se conservan por cuenta en el navegador, cuando este permite almacenamiento local; los botones Guardar y Enviar los guardan en Supabase.
 
@@ -56,3 +56,9 @@ Los proyectos anteriores conservan el texto de integrantes hasta que el estudian
 El botón «Agregar estudiante de otro grado» abre una selección de grado y luego de estudiante. Los integrantes se agregan al mismo equipo, sin duplicados, y permanecen identificados al guardar borradores, recargar o volver a editar. Se conserva la lista rápida del grupo propio y el salón compartido de séptimo/octavo.
 
 Para actualizar, ejecutar únicamente `supabase/feria-equipos-entre-grados.sql`, que incluye las mejoras anteriores y conserva los proyectos existentes. La consulta por grado requiere una cuenta autorizada, valida grados 0–8 y solo devuelve identificador, nombre y grado de estudiantes activos. Los integrantes de un proyecto solo pueden ser consultados por su autor y docentes con acceso al proyecto. La edición sigue en la cuenta que lo registró.
+
+## Bibliografía
+
+El formulario incluye un campo opcional de Bibliografía de hasta 4000 caracteres para libros, páginas web, videos y otras fuentes consultadas. La información queda guardada y aparece en el detalle que revisan los docentes. Para actualizar una feria existente, ejecutar `supabase/feria-bibliografia.sql`, que también incluye las mejoras anteriores. Los proyectos y borradores previos se conservan; un cliente anterior que no envíe el campo no borra la bibliografía ya guardada.
+
+`node tests/feriaBibliografia.test.mjs` verifica guardado, consulta docente, límites, compatibilidad y migración.
