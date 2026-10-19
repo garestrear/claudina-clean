@@ -1,0 +1,11 @@
+/* Impresión de horarios: ocultar navegación, controles y edición. */
+@media print {
+  body * { visibility: hidden !important; }
+  .teacherSchedule, .teacherSchedule *, .studentSchedule, .studentSchedule * { visibility: visible !important; }
+  .teacherSchedule, .studentSchedule { position: absolute !important; left: 0; top: 0; width: 100% !important; background: white !important; color: black !important; }
+  .teacherScheduleToolbar, .studentWeekControls, .studentDayTabs, .teacherViewSwitch, .teacherSlotActions, .scheduleEditor, .taskHelp, .teacherSchedule > .card { display: none !important; }
+  .teacherWeekGrid { display: block !important; }
+  .teacherDay { break-inside: avoid; margin-bottom: 12px; }
+  .teacherSlot, .studentLesson { break-inside: avoid; border: 1px solid #bbb !important; padding: 4px 8px !important; }
+  @page { size: A4; margin: 12mm; }
+}
