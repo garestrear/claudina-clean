@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {crearFeriaDb,uuid,uid} from './fixtures/feriaDb.mjs';
 const{db,sql,identity,rpc}=await crearFeriaDb();await db.exec(sql);
-const datos={areas:['science','engineering'],asesor_id:uid(2),titulo:'Filtro de agua',integrantes:'Ana · 6°\nLuis · 7°',propuesta:'Queremos filtrar agua.',procedimiento:'Construimos y probamos un filtro.',materiales:'Arena y botellas',resultados_esperados:'Comparar muestras',apoyo:''};
+const datos={integrantes_ids:[],areas:['science','engineering'],asesor_id:uid(2),titulo:'Filtro de agua',integrantes:'Ana · 6°\nLuis · 7°',propuesta:'Queremos filtrar agua.',procedimiento:'Construimos y probamos un filtro.',materiales:'Arena y botellas',resultados_esperados:'Comparar muestras',apoyo:''};
 const id=uuid(100),id2=uuid(200);
 const guardar=(version=0,enviar=false,request=1,d=datos,p=id)=>rpc('feria_guardar',[p,d,version,enviar,uuid(1000+request)],['uuid','jsonb','integer','boolean','uuid']);
 const revisar=(version=2,decision='ajustes',nota='Explica cómo compararás las muestras.',request=1,p=id)=>rpc('feria_revisar',[p,version,decision,nota,uuid(2000+request)],['uuid','integer','text','text','uuid']);
@@ -11,7 +11,7 @@ await identity(6);await assert.rejects(guardar());
 await identity(3);let r=await guardar();assert.equal(r.proyecto.estado,'borrador');assert.equal(r.proyecto.grado,6);assert.equal(r.proyecto.autor,undefined);assert.equal(r.proyecto.ultimo_guardado,undefined);assert.equal((await guardar()).proyecto.version,1,'reenvío idempotente');
 await identity(1);assert.equal((await rpc('feria_contexto')).proyectos.length,0,'docente no ve borradores');await assert.rejects(rpc('feria_proyecto',[id],['uuid']));await assert.rejects(guardar(1));
 await identity(4);assert.equal((await rpc('feria_contexto')).proyectos.length,0);await assert.rejects(rpc('feria_proyecto',[id],['uuid']));await assert.rejects(guardar(1));
-await identity(3);await assert.rejects(guardar(1,true,2,{...datos,propuesta:''}));await assert.rejects(guardar(1,true,2,{...datos,grado:8}));await assert.rejects(guardar(1,true,2,{...datos,integrantes:[]}));await assert.rejects(guardar(1,true,2,{...datos,titulo:'a'.repeat(151)}));
+await identity(3);await assert.rejects(guardar(1,true,2,{...datos,propuesta:''}));await assert.rejects(guardar(1,true,2,{...datos,grado:8}));await assert.rejects(guardar(1,true,2,{...datos,integrantes_ids:[null]}));await assert.rejects(guardar(1,true,2,{...datos,titulo:'a'.repeat(151)}));
 r=await guardar(1,true,2);assert.equal(r.proyecto.estado,'enviado');assert.equal(r.proyecto.version,2);await assert.rejects(guardar(1,true,3));await assert.rejects(revisar());
 await identity(2);assert.equal((await rpc('feria_contexto')).proyectos.length,1,'cualquier docente, sin restricción de grupos');r=await revisar();assert.equal(r.proyecto.estado,'ajustes');assert.equal(r.revisiones.length,1);assert.equal(r.revisiones[0].nombre_revisor,'Docente Dos');assert.equal((await revisar()).revisiones.length,1,'revisión repetida no duplica observaciones');await assert.rejects(revisar(3,'ajustes','',2));
 await identity(1);await assert.rejects(revisar(2,'aprobado','',3),'revisión obsoleta bloqueada');

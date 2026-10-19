@@ -6,9 +6,9 @@ Ejecutar completo `supabase/feria-ciencia.sql` en el SQL Editor del proyecto Sup
 
 ## Inscripción
 
-Un integrante registra el proyecto desde su cuenta de estudiante. Puede indicar libremente nombres y grados de todo el equipo, incluso si es un equipo de varios grados. El grado utilizado en los filtros es el de quien lo registra.
+Un integrante registra el proyecto desde su cuenta de estudiante. Se incluye automáticamente a quien registra y se agregan los demás integrantes desde una lista de compañeros activos del mismo grado. Séptimo y octavo comparten la lista porque pertenecen al mismo salón. El grado utilizado en los filtros es el de quien lo registra.
 
-Al inicio se escogen una o varias áreas STEAM (Science, Technology, Engineering, Arts o Mathematics) y un profesor asesor de la lista real de docentes registrados. Después se escriben el nombre del proyecto, integrantes, qué quieren hacer y cómo lo harán. Materiales, resultados esperados y apoyo necesario son opcionales. Para guardar un borrador se requieren áreas, asesor y nombre. Al enviar también se comprueban integrantes, qué harán y cómo lo harán.
+Al inicio se escogen una o varias áreas STEAM (Science, Technology, Engineering, Arts o Mathematics) y un profesor asesor de la lista real de docentes registrados. Después se escogen los integrantes desde la lista de compañeros y se escriben el nombre del proyecto, qué quieren hacer y cómo lo harán. Materiales, resultados esperados y apoyo necesario son opcionales. Para guardar un borrador se requieren áreas, asesor y nombre. Al enviar también se comprueban integrantes, qué harán y cómo lo harán.
 
 Solo la cuenta que registra el proyecto puede editarlo. Sus borradores no son visibles para otros estudiantes ni docentes. Los textos sin guardar se conservan por cuenta en el navegador, cuando este permite almacenamiento local; los botones Guardar y Enviar los guardan en Supabase.
 
@@ -40,3 +40,13 @@ Quienes ya ejecutaron el SQL original deben ejecutar `supabase/feria-areas-aseso
 La selección del asesor se comprueba en Supabase: solo acepta perfiles con rol profesor. Su asignación no limita que cualquier docente pueda revisar el proyecto.
 
 `node tests/feriaClasificacion.test.mjs` comprueba validación, docentes disponibles, múltiples áreas, migración incremental y compatibilidad con borradores anteriores.
+
+## Selector de integrantes
+
+Ejecutar `supabase/feria-integrantes.sql` para actualizar una feria ya activada. Es acumulativo: también incluye las áreas STEAM y el profesor asesor, por lo que no es necesario volver a ejecutar los scripts anteriores.
+
+Cada estudiante recibe únicamente identificador, nombre y grado de sus compañeros activos. La lista no incluye documentos, correos, estudiantes inactivos ni otros grupos. El docente no recibe esta lista de compañeros en el contexto de la feria. Los integrantes se agregan desde un desplegable y se pueden quitar; quien registra permanece incluido. Supabase valida los identificadores y el grupo, y genera los nombres mostrados a partir del registro escolar.
+
+Los proyectos anteriores conservan el texto de integrantes hasta que el estudiante confirme el equipo usando el nuevo selector. El selector no cambia los permisos de edición: continúa editando la cuenta que registró el proyecto.
+
+`node tests/feriaIntegrantes.test.mjs` comprueba grupos, privacidad, inactivos, nombres generados en el servidor, inclusión automática, proyectos individuales, salón compartido de 7°/8° y migración repetible.
