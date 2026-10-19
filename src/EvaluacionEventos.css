@@ -45,3 +45,5 @@
 .eventLoginIntro>span{font-size:2rem}.eventLoginIntro p{line-height:1.6}.eventLoginIntro b{font-size:.95rem}
 @media(max-width:600px){.eventHero{padding:24px 20px;border-radius:20px}.eventHero p{padding-right:0}.eventCardHeader{padding:22px 18px 0}.eventResponse{padding:0 18px 22px}.eventScoreGrid{grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}.eventScore{min-height:57px}.eventMood{margin-top:18px}.eventCommentMeta{flex-direction:column;gap:4px}.eventCard>.chips,.eventCard>details,.eventCard>.notice,.eventCard>div:not([class]){margin:18px}.eventShare{margin:18px}.eventThanks{margin:18px}}
 @media(prefers-reduced-motion:reduce){.eventScore{transition:none}}
+
+.eventDelete{border:2px solid #b64c46;scroll-margin-top:20px}.eventDelete label{display:grid;gap:8px}.eventDelete input{padding:12px;border:1px solid #ad7975;border-radius:10px;max-width:100%;width:100%;box-sizing:border-box}.eventDelete button[type=submit]{background:#a42e29;color:white}.eventDelete button:disabled{opacity:.5;cursor:not-allowed}

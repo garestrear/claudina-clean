@@ -1,0 +1,8 @@
+import assert from 'node:assert/strict';import{informeEvento}from'../src/informeEvento.js';
+const evento={titulo:'Encuentro <script>alert(1)</script>',descripcion:'Familias & estudiantes',estado:'abierto',grados:[0,6]};const fecha=new Date('2026-10-19T15:00:00Z');
+const datos={total:1,promedio:10,distribucion:{10:1},grupos:[{tipo:'estudiante',total:1,promedio:10,comentarios:['Muy bueno <img src=x onerror=alert(1)>']}]};
+let html=informeEvento(evento,datos,fecha);assert(html.includes('&lt;script&gt;'));assert(!html.includes('<script>'));assert(!html.includes('<img'));assert(html.includes('&lt;img'));assert(html.includes('10 / 10'));assert(html.includes('TS y JR, 6°'));assert(html.includes('resultados parciales'));assert(html.includes('Acudientes'));assert(html.includes('Profesores'));assert(html.includes('Sin respuestas'));assert(html.includes('<th>10</th><td>1</td>'));assert(html.includes('Guardar como PDF'));
+html=informeEvento({...evento,estado:'cerrado'},{total:0,promedio:null,grupos:[],distribucion:{}},fecha);assert(html.includes('Finalizada'));assert(!html.includes('NaN'));assert(!html.includes('undefined'));assert(html.includes('Todavía no hay comentarios.'));
+html=informeEvento(evento,{total:1,promedio:7,grupos:[{tipo:'sin_clasificar',total:1,promedio:7,comentarios:['Histórico']}],distribucion:{7:1}},fecha);assert(html.includes('Sin clasificar'));assert(html.includes('Histórico'));assert(html.includes('anteriores'));
+html=informeEvento(evento,{total:1,promedio:5,comentarios:['Anterior'],distribucion:{5:1}},fecha);assert(html.includes('Anterior'));assert(html.includes('no dispone de clasificación'));
+console.log('PASS: informe con cero/una respuesta, promedios, grupos, comentarios, distribución, historial y textos escapados');
