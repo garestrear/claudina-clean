@@ -1,0 +1,94 @@
+import React,{useEffect,useRef,useState} from 'react';
+import {supabase} from './lib/supabase';
+import {camposFeria,datosFeria,estadosFeria,gradoFeria,claveBorradorFeria,leerBorradorFeria,validarFeria} from './feriaCiencia.js';
+import './FeriaCiencia.css';
+const fecha=valor=>new Date(valor).toLocaleString('es-CO',{timeZone:'America/Bogota',dateStyle:'medium',timeStyle:'short'});
+const leerLocal=clave=>{try{return leerBorradorFeria(localStorage,clave)}catch{return null}};
+function Estado({estado}){return <span className={`fairStatus fairStatus--${estado}`}>{estadosFeria[estado]}</span>}
+function Formulario({proyecto,cuenta,nuevo,onGuardar,onVolver}){
+ const clave=claveBorradorFeria(cuenta,nuevo?'nuevo':proyecto.id);
+ const[borrador,setBorrador]=useState(()=>leerLocal(clave));
+ const[datos,setDatos]=useState(()=>borrador?.versionBase===proyecto.version?borrador.datos:datosFeria(proyecto));
+ const[recuperado,setRecuperado]=useState(()=>borrador?.versionBase===proyecto.version);
+ const[busy,setBusy]=useState(false),[error,setError]=useState(''),[local,setLocal]=useState(null);
+ const solicitud=useRef(borrador?.versionBase===proyecto.version?borrador.solicitud:null);
+ const completos=camposFeria.filter(c=>c.obligatorio&&datos[c.id].trim()).length;
+ function persistir(d,peticion=null){try{localStorage.setItem(clave,JSON.stringify({proyectoId:proyecto.id,versionBase:proyecto.version,datos:d,solicitud:peticion}));setLocal(true)}catch{setLocal(false)}}
+ function cambiar(id,valor){const d={...datos,[id]:valor};setDatos(d);solicitud.current=null;setError('');persistir(d)}
+ function recuperar(){setDatos(borrador.datos);setRecuperado(true);setBorrador(null);solicitud.current=null;persistir(borrador.datos)}
+ async function guardar(enviar){
+  if(busy)return;const problema=validarFeria(datos,enviar);if(problema){setError(problema);return}
+  setBusy(true);setError('');
+  try{
+   if(!solicitud.current||solicitud.current.enviar!==enviar)solicitud.current={id:crypto.randomUUID(),enviar};
+   persistir(datos,solicitud.current);
+   const{data,error}=await supabase.rpc('feria_guardar',{proyecto:proyecto.id,datos,version_esperada:proyecto.version,enviar,solicitud:solicitud.current.id});
+   if(error)throw error;
+   try{localStorage.removeItem(clave)}catch{}
+   onGuardar(data,enviar?'¡Proyecto enviado! Los docentes ya pueden revisarlo.':'Proyecto guardado. Puedes continuar después.');
+  }catch(e){setError('No se guardó el proyecto: '+e.message)}finally{setBusy(false)}
+ }
+ return <form className="fairForm" onSubmit={e=>{e.preventDefault();guardar(true)}}>
+  <div className="fairFormHeading"><div><span className="fairEyebrow">SU IDEA EMPIEZA AQUÍ</span><h3>{nuevo?'Inscribir un proyecto':'Actualizar el proyecto'}</h3><p>Escriban con sus propias palabras. No necesitan tenerlo todo resuelto.</p></div><span className="fairProgress">{completos}/4 campos principales</span></div>
+  <p className="fairHint">Elijan a un integrante para registrarlo. Desde esa cuenta podrán actualizar el proyecto y consultar las observaciones.</p>
+  {recuperado&&<p className="notice">Recuperamos el texto que tenías sin guardar.</p>}
+  {borrador&&!recuperado&&<div className="fairDraftNotice"><p>Hay un borrador en este dispositivo de una versión anterior. Revisa el proyecto actual antes de recuperarlo.</p><button type="button" disabled={busy} onClick={recuperar}>Recuperar mi texto</button><button type="button" disabled={busy} onClick={()=>{try{localStorage.removeItem(clave)}catch{}setBorrador(null)}}>Descartar ese borrador</button></div>}
+  <fieldset disabled={busy}>
+   {camposFeria.map(c=><label key={c.id} htmlFor={`fair-${c.id}`}><span className="fairFieldTitle">{c.titulo}<small>{c.obligatorio?'Principal':'Opcional'}</small></span><span className="fairFieldHelp" id={`fair-help-${c.id}`}>{c.ayuda}</span>{c.corto?<input id={`fair-${c.id}`} aria-describedby={`fair-help-${c.id}`} required minLength={3} maxLength={c.max} value={datos[c.id]} onChange={e=>cambiar(c.id,e.target.value)}/>:<textarea id={`fair-${c.id}`} aria-describedby={`fair-help-${c.id}`} maxLength={c.max} rows={c.obligatorio?4:3} value={datos[c.id]} onChange={e=>cambiar(c.id,e.target.value)}/>}<span className="fairCharCount">{datos[c.id].length}/{c.max}</span></label>)}
+  </fieldset>
+  {proyecto.estado&&proyecto.estado!=='borrador'&&<p className="fairHint">Al modificarlo, quedará en ajustes hasta que vuelvas a enviarlo a revisión.</p>}
+  {error&&<p className="error" role="alert">{error}</p>}
+  <div className="fairSaveBar"><button type="submit" className="fairPrimary" disabled={busy}>{busy?'Guardando…':'Enviar a revisión'}</button><button type="button" disabled={busy} onClick={()=>guardar(false)}>{nuevo||proyecto.estado==='borrador'?'Guardar borrador':'Guardar cambios sin enviar'}</button><button type="button" disabled={busy} onClick={onVolver}>Volver</button></div>
+  <p className="fairLocalStatus" role="status">{local===false?'No pudimos conservar un borrador en este dispositivo. Guarda el proyecto antes de salir.':local===true?'Texto conservado en este dispositivo. Usa Guardar o Enviar para guardarlo en tu cuenta.':'Puedes guardar un borrador y completarlo más adelante.'}</p>
+ </form>;
+}
+function Revision({proyecto,onGuardar}){
+ const[decision,setDecision]=useState('ajustes'),[comentario,setComentario]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const solicitud=useRef(null);
+ async function revisar(e){e.preventDefault();if(busy)return;setBusy(true);setError('');
+  try{solicitud.current=solicitud.current||crypto.randomUUID();const{data,error}=await supabase.rpc('feria_revisar',{proyecto:proyecto.id,version_esperada:proyecto.version,decision,comentario,solicitud:solicitud.current});if(error)throw error;setComentario('');solicitud.current=null;onGuardar(data,'Revisión guardada. El estudiante ya puede consultarla.')}catch(e){setError('No se guardó la revisión: '+e.message)}finally{setBusy(false)}
+ }
+ if(proyecto.estado!=='enviado')return <p className="fairHint">{proyecto.estado==='aprobado'?'Este proyecto está aprobado. Si el estudiante lo modifica y vuelve a enviarlo, podrá recibir una nueva revisión.':'El equipo está haciendo ajustes. Podrás revisar cuando vuelva a enviar el proyecto.'}</p>;
+ return <form className="fairReviewForm" onSubmit={revisar}><h3>Revisar este proyecto</h3><p>Cualquier docente puede dejar la revisión. Las observaciones serán visibles para la cuenta que lo registró.</p><label>Decisión<select aria-label="Decisión de revisión" value={decision} disabled={busy} onChange={e=>{setDecision(e.target.value);solicitud.current=null}}><option value="ajustes">Pedir ajustes</option><option value="aprobado">Aprobar proyecto</option></select></label><label>Observaciones<textarea value={comentario} required={decision==='ajustes'} maxLength={4000} rows={4} disabled={busy} onChange={e=>{setComentario(e.target.value);solicitud.current=null}} placeholder="Destaca lo que va bien y explica cómo pueden mejorar su idea."/></label>{error&&<p className="error" role="alert">{error}</p>}<button className="fairPrimary" disabled={busy}>{busy?'Guardando revisión…':'Guardar revisión'}</button></form>;
+}
+function Detalle({id,perfil,onVolver,onCambiar,onMensaje}){
+ const[datos,setDatos]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[editar,setEditar]=useState(false);
+ const profesor=perfil.rol==='profesor';
+ useEffect(()=>{let vigente=true;supabase.rpc('feria_proyecto',{proyecto:id}).then(({data,error})=>{if(!vigente)return;if(error)setError(error.message);else setDatos(data)}).catch(()=>{if(vigente)setError('No se pudo consultar el proyecto')});return()=>{vigente=false}},[id]);
+ async function refrescar(){setBusy(true);setError('');try{const{data,error}=await supabase.rpc('feria_proyecto',{proyecto:id});if(error)throw error;setDatos(data);onCambiar();onMensaje('Proyecto actualizado. Revisa los cambios antes de continuar.')}catch(e){setError(e.message)}finally{setBusy(false)}}
+ function guardado(data,mensaje){setDatos(data);setEditar(false);onMensaje(mensaje);onCambiar()}
+ if(!datos)return <div className="fairEmpty"><button onClick={onVolver}>← Volver a proyectos</button>{error?<><p className="error" role="alert">{error}</p><button disabled={busy} onClick={refrescar}>Reintentar</button></>:<p role="status">Abriendo el proyecto…</p>}</div>;
+ const p=datos.proyecto;
+ if(editar)return <Formulario key={p.id+':'+p.version} proyecto={p} cuenta={perfil.id} onVolver={()=>setEditar(false)} onGuardar={guardado}/>;
+ return <article className="fairDetail"><div className="fairDetailActions"><button onClick={onVolver}>← Proyectos</button><button onClick={refrescar} disabled={busy}>{busy?'Actualizando…':'Actualizar proyecto'}</button>{!profesor&&<button className="fairPrimary" onClick={()=>setEditar(true)}>Editar proyecto</button>}</div>{error&&<p className="error" role="alert">{error}</p>}
+  <header className="fairProjectHeading"><Estado estado={p.estado}/><h3>{p.titulo}</h3><p>{gradoFeria(p.grado)} · Registrado por {datos.registrado_por}</p><small>Última actualización: {fecha(p.actualizado_en)}</small></header>
+  {p.estado==='borrador'&&<p className="fairHint">Este borrador solo lo ves tú. Cuando lo envíes a revisión, los docentes podrán consultarlo.</p>}
+  <div className="fairProjectText">{camposFeria.filter(c=>c.id!=='titulo').map(c=><div key={c.id}><h4>{c.titulo}</h4><p>{p[c.id]||(c.obligatorio?'Todavía no lo han completado.':'No indicado (opcional).')}</p></div>)}</div>
+  {profesor&&<Revision proyecto={p} onGuardar={guardado}/>}
+  <div className="fairHistory"><h3>Observaciones de los docentes</h3>{datos.revisiones.length?datos.revisiones.map(r=><article key={r.id}><div><Estado estado={r.estado}/><small>Versión del texto: {r.revision_contenido}</small></div><p>{r.observacion||'Proyecto aprobado.'}</p><small>{r.nombre_revisor} · {fecha(r.creado_en)}</small></article>):<p>Aún no hay observaciones. {p.estado==='enviado'?'El proyecto está esperando revisión.':''}</p>}</div>
+ </article>;
+}
+export default function FeriaCiencia({perfil}){
+ const profesor=perfil.rol==='profesor';
+ const[contexto,setContexto]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState(''),[mensaje,setMensaje]=useState('');
+ const[seleccion,setSeleccion]=useState(null),[nuevo,setNuevo]=useState(null),[busqueda,setBusqueda]=useState(''),[grado,setGrado]=useState('todos'),[estado,setEstado]=useState('todos');
+ const carga=useRef(0);
+ async function cargar(){const numero=++carga.current;setError('');try{const{data,error}=await supabase.rpc('feria_contexto');if(numero!==carga.current)return;if(error)throw error;setContexto(data)}catch(e){if(numero===carga.current)setError(e.message)}finally{if(numero===carga.current)setLoading(false)}}
+ useEffect(()=>{cargar();return()=>{carga.current++}},[perfil.id]);
+ function volver(){setSeleccion(null);setNuevo(null);setMensaje('')}
+ function crear(){const b=leerLocal(claveBorradorFeria(perfil.id,'nuevo'));const valido=/^[0-9a-f-]{36}$/i.test(b?.proyectoId||'');setNuevo({id:valido?b.proyectoId:crypto.randomUUID(),version:0,...datosFeria()});setSeleccion(null);setMensaje('')}
+ function creado(data,m){setNuevo(null);setSeleccion(data.proyecto.id);setMensaje(m);cargar()}
+ const proyectos=contexto?.proyectos||[];
+ const buscar=busqueda.trim().toLocaleLowerCase('es');
+ const visibles=proyectos.filter(p=>(grado==='todos'||p.grado===Number(grado))&&(estado==='todos'||p.estado===estado)&&(!buscar||[p.titulo,p.integrantes,p.registrado_por].some(t=>t.toLocaleLowerCase('es').includes(buscar))));
+ return <section className="fairSection"><div className="fairHero"><div className="fairHeroSymbol" aria-hidden="true">✦</div><div><span className="fairEyebrow">IMAGINAR · EXPLORAR · CREAR</span><h2>Feria de la Ciencia <span>STEAM</span></h2><p>{profesor?'Acompaña las ideas de los estudiantes y ayúdalas a crecer.':'Una pregunta, una idea y muchas ganas de descubrir. ¡Cuéntanos su proyecto!'}</p></div></div>
+  {mensaje&&<p className="fairMessage" role="status">{mensaje}</p>}
+  {loading?<p role="status">Preparando los proyectos de la feria…</p>:error&&!contexto?<div className="fairEmpty"><h3>No pudimos abrir la feria</h3><p>{profesor?'Si es la primera vez, ejecuta el SQL de activación de Feria de la Ciencia en Supabase. Luego vuelve a intentar.':'Pide a tu docente que compruebe si el módulo ya está habilitado.'}</p><details><summary>Ver detalle</summary><p className="error">{error}</p></details><button onClick={cargar}>Reintentar</button></div>:nuevo?<Formulario key={nuevo.id} proyecto={nuevo} cuenta={perfil.id} nuevo onVolver={volver} onGuardar={creado}/>:seleccion?<Detalle key={seleccion} id={seleccion} perfil={perfil} onVolver={volver} onCambiar={cargar} onMensaje={setMensaje}/>:<>
+   {error&&<p className="error" role="alert">No pudimos actualizar la lista: {error}</p>}
+   <div className="fairOverview"><div><b>{proyectos.length}</b><span>{profesor?'Proyectos recibidos':'Mis proyectos'}</span></div><div><b>{proyectos.filter(p=>p.estado==='enviado').length}</b><span>Por revisar</span></div><div><b>{proyectos.filter(p=>p.estado==='aprobado').length}</b><span>Aprobados</span></div></div>
+   <div className="fairListHeading"><div><h3>{profesor?'Proyectos para acompañar':'Mis proyectos'}</h3><p>{profesor?'Puedes revisar proyectos de todos los grados, aunque no estén entre tus grupos asignados.':'Guarda una idea, complétala a tu ritmo y envíala a revisión.'}</p></div>{!profesor&&<button className="fairPrimary" onClick={crear}>＋ Inscribir proyecto</button>}</div>
+   <div className="fairFilters"><label>Buscar<input type="search" value={busqueda} onChange={e=>setBusqueda(e.target.value)} placeholder="Proyecto o integrante"/></label>{profesor&&<label>Grado<select aria-label="Filtrar por grado" value={grado} onChange={e=>setGrado(e.target.value)}><option value="todos">Todos los grados</option>{Array.from({length:9},(_,i)=><option key={i} value={i}>{gradoFeria(i)}</option>)}</select></label>}<label>Estado<select aria-label="Filtrar por estado" value={estado} onChange={e=>setEstado(e.target.value)}><option value="todos">Todos los estados</option>{Object.entries(estadosFeria).filter(([id])=>!profesor||id!=='borrador').map(([id,t])=><option key={id} value={id}>{t}</option>)}</select></label><button onClick={cargar}>Actualizar lista</button></div>
+   {visibles.length?<div className="fairGrid">{visibles.map(p=><article className="fairCard" key={p.id}><div className="fairCardTop"><Estado estado={p.estado}/><span>{gradoFeria(p.grado)}</span></div><h4>{p.titulo}</h4><p className="fairMembers">{p.integrantes||'Falta escribir los integrantes.'}</p>{profesor&&<small>Registrado por {p.registrado_por}</small>}<small>Actualizado: {fecha(p.actualizado_en)}</small><button onClick={()=>{setSeleccion(p.id);setMensaje('')}}>{profesor&&p.estado==='enviado'?'Revisar proyecto':'Ver proyecto'} <span aria-hidden="true">→</span></button></article>)}</div>:<div className="fairEmpty"><span aria-hidden="true">✦</span><h3>{proyectos.length?'No hay proyectos con esos filtros':profesor?'Las primeras ideas están por llegar':'Toda gran idea comienza con una pregunta'}</h3><p>{proyectos.length?'Prueba otro estado, grado o nombre.':profesor?'Los proyectos aparecerán aquí cuando los estudiantes los envíen a revisión.':'Inscribe el proyecto de tu equipo. Puedes empezar con un borrador.'}</p></div>}
+  </>}
+ </section>;
+}
