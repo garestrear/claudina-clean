@@ -1,5 +1,7 @@
 # Feria STEAM · Instituciones invitadas
 
+La portada compartible `https://claudina-clean.vercel.app/?vista=invitados` se organiza en Feria STEAM, Nuestro colegio y Comunidad. La feria abre primero; Nuestro colegio conserva la identidad, ubicación, lema y enlace institucional; Comunidad conserva contador, avisos y experiencias de convivencia con detalles desplegables.
+
 La vista de invitados muestra la sexta edición renovada, su nombre anterior, fecha (6 de noviembre de 2026), significado de STEAM y actividades: teatro ambiental, talleristas, puentes de palitos, maquetas, proyectos artísticos, experimentos y emprendimientos. Incluye el enlace compartible `https://claudina-clean.vercel.app/?feria=invitados`.
 
 ## Activación
