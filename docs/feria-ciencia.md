@@ -6,7 +6,7 @@ Ejecutar completo `supabase/feria-ciencia.sql` en el SQL Editor del proyecto Sup
 
 ## Inscripción
 
-Un integrante registra el proyecto desde su cuenta de estudiante. Se incluye automáticamente a quien registra y se agregan los demás integrantes desde una lista de compañeros activos del mismo grado. Séptimo y octavo comparten la lista porque pertenecen al mismo salón. El grado utilizado en los filtros es el de quien lo registra.
+Un integrante registra el proyecto desde su cuenta de estudiante. Se incluye automáticamente a quien registra y se agregan los demás integrantes desde una lista de compañeros activos del mismo grado o mediante «Agregar estudiante de otro grado». Séptimo y octavo comparten la lista porque pertenecen al mismo salón. El grado utilizado en los filtros es el de quien lo registra.
 
 Al inicio se escogen una o varias áreas STEAM (Science, Technology, Engineering, Arts o Mathematics) y un profesor asesor de la lista real de docentes registrados. Después se escogen los integrantes desde la lista de compañeros y se escriben el nombre del proyecto, qué quieren hacer y cómo lo harán. Materiales, resultados esperados y apoyo necesario son opcionales. Para guardar un borrador se requieren áreas, asesor y nombre. Al enviar también se comprueban integrantes, qué harán y cómo lo harán.
 
@@ -45,8 +45,14 @@ La selección del asesor se comprueba en Supabase: solo acepta perfiles con rol 
 
 Ejecutar `supabase/feria-integrantes.sql` para actualizar una feria ya activada. Es acumulativo: también incluye las áreas STEAM y el profesor asesor, por lo que no es necesario volver a ejecutar los scripts anteriores.
 
-Cada estudiante recibe únicamente identificador, nombre y grado de sus compañeros activos. La lista no incluye documentos, correos, estudiantes inactivos ni otros grupos. El docente no recibe esta lista de compañeros en el contexto de la feria. Los integrantes se agregan desde un desplegable y se pueden quitar; quien registra permanece incluido. Supabase valida los identificadores y el grupo, y genera los nombres mostrados a partir del registro escolar.
+Cada estudiante recibe únicamente identificador, nombre y grado de sus compañeros activos. La lista inicial no incluye documentos, correos, estudiantes inactivos ni otros grupos. La opción de otro grado consulta únicamente el grado escogido, con los mismos datos mínimos. El docente no recibe esta lista de compañeros en el contexto de la feria. Los integrantes se agregan desde un desplegable y se pueden quitar; quien registra permanece incluido. Supabase valida los identificadores y que los estudiantes estén activos en la institución, y genera los nombres mostrados a partir del registro escolar.
 
 Los proyectos anteriores conservan el texto de integrantes hasta que el estudiante confirme el equipo usando el nuevo selector. El selector no cambia los permisos de edición: continúa editando la cuenta que registró el proyecto.
 
 `node tests/feriaIntegrantes.test.mjs` comprueba grupos, privacidad, inactivos, nombres generados en el servidor, inclusión automática, proyectos individuales, salón compartido de 7°/8° y migración repetible.
+
+## Equipos con estudiantes de otros grados
+
+El botón «Agregar estudiante de otro grado» abre una selección de grado y luego de estudiante. Los integrantes se agregan al mismo equipo, sin duplicados, y permanecen identificados al guardar borradores, recargar o volver a editar. Se conserva la lista rápida del grupo propio y el salón compartido de séptimo/octavo.
+
+Para actualizar, ejecutar únicamente `supabase/feria-equipos-entre-grados.sql`, que incluye las mejoras anteriores y conserva los proyectos existentes. La consulta por grado requiere una cuenta autorizada, valida grados 0–8 y solo devuelve identificador, nombre y grado de estudiantes activos. Los integrantes de un proyecto solo pueden ser consultados por su autor y docentes con acceso al proyecto. La edición sigue en la cuenta que lo registró.

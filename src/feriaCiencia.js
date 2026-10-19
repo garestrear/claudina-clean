@@ -20,7 +20,7 @@ export const datosFeria=p=>({...Object.fromEntries(camposFeria.map(c=>[c.id,type
 export const gradoFeria=g=>Number(g)===0?'TS y JR':`${g}°`;
 export const claveBorradorFeria=(cuenta,id)=>`claudina:feria:v1:${cuenta}:${id}`;
 export function leerBorradorFeria(storage,clave){
- try{const b=JSON.parse(storage.getItem(clave));return b&&typeof b==='object'&&typeof b.proyectoId==='string'&&Number.isInteger(b.versionBase)&&b.datos&&(b.datos.areas===undefined||areasFeriaValidas(b.datos.areas))&&camposFeria.every(c=>typeof b.datos[c.id]==='string'&&b.datos[c.id].length<=c.max)?{...b,datos:datosFeria(b.datos)}:null}catch{return null}
+ try{const b=JSON.parse(storage.getItem(clave));return b&&typeof b==='object'&&typeof b.proyectoId==='string'&&Number.isInteger(b.versionBase)&&b.datos&&(b.datos.areas===undefined||areasFeriaValidas(b.datos.areas))&&camposFeria.every(c=>typeof b.datos[c.id]==='string'&&b.datos[c.id].length<=c.max)?{...b,datos:datosFeria(b.datos),referencias:Array.isArray(b.referencias)?b.referencias.filter(e=>e&&typeof e.id==='string'&&typeof e.nombre==='string'&&Number.isInteger(e.grado)&&e.grado>=0&&e.grado<=8):[]}:null}catch{return null}
 }
 export function validarFeria(datos,enviar){
  if(!areasFeriaValidas(datos.areas)||datos.areas.length===0)return 'Selecciona una o varias áreas STEAM para clasificar el proyecto.';

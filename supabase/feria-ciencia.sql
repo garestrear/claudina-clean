@@ -52,6 +52,13 @@ revoke all on public.feria_proyectos,public.feria_revisiones from public,anon,au
 create or replace function public.feria_estudiante_activo() returns boolean language sql stable security definer set search_path='' as $$
  select exists(select 1 from public.perfiles p join public.estudiantes e on e.auth_user_id=p.id where p.id=auth.uid() and p.rol='estudiante' and e.activo);
 $$;
+create or replace function public.feria_estudiantes_grado(grado_elegido integer) returns jsonb language plpgsql stable security definer set search_path='' as $$
+begin
+ if auth.uid() is null or not(coalesce(public.es_profesor(),false) or public.feria_estudiante_activo()) then raise exception 'Ingresa como docente o estudiante con ficha activa';end if;
+ if grado_elegido is null or grado_elegido not between 0 and 8 then raise exception 'Selecciona un grado válido';end if;
+ return coalesce((select jsonb_agg(jsonb_build_object('id',e.id,'nombre',e.nombre,'grado',e.grado) order by e.nombre,e.id) from public.estudiantes e where e.activo and e.grado=grado_elegido),'[]'::jsonb);
+end;
+$$;
 create or replace function public.feria_contexto() returns jsonb language plpgsql stable security definer set search_path='' as $$
 declare docente boolean:=coalesce(public.es_profesor(),false);ficha jsonb;
 begin
@@ -71,6 +78,7 @@ begin
  select * into p from public.feria_proyectos where id=proyecto;
  if p.id is null or not((docente and p.estado<>'borrador') or p.autor=auth.uid()) then raise exception 'Proyecto no disponible';end if;
  return jsonb_build_object('proyecto',to_jsonb(p)-'autor'-'ultimo_guardado'-'estudiante_id','asesor_nombre',(select pf.nombre from public.perfiles pf where pf.id=p.asesor_id),'registrado_por',(select e.nombre from public.estudiantes e where e.id=p.estudiante_id),
+ 'integrantes',coalesce((select jsonb_agg(jsonb_build_object('id',e.id,'nombre',e.nombre,'grado',e.grado,'activo',e.activo) order by e.nombre,e.id) from public.estudiantes e where e.id=any(p.integrantes_ids)),'[]'::jsonb),
  'revisiones',coalesce((select jsonb_agg(to_jsonb(r)-'revisor'-'solicitud' order by r.creado_en desc,r.id) from public.feria_revisiones r where r.proyecto_id=p.id),'[]'::jsonb));
 end;
 $$;
@@ -85,7 +93,7 @@ begin
  if jsonb_array_length(datos->'integrantes_ids')>100 or exists(select 1 from jsonb_array_elements(datos->'integrantes_ids') a where jsonb_typeof(a) is distinct from 'string' or (a#>>'{}')!~*'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') then raise exception 'Selecciona integrantes válidos de la lista';end if;
  select coalesce(array_agg(a::uuid),'{}'::uuid[]) into equipo from jsonb_array_elements_text(datos->'integrantes_ids') a;
  if cardinality(equipo)<>(select count(distinct x) from unnest(equipo) x) then raise exception 'No repitas integrantes';end if;
- if exists(select 1 from unnest(equipo) x where not exists(select 1 from public.estudiantes e where e.id=x and e.activo and (e.grado=ficha.grado or(e.grado in(7,8) and ficha.grado in(7,8))))) then raise exception 'Solo puedes escoger compañeros activos de tu grupo';end if;
+ if exists(select 1 from unnest(equipo) x where not exists(select 1 from public.estudiantes e where e.id=x and e.activo)) then raise exception 'Solo puedes escoger estudiantes activos de la institución';end if;
  if not(ficha.id=any(equipo)) then equipo:=array_prepend(ficha.id,equipo);end if;
  select string_agg(e.nombre||' · '||case when e.grado=0 then 'TS y JR' else e.grado||'°' end,E'\n' order by (e.id=ficha.id) desc,e.nombre,e.id) into nombres_equipo from public.estudiantes e where e.id=any(equipo);
  datos:=jsonb_set(datos,'{integrantes}',to_jsonb(nombres_equipo));
@@ -138,7 +146,7 @@ begin
  return public.feria_proyecto(p.id);
 end;
 $$;
-revoke all on function public.feria_estudiante_activo(),public.feria_contexto(),public.feria_proyecto(uuid),public.feria_guardar(uuid,jsonb,integer,boolean,uuid),public.feria_revisar(uuid,integer,text,text,uuid) from public,anon,authenticated;
-grant execute on function public.feria_contexto(),public.feria_proyecto(uuid),public.feria_guardar(uuid,jsonb,integer,boolean,uuid),public.feria_revisar(uuid,integer,text,text,uuid) to authenticated;
+revoke all on function public.feria_estudiante_activo(),public.feria_estudiantes_grado(integer),public.feria_contexto(),public.feria_proyecto(uuid),public.feria_guardar(uuid,jsonb,integer,boolean,uuid),public.feria_revisar(uuid,integer,text,text,uuid) from public,anon,authenticated;
+grant execute on function public.feria_estudiantes_grado(integer),public.feria_contexto(),public.feria_proyecto(uuid),public.feria_guardar(uuid,jsonb,integer,boolean,uuid),public.feria_revisar(uuid,integer,text,text,uuid) to authenticated;
 notify pgrst,'reload schema';
 commit;
