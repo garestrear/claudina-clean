@@ -25,3 +25,9 @@ No se crea un perfil institucional para las cuentas externas. Las tablas externa
 ## Pruebas
 
 `tests/feriaInvitadosSql.test.mjs` verifica verificación del correo, separación entre colegios y datos internos, permisos de docente/estudiante/acudiente, borradores, validación, envío, ajustes, aprobación, edición posterior, conflictos, idempotencia e historial y migración repetible. `tests/feriaInvitadosBrowser.test.mjs` usa la App completa, autenticación simulada y PostgreSQL real en memoria: portal público → Google/correo simulados → cuenta externa sin perfil → borrador → envío → revisión → corrección → aprobación. No envía mensajes reales ni modifica producción. Se conservan las pruebas internas de feria y familias y la compilación de producción.
+
+## Convocatoria y difusión
+
+Evento: viernes 6 de noviembre de 2026 de 7:00 a. m. a 12:00 m., C.E.R. Claudina Múnera. Recepción hasta el viernes 30 de octubre a las 11:59 p. m., America/Bogota. El servidor bloquea el primer envío de propuestas después de ese plazo y permite corregir propuestas previamente enviadas. Contactos: prae@claudinamunera.edu.co y profesor Gustavo Restrepo 3185377167.
+
+La portada incluye pasos, ejemplos STEAM y enlace a invitación imprimible con QR local, sin servicios de terceros. El campo logistica permite especificar recursos de exposición sin prometer disponibilidad. La muestra pública usa feria_proyectos_publicos y solo expone id, título, institución y áreas de proyectos aprobados con publicar=true. No incluye integrantes ni contactos. Autorización opcional y revocable editando el proyecto; editar un aprobado lo retira de la muestra hasta nueva aprobación. Volver a ejecutar el SQL completo actualizado para instalar estas funciones.
