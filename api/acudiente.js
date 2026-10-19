@@ -14,6 +14,9 @@ export function crearHandlerAcudiente(factory=createClient,env=process.env){retu
    if(identidadError||!identidad.user)return res.status(401).json({error:'Ingresa con tu cuenta de profesor.'});
    const{data:perfil,error:perfilError}=await admin.from('perfiles').select('rol').eq('id',identidad.user.id).maybeSingle();
    if(perfilError||perfil?.rol!=='profesor')return res.status(403).json({error:'Solo un profesor puede restablecer el acceso.'});
+   const{data:permiso,error:permisoError}=await admin.from('administradores_docentes').select('id').eq('id',identidad.user.id).maybeSingle();
+   if(permisoError)return res.status(503).json({error:'Activa la actualización SQL de permisos docentes.'});
+   if(!permiso)return res.status(403).json({error:'Solo administradores pueden restablecer el acceso.'});
    const{data:hijo,error:hijoError}=await admin.from('estudiantes').select('id,documento,activo').eq('id',req.body.estudiante).eq('activo',true).maybeSingle();
    if(hijoError||!hijo?.documento)return res.status(400).json({error:'Registra el documento del estudiante activo antes de restablecer su acceso.'});
    const{data:cuenta,error:cuentaError}=await admin.from('acudientes').select('auth_user_id').eq('estudiante_id',hijo.id).maybeSingle();

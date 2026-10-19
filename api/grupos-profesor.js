@@ -14,6 +14,9 @@ export function crearHandlerGrupos(factory=createClient,env=process.env){return 
   if(authError||!identidad?.user)return res.status(401).json({error:'Sesión inválida'});
   const {data:perfil,error:perfilError}=await db.from('perfiles').select('rol').eq('id',identidad.user.id).maybeSingle();
   if(perfilError||perfil?.rol!=='profesor')return res.status(403).json({error:'Solo profesores administradores pueden asignar grupos'});
+  const {data:permiso,error:permisoError}=await db.from('administradores_docentes').select('id').eq('id',identidad.user.id).maybeSingle();
+  if(permisoError)return res.status(503).json({error:'Activa la actualización SQL de permisos docentes.'});
+  if(!permiso)return res.status(403).json({error:'Solo administradores pueden asignar grupos a otros docentes'});
   const {profesorId,accion,grupos}=req.body||{};
   if(!uuid.test(profesorId||'')||!['consultar','guardar'].includes(accion))return res.status(400).json({error:'Selecciona un profesor válido'});
   if(accion==='guardar'&&!gruposValidos(grupos))return res.status(400).json({error:'Selecciona uno o más grupos válidos, sin repetir'});
