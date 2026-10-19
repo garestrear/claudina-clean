@@ -7,6 +7,7 @@ export async function crearFeriaDb(){
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
  create table public.perfiles(id uuid primary key,nombre text,rol text);
  create table public.estudiantes(id uuid primary key,nombre text,grado smallint,activo boolean,auth_user_id uuid);
+ create table public.acudientes(auth_user_id uuid primary key,estudiante_id uuid not null unique references public.estudiantes(id));
  create function public.es_profesor() returns boolean language sql stable security definer set search_path='' as $$select exists(select 1 from public.perfiles where id=auth.uid() and rol='profesor')$$;
  insert into perfiles values('${uid(1)}','Docente Uno','profesor'),('${uid(2)}','Docente Dos','profesor'),('${uid(3)}','Estudiante Sexto','estudiante'),('${uid(4)}','Estudiante TS','estudiante'),('${uid(5)}','Acudiente','acudiente'),('${uid(6)}','Inactivo','estudiante');
  insert into estudiantes values('${uuid(3)}','Estudiante Sexto',6,true,'${uid(3)}'),('${uuid(4)}','Estudiante TS',0,true,'${uid(4)}'),('${uuid(6)}','Inactivo',8,false,'${uid(6)}');`);

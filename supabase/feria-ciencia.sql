@@ -50,12 +50,25 @@ alter table public.feria_proyectos enable row level security;
 alter table public.feria_revisiones enable row level security;
 revoke all on public.feria_proyectos,public.feria_revisiones from public,anon,authenticated;
 
+-- Resuelve al estudiante desde la sesión; nunca acepta un hijo elegido por el cliente.
+create or replace function public.feria_ficha_actual() returns public.estudiantes language plpgsql stable security definer set search_path='' as $$
+declare ficha public.estudiantes;rol text;
+begin
+ select p.rol::text into rol from public.perfiles p where p.id=auth.uid();
+ if rol='estudiante' then
+  select e.* into ficha from public.estudiantes e where e.auth_user_id=auth.uid() and e.activo limit 1;
+ elsif rol='acudiente' then
+  select e.* into ficha from public.estudiantes e join public.acudientes a on a.estudiante_id=e.id where a.auth_user_id=auth.uid() and e.activo;
+ end if;
+ return ficha;
+end;
+$$;
 create or replace function public.feria_estudiante_activo() returns boolean language sql stable security definer set search_path='' as $$
  select exists(select 1 from public.perfiles p join public.estudiantes e on e.auth_user_id=p.id where p.id=auth.uid() and p.rol='estudiante' and e.activo);
 $$;
 create or replace function public.feria_estudiantes_grado(grado_elegido integer) returns jsonb language plpgsql stable security definer set search_path='' as $$
 begin
- if auth.uid() is null or not(coalesce(public.es_profesor(),false) or public.feria_estudiante_activo()) then raise exception 'Ingresa como docente o estudiante con ficha activa';end if;
+ if auth.uid() is null or not(coalesce(public.es_profesor(),false) or (public.feria_ficha_actual()).id is not null) then raise exception 'Ingresa como docente, estudiante activo o su acudiente vinculado';end if;
  if grado_elegido is null or grado_elegido not between 0 and 8 then raise exception 'Selecciona un grado válido';end if;
  return coalesce((select jsonb_agg(jsonb_build_object('id',e.id,'nombre',e.nombre,'grado',e.grado) order by e.nombre,e.id) from public.estudiantes e where e.activo and e.grado=grado_elegido),'[]'::jsonb);
 end;
@@ -63,21 +76,21 @@ $$;
 create or replace function public.feria_contexto() returns jsonb language plpgsql stable security definer set search_path='' as $$
 declare docente boolean:=coalesce(public.es_profesor(),false);ficha jsonb;
 begin
- if auth.uid() is null or not(docente or public.feria_estudiante_activo()) then raise exception 'Ingresa como docente o estudiante con ficha activa';end if;
- if not docente then select jsonb_build_object('id',e.id,'nombre',e.nombre,'grado',e.grado) into ficha from public.estudiantes e where e.auth_user_id=auth.uid() and e.activo limit 1;end if;
+ if auth.uid() is null or not(docente or (public.feria_ficha_actual()).id is not null) then raise exception 'Ingresa como docente, estudiante activo o su acudiente vinculado';end if;
+ if not docente then select jsonb_build_object('id',e.id,'nombre',e.nombre,'grado',e.grado) into ficha from public.feria_ficha_actual() e;end if;
  return jsonb_build_object('profesor',docente,'ficha',ficha,'companeros',case when docente then '[]'::jsonb else coalesce((select jsonb_agg(jsonb_build_object('id',e.id,'nombre',e.nombre,'grado',e.grado) order by e.nombre,e.id) from public.estudiantes e where e.activo and e.id<>(ficha->>'id')::uuid and (e.grado=(ficha->>'grado')::integer or(e.grado in(7,8) and (ficha->>'grado')::integer in(7,8)))),'[]'::jsonb) end,'docentes',coalesce((select jsonb_agg(jsonb_build_object('id',pf.id,'nombre',pf.nombre) order by pf.nombre,pf.id) from public.perfiles pf where pf.rol='profesor'),'[]'::jsonb),'proyectos',coalesce((select jsonb_agg(x.dato order by x.actualizado_en desc,x.id) from(
   select p.id,p.actualizado_en,jsonb_build_object('id',p.id,'titulo',p.titulo,'integrantes',p.integrantes,'areas',p.areas,'asesor_id',p.asesor_id,'asesor_nombre',(select pf.nombre from public.perfiles pf where pf.id=p.asesor_id),'grado',p.grado,'estado',p.estado,'version',p.version,'actualizado_en',p.actualizado_en,'registrado_por',e.nombre) dato
   from public.feria_proyectos p join public.estudiantes e on e.id=p.estudiante_id
-  where (docente and p.estado<>'borrador') or p.autor=auth.uid()
+  where (docente and p.estado<>'borrador') or p.estudiante_id=(public.feria_ficha_actual()).id
  ) x),'[]'::jsonb));
 end;
 $$;
 create or replace function public.feria_proyecto(proyecto uuid) returns jsonb language plpgsql stable security definer set search_path='' as $$
 declare p public.feria_proyectos;docente boolean:=coalesce(public.es_profesor(),false);
 begin
- if auth.uid() is null or not(docente or public.feria_estudiante_activo()) then raise exception 'Inicia sesión con una cuenta autorizada';end if;
+ if auth.uid() is null or not(docente or (public.feria_ficha_actual()).id is not null) then raise exception 'Inicia sesión con una cuenta autorizada';end if;
  select * into p from public.feria_proyectos where id=proyecto;
- if p.id is null or not((docente and p.estado<>'borrador') or p.autor=auth.uid()) then raise exception 'Proyecto no disponible';end if;
+ if p.id is null or not coalesce((docente and p.estado<>'borrador') or p.estudiante_id=(public.feria_ficha_actual()).id,false) then raise exception 'Proyecto no disponible';end if;
  return jsonb_build_object('proyecto',to_jsonb(p)-'autor'-'ultimo_guardado'-'estudiante_id','asesor_nombre',(select pf.nombre from public.perfiles pf where pf.id=p.asesor_id),'registrado_por',(select e.nombre from public.estudiantes e where e.id=p.estudiante_id),
  'integrantes',coalesce((select jsonb_agg(jsonb_build_object('id',e.id,'nombre',e.nombre,'grado',e.grado,'activo',e.activo) order by e.nombre,e.id) from public.estudiantes e where e.id=any(p.integrantes_ids)),'[]'::jsonb),
  'revisiones',coalesce((select jsonb_agg(to_jsonb(r)-'revisor'-'solicitud' order by r.creado_en desc,r.id) from public.feria_revisiones r where r.proyecto_id=p.id),'[]'::jsonb));
@@ -86,10 +99,10 @@ $$;
 create or replace function public.feria_guardar(proyecto uuid,datos jsonb,version_esperada integer,enviar boolean,solicitud uuid) returns jsonb language plpgsql security definer set search_path='' as $$
 declare p public.feria_proyectos;ficha public.estudiantes;campo text;limite integer;estado_nuevo text;areas_elegidas text[];asesor_elegido uuid;equipo uuid[];nombres_equipo text;
 begin
- if not public.feria_estudiante_activo() then raise exception 'Solo estudiantes con ficha activa pueden registrar proyectos';end if;
+ ficha:=public.feria_ficha_actual();
+ if ficha.id is null then raise exception 'Ingresa como estudiante activo o como su acudiente vinculado';end if;
  if proyecto is null or solicitud is null or enviar is null or jsonb_typeof(datos) is distinct from 'object' or octet_length(datos::text)>85000 then raise exception 'Revisa los datos del proyecto';end if;
  if datos-array['titulo','integrantes','propuesta','procedimiento','materiales','resultados_esperados','apoyo','areas','asesor_id','integrantes_ids','bibliografia']<>'{}'::jsonb then raise exception 'Los campos del proyecto no son válidos';end if;
- select * into ficha from public.estudiantes e where e.auth_user_id=auth.uid() and e.activo limit 1;
  if jsonb_typeof(datos->'integrantes_ids') is distinct from 'array' then raise exception 'Actualiza la app y escoge los integrantes de la lista de compañeros';end if;
  if jsonb_array_length(datos->'integrantes_ids')>100 or exists(select 1 from jsonb_array_elements(datos->'integrantes_ids') a where jsonb_typeof(a) is distinct from 'string' or (a#>>'{}')!~*'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') then raise exception 'Selecciona integrantes válidos de la lista';end if;
  select coalesce(array_agg(a::uuid),'{}'::uuid[]) into equipo from jsonb_array_elements_text(datos->'integrantes_ids') a;
@@ -114,7 +127,7 @@ begin
  if enviar and (length(trim(datos->>'integrantes'))=0 or length(trim(datos->>'propuesta'))=0 or length(trim(datos->>'procedimiento'))=0) then raise exception 'Completa integrantes, qué harán y cómo lo harán antes de enviar';end if;
  select * into p from public.feria_proyectos where id=proyecto for update;
  if p.id is not null then
-  if p.autor<>auth.uid() then raise exception 'Solo la cuenta que registró el proyecto puede modificarlo';end if;
+  if p.estudiante_id<>ficha.id then raise exception 'Solo el estudiante que registra y su acudiente vinculado pueden modificar el proyecto';end if;
   if p.ultimo_guardado=solicitud then return public.feria_proyecto(p.id);end if;
   if version_esperada is distinct from p.version then raise exception 'El proyecto cambió. Vuelve a abrirlo antes de guardar para no sobrescribir cambios';end if;
   estado_nuevo:=case when enviar then 'enviado' when p.estado='borrador' then 'borrador' else 'ajustes' end;
@@ -148,7 +161,7 @@ begin
  return public.feria_proyecto(p.id);
 end;
 $$;
-revoke all on function public.feria_estudiante_activo(),public.feria_estudiantes_grado(integer),public.feria_contexto(),public.feria_proyecto(uuid),public.feria_guardar(uuid,jsonb,integer,boolean,uuid),public.feria_revisar(uuid,integer,text,text,uuid) from public,anon,authenticated;
+revoke all on function public.feria_ficha_actual(),public.feria_estudiante_activo(),public.feria_estudiantes_grado(integer),public.feria_contexto(),public.feria_proyecto(uuid),public.feria_guardar(uuid,jsonb,integer,boolean,uuid),public.feria_revisar(uuid,integer,text,text,uuid) from public,anon,authenticated;
 grant execute on function public.feria_estudiantes_grado(integer),public.feria_contexto(),public.feria_proyecto(uuid),public.feria_guardar(uuid,jsonb,integer,boolean,uuid),public.feria_revisar(uuid,integer,text,text,uuid) to authenticated;
 notify pgrst,'reload schema';
 commit;
