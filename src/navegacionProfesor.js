@@ -1,7 +1,7 @@
 export const seccionesDocente=[
  {id:'inicio',nombre:'Inicio',icono:'🏠',paginas:['horario']},
  {id:'aseo',nombre:'Aseo',icono:'🧹',paginas:['hoy','consolidado','historial']},
- {id:'comunidad',nombre:'Comunidad',icono:'📣',paginas:['avisos','convivencia']},
+ {id:'comunidad',nombre:'Comunidad',icono:'📣',paginas:['tareas','avisos','convivencia']},
  {id:'actividades',nombre:'Actividades',icono:'🎯',paginas:['feria','eventos','encuestas','ingles']},
  {id:'mas',nombre:'Más',icono:'☰',paginas:['reportes','misgrupos','administracion','estudiantes','profesores','asignacion']}
 ];
@@ -10,7 +10,8 @@ export const herramientasDocente={
  hoy:['🧹','Registrar aseo','Registra cómo fue el aseo de tus grupos.'],
  consolidado:['📈','Calificaciones de aseo','Consulta las valoraciones por estudiante.'],
  historial:['📊','Historial de aseo','Revisa los registros de días anteriores.'],
- avisos:['📣','Avisos y tareas','Publica avisos y revisa las tareas propuestas.'],
+ tareas:['📚','Tareas','Revisa propuestas y consulta las tareas publicadas.'],
+ avisos:['📣','Avisos','Publica comunicaciones para la comunidad.'],
  convivencia:['🤝','Convivencia','Acompaña reportes, explicaciones y compromisos.'],
  feria:['🔬','Feria STEAM','Acompaña y revisa los proyectos de tus estudiantes.'],
  eventos:['⭐','Evaluar eventos','Responde evaluaciones y consulta resultados.'],
