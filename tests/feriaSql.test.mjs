@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
-import {crearFeriaDb,uuid} from './fixtures/feriaDb.mjs';
+import {crearFeriaDb,uuid,uid} from './fixtures/feriaDb.mjs';
 const{db,sql,identity,rpc}=await crearFeriaDb();await db.exec(sql);
-const datos={titulo:'Filtro de agua',integrantes:'Ana · 6°\nLuis · 7°',propuesta:'Queremos filtrar agua.',procedimiento:'Construimos y probamos un filtro.',materiales:'Arena y botellas',resultados_esperados:'Comparar muestras',apoyo:''};
+const datos={areas:['science','engineering'],asesor_id:uid(2),titulo:'Filtro de agua',integrantes:'Ana · 6°\nLuis · 7°',propuesta:'Queremos filtrar agua.',procedimiento:'Construimos y probamos un filtro.',materiales:'Arena y botellas',resultados_esperados:'Comparar muestras',apoyo:''};
 const id=uuid(100),id2=uuid(200);
 const guardar=(version=0,enviar=false,request=1,d=datos,p=id)=>rpc('feria_guardar',[p,d,version,enviar,uuid(1000+request)],['uuid','jsonb','integer','boolean','uuid']);
 const revisar=(version=2,decision='ajustes',nota='Explica cómo compararás las muestras.',request=1,p=id)=>rpc('feria_revisar',[p,version,decision,nota,uuid(2000+request)],['uuid','integer','text','text','uuid']);
