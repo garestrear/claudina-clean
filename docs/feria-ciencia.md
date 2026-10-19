@@ -8,13 +8,13 @@ Ejecutar completo `supabase/feria-ciencia.sql` en el SQL Editor del proyecto Sup
 
 Un integrante registra el proyecto desde su cuenta de estudiante. Puede indicar libremente nombres y grados de todo el equipo, incluso si es un equipo de varios grados. El grado utilizado en los filtros es el de quien lo registra.
 
-Campos principales: nombre del proyecto, integrantes, qué quieren hacer y cómo lo harán. Materiales, resultados esperados y apoyo necesario son opcionales. Los borradores pueden guardarse con solo el nombre del proyecto. Al enviar se comprueban los cuatro campos principales.
+Al inicio se escogen una o varias áreas STEAM (Science, Technology, Engineering, Arts o Mathematics) y un profesor asesor de la lista real de docentes registrados. Después se escriben el nombre del proyecto, integrantes, qué quieren hacer y cómo lo harán. Materiales, resultados esperados y apoyo necesario son opcionales. Para guardar un borrador se requieren áreas, asesor y nombre. Al enviar también se comprueban integrantes, qué harán y cómo lo harán.
 
 Solo la cuenta que registra el proyecto puede editarlo. Sus borradores no son visibles para otros estudiantes ni docentes. Los textos sin guardar se conservan por cuenta en el navegador, cuando este permite almacenamiento local; los botones Guardar y Enviar los guardan en Supabase.
 
 ## Revisión
 
-Cualquier docente puede consultar los proyectos enviados de todos los grados, independientemente de sus grupos asignados. Puede filtrarlos por grado o estado y buscar por título, integrantes o estudiante que los registró.
+Cualquier docente puede consultar los proyectos enviados de todos los grados, independientemente de sus grupos asignados. Puede filtrarlos por área, asesor, grado o estado y buscar por título, integrantes o estudiante que los registró.
 
 Los estados son Borrador, Por revisar, En ajustes y Aprobado. Para pedir ajustes debe escribir una observación. Cada revisión conserva su autor, fecha y versión del contenido. El estudiante puede corregir y reenviar el proyecto; las observaciones anteriores se conservan. Modificar un aprobado lo devuelve a ajustes hasta un nuevo envío.
 
@@ -32,3 +32,11 @@ Pruebas:
 - `npm run build`: compilación de producción.
 
 Para el navegador de pruebas puede usarse `FERIA_TEST_CHROMIUM` para indicar un ejecutable local de Chromium. Las pruebas usan cuentas ficticias y una base PostgreSQL en memoria; no modifican datos reales.
+
+## Actualización para ferias ya activadas
+
+Quienes ya ejecutaron el SQL original deben ejecutar `supabase/feria-areas-asesor.sql` completo. Incluye la selección múltiple de áreas, profesor asesor, lista de docentes y datos para los filtros. Es repetible y conserva proyectos, estados, revisiones y versiones. Los proyectos anteriores permanecen sin clasificar y sin asesor hasta que se actualicen; no se les asignan datos arbitrarios. Los borradores locales anteriores se recuperan conservando su texto y solicitan completar los nuevos campos.
+
+La selección del asesor se comprueba en Supabase: solo acepta perfiles con rol profesor. Su asignación no limita que cualquier docente pueda revisar el proyecto.
+
+`node tests/feriaClasificacion.test.mjs` comprueba validación, docentes disponibles, múltiples áreas, migración incremental y compatibilidad con borradores anteriores.
