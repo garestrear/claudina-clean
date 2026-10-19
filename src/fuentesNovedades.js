@@ -26,8 +26,8 @@ export async function cargarNovedades(db,{rol,id,ficha,grupos}){
    guardar(docente?'avisos':'inicio',async()=>{
     let q=db.from('avisos').select('id,tipo,titulo,contenido,grado,fecha_evento,foto_path,publicado').order('created_at',{ascending:false}).limit(100);
     if(propio)q=q.eq('publicado',true).or('grado.is.null,grado.eq.'+grado);
-    const [avisos,mensajes,propuestas]=await Promise.all([consulta(q),consulta(db.from('mensajes_estudiantes').select('id,titulo,contenido,estado').in('estado',docente?['pendiente','aprobado','oculto']:['aprobado']).order('created_at',{ascending:false}).limit(100)),docente?rpc('tareas_propuestas_listar'):Promise.resolve([])]);
-    return [...conClave('aviso',avisos.filter(a=>delGrupo(a.grado))),...conClave('mensaje',mensajes),...conClave('propuesta',propuestas.filter(p=>p.estado==='pendiente'&&delGrupo(p.grado)))];
+    const [avisos,mensajes]=await Promise.all([consulta(q),consulta(db.from('mensajes_estudiantes').select('id,titulo,contenido,estado').in('estado',docente?['pendiente','aprobado','oculto']:['aprobado']).order('created_at',{ascending:false}).limit(100))]);
+    return [...conClave('aviso',avisos.filter(a=>delGrupo(a.grado))),...conClave('mensaje',mensajes),];
    });
    guardar('horario',async()=>{let b=db.from('horario_base').select('*'),c=db.from('horario_cambios').select('*').gte('fecha',desde());if(propio){b=b.eq('grupo',grupo);c=c.eq('grupo',grupo)}else{b=b.in('grupo',grupos);c=c.in('grupo',grupos)}const [base,cambios]=await Promise.all([consulta(b),consulta(c)]);return [...conClave('base',base),...conClave('cambio',cambios)]},true);
    const aseo=(async()=>{let q=db.from('participaciones').select('id,estudiante_id,estado,calificacion,registro_id,registros_aseo!inner(id,fecha,grupo,observaciones),tareas(tipo,detalle,realizada)').gte('registros_aseo.fecha',desde()).limit(1000);if(propio)q=q.eq('estudiante_id',ficha.id);const filas=await consulta(q);return filas.filter(p=>!docente||incluyeGrupo(grupos,p.registros_aseo.grupo))})();
