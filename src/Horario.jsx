@@ -1,3 +1,4 @@
+import './horario-simple.css';
 import './horario-print.css';
 import {useGruposDocente} from './GruposDocente';
 import FotoTarea from './FotoTarea';
