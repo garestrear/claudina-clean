@@ -1,3 +1,4 @@
+import {InvitacionFeria} from './FeriaInvitados';
 import React,{useEffect,useState} from 'react';
 import {supabase} from './lib/supabase';
 import {fechaBogota} from './ultimaActividad';
@@ -18,7 +19,7 @@ export function PortalInvitados({salir}){
  const dias=diasConvivencia(datos?.seguimiento);
  return <main className="guestPortal"><header><img className="brandShield" src={escudo} alt="Escudo Claudina Múnera"/><div><h1>Claudina App</h1><p>Familias y comunidad · Acceso de invitados</p></div><button type="button" onClick={salir}>Ingresar a mi cuenta</button></header>
  <section><div className="hero"><span>BIENVENIDOS A NUESTRA COMUNIDAD</span><h2>Convivimos, cuidamos y transformamos</h2><p>Una comunidad que aprende a cuidar sus espacios y a resolver sus diferencias con diálogo.</p></div>
- <article className="card"><h2>Nuestra institución</h2><p>Centro Educativo Rural Claudina Múnera · Vereda La Corrala, Caldas, Antioquia.</p><p>“Acogemos con amor, sabiduría y liderazgo transformando realidades”.</p><p>Claudina App acompaña los turnos de aseo, la participación estudiantil, los horarios y los avisos de nuestra comunidad educativa.</p><a href="https://www.claudinamunera.edu.co/" target="_blank" rel="noreferrer">Conoce la página institucional ↗</a></article>
+ <InvitacionFeria/><article className="card"><h2>Nuestra institución</h2><p>Centro Educativo Rural Claudina Múnera · Vereda La Corrala, Caldas, Antioquia.</p><p>“Acogemos con amor, sabiduría y liderazgo transformando realidades”.</p><p>Claudina App acompaña los turnos de aseo, la participación estudiantil, los horarios y los avisos de nuestra comunidad educativa.</p><a href="https://www.claudinamunera.edu.co/" target="_blank" rel="noreferrer">Conoce la página institucional ↗</a></article>
  <ContadorConvivencia seguimiento={datos?.seguimiento} loading={loading}/>
  {loading?<p role="status">Cargando publicaciones…</p>:error?<div className="notice" role="status">{error}<button type="button" onClick={cargar}>Reintentar</button></div>:<>
  <article className="card"><h2>📣 Avisos para la comunidad</h2>{datos?.avisos?.length?datos.avisos.map((a,i)=><div className="guestEntry" key={i}><h3>{a.titulo}</h3><p>{a.contenido}</p>{a.fecha_evento&&<small>Fecha: {a.fecha_evento}</small>}</div>):<p>Pronto compartiremos nuevos avisos públicos.</p>}</article>

@@ -1,3 +1,4 @@
+import {ProyectosExternos} from './FeriaInvitados';
 import BotonImprimirFeria from './FeriaImpresion';
 import React,{useEffect,useRef,useState} from 'react';
 import {supabase} from './lib/supabase';
@@ -82,7 +83,7 @@ function Detalle({id,perfil,docentes,ficha,companeros,onVolver,onCambiar,onMensa
   <div className="fairHistory"><h3>Observaciones de los docentes</h3>{datos.revisiones.length?datos.revisiones.map(r=><article key={r.id}><div><Estado estado={r.estado}/><small>Versión del texto: {r.revision_contenido}</small></div><p>{r.observacion||'Proyecto aprobado.'}</p><small>{r.nombre_revisor} · {fecha(r.creado_en)}</small></article>):<p>Aún no hay observaciones. {p.estado==='enviado'?'El proyecto está esperando revisión.':''}</p>}</div>
  </article>;
 }
-export default function FeriaCiencia({perfil}){
+function FeriaInterna({perfil}){
  const profesor=perfil.rol==='profesor',acudiente=perfil.rol==='acudiente';
  const[contexto,setContexto]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState(''),[mensaje,setMensaje]=useState('');
  const[seleccion,setSeleccion]=useState(null),[nuevo,setNuevo]=useState(null),[busqueda,setBusqueda]=useState(''),[grado,setGrado]=useState('todos'),[estado,setEstado]=useState('todos'),[area,setArea]=useState('todas'),[asesor,setAsesor]=useState('todos');
@@ -108,3 +109,5 @@ export default function FeriaCiencia({perfil}){
   </>}
  </section>;
 }
+
+export default function FeriaCiencia({perfil}){const[origen,setOrigen]=useState('claudina');return <>{perfil.rol==='profesor'&&<div className="fairOriginTabs" role="group" aria-label="Origen de los proyectos"><button type="button" aria-pressed={origen==='claudina'} onClick={()=>setOrigen('claudina')}>Proyectos Claudina</button><button type="button" aria-pressed={origen==='invitados'} onClick={()=>setOrigen('invitados')}>Instituciones invitadas</button></div>}{origen==='invitados'&&perfil.rol==='profesor'?<ProyectosExternos docente cuenta={perfil.id}/>:<FeriaInterna perfil={perfil}/>}</>}
