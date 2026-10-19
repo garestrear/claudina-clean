@@ -22,7 +22,7 @@ const key=(g,d,b)=>`${g}-${d}-${b}`;
 export default function Horario({grupoInicial='6',editable=false,nombreDocente=''}){
   const {incluye}=useGruposDocente();
   const gruposHorario=['0','6','7-8'].filter(g=>!editable||incluye(g));
-  const[grupo,setGrupo]=useState(gruposHorario.includes(grupoInicial)?grupoInicial:gruposHorario[0]||grupoInicial),[filtroProfesor,setFiltroProfesor]=useState(''),[vistaDocente,setVistaDocente]=useState('dia'),[lunes,setLunes]=useState(semanaInicial),[diaSeleccionado,setDiaSeleccionado]=useState(diaInicial);
+  const[grupo,setGrupo]=useState(gruposHorario.includes(grupoInicial)?grupoInicial:gruposHorario[0]||grupoInicial),[filtroProfesor,setFiltroProfesor]=useState(''),[vistaDocente,setVistaDocente]=useState('semana'),[lunes,setLunes]=useState(semanaInicial),[diaSeleccionado,setDiaSeleccionado]=useState(diaInicial);
   const[tareas,setTareas]=useState([]),[errorTareas,setErrorTareas]=useState('');
   const[base,setBase]=useState([]),[cambios,setCambios]=useState([]),[editor,setEditor]=useState(null),[materia,setMateria]=useState(''),[profesor,setProfesor]=useState(''),[aviso,setAviso]=useState(''),[cancelada,setCancelada]=useState(false),[msg,setMsg]=useState(''),[cargando,setCargando]=useState(true);
   async function cargar(){setCargando(true);const [{data:b,error:e1},{data:c,error:e2}]=await Promise.all([supabase.from('horario_base').select('*'),supabase.from('horario_cambios').select('*').gte('fecha',lunes).lte('fecha',fechaSemana(lunes,4))]);setBase(b||[]);setCambios(c||[]);setMsg(e1||e2?'Para activar el horario, ejecuta horario-temporal.sql en Supabase. '+(e1||e2).message:'');setCargando(false)}
