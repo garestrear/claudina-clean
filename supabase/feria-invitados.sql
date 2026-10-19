@@ -40,7 +40,7 @@ revoke all on function public.feria_externo_autorizado() from public,anon,authen
 create or replace function public.feria_externa_contexto()
 returns jsonb language plpgsql security definer set search_path='' as $$
 begin
- if not coalesce(public.es_profesor(),false) and not public.feria_externo_autorizado() then raise exception 'Ingresa con el correo verificado del docente invitado';end if;
+ if not coalesce(public.es_profesor(),false) and not public.feria_externo_autorizado() then raise exception 'Ingresa con el correo verificado del participante invitado';end if;
  return coalesce((select jsonb_agg(to_jsonb(p)-'ultima_solicitud'-'autor' order by p.actualizado_en desc) from public.feria_proyectos_externos p
  where p.autor=auth.uid() or (public.es_profesor() and p.estado<>'borrador')),'[]'::jsonb);
 end $$;
@@ -58,27 +58,28 @@ create or replace function public.feria_externa_guardar(proyecto uuid,datos json
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare p public.feria_proyectos_externos;d jsonb:='{}'::jsonb;campo text;limite int;correo text;
 begin
- if not public.feria_externo_autorizado() then raise exception 'Usa un correo verificado de docente de una institución invitada';end if;
+ if not public.feria_externo_autorizado() then raise exception 'Usa un correo verificado de una persona de otra institución';end if;
  if proyecto is null or solicitud is null or enviar is null or version_esperada is null then raise exception 'Solicitud incompleta';end if;
  perform pg_advisory_xact_lock(hashtextextended(auth.uid()::text,0));
  select * into p from public.feria_proyectos_externos where id=proyecto for update;
  if p.id is not null and p.autor<>auth.uid() then raise exception 'Proyecto no disponible';end if;
  if p.id is not null and p.ultima_solicitud=solicitud then return public.feria_externa_proyecto(proyecto);end if;
  if (p.id is null and version_esperada<>0) or(p.id is not null and p.version<>version_esperada) then raise exception 'El proyecto cambió. Actualiza la lista antes de guardar';end if;
- if p.id is null and(select count(*) from public.feria_proyectos_externos where autor=auth.uid())>=20 then raise exception 'Límite de 20 proyectos por docente';end if;
- foreach campo in array array['institucion','municipio','responsable','telefono','titulo','integrantes','propuesta','procedimiento','materiales','resultados_esperados','bibliografia','apoyo'] loop
-  limite:=case when campo in('institucion','municipio','responsable','titulo') then 150 when campo='telefono' then 50 when campo in('integrantes','materiales','resultados_esperados','apoyo') then 2000 else 4000 end;
+ if enviar and (p.id is null or p.estado='borrador') and now()>=timestamptz '2026-10-31 00:00:00 America/Bogota' then raise exception 'La recepción de nuevas propuestas cerró el 30 de octubre de 2026 a las 11:59 p. m. (Colombia). Contacta al comité científico';end if;
+ if p.id is null and(select count(*) from public.feria_proyectos_externos where autor=auth.uid())>=20 then raise exception 'Límite de 20 proyectos por cuenta';end if;
+ foreach campo in array array['institucion','municipio','responsable','telefono','titulo','integrantes','propuesta','procedimiento','materiales','resultados_esperados','bibliografia','apoyo','logistica'] loop
+  limite:=case when campo in('institucion','municipio','responsable','titulo') then 150 when campo='telefono' then 50 when campo in('integrantes','materiales','resultados_esperados','apoyo','logistica') then 2000 else 4000 end;
   if datos?campo and jsonb_typeof(datos->campo)<>'string' then raise exception 'Texto inválido en %',campo;end if;
   if length(coalesce(datos->>campo,''))>limite then raise exception 'Texto demasiado largo en %',campo;end if;
   d:=d||jsonb_build_object(campo,trim(coalesce(datos->>campo,'')));
  end loop;
- if length(d->>'titulo')<3 or length(d->>'institucion')<3 or length(d->>'responsable')<3 or length(d->>'municipio')<2 then raise exception 'Completa institución, municipio, docente responsable y título';end if;
+ if length(d->>'titulo')<3 or length(d->>'institucion')<3 or length(d->>'responsable')<3 or length(d->>'municipio')<2 then raise exception 'Completa institución, municipio, persona responsable y título';end if;
  if jsonb_typeof(datos->'areas') is distinct from 'array' then raise exception 'Selecciona las áreas STEAM';end if;
  if jsonb_array_length(datos->'areas') not between 1 and 5 or exists(select 1 from jsonb_array_elements(datos->'areas') a where jsonb_typeof(a)<>'string' or (a#>>'{}') not in('science','technology','engineering','arts','mathematics')) or (select count(distinct a) from jsonb_array_elements(datos->'areas') a)<>jsonb_array_length(datos->'areas') then raise exception 'Áreas STEAM inválidas';end if;
  if enviar and (length(d->>'integrantes')=0 or length(d->>'propuesta')=0 or length(d->>'procedimiento')=0) then raise exception 'Completa integrantes, propuesta y procedimiento antes de enviar';end if;
  if datos->'acepta' is distinct from 'true'::jsonb then raise exception 'Confirma la autorización institucional para registrar el equipo';end if;
  select u.email into correo from auth.users u where u.id=auth.uid();
- d:=d||jsonb_build_object('areas',datos->'areas','correo',correo,'acepta',true);
+ d:=d||jsonb_build_object('areas',datos->'areas','correo',correo,'acepta',true,'publicar',coalesce(datos->'publicar'='true'::jsonb,false));
  if p.id is null then
   insert into public.feria_proyectos_externos(id,autor,datos,estado,ultima_solicitud) values(proyecto,auth.uid(),d,case when enviar then 'enviado' else 'borrador' end,solicitud);
  else
@@ -109,4 +110,12 @@ grant execute on function public.feria_externa_contexto(),public.feria_externa_p
 create or replace function public.feria_invitacion_habilitada() returns boolean language sql stable set search_path='' as $$select true$$;
 revoke all on function public.feria_invitacion_habilitada() from public;
 grant execute on function public.feria_invitacion_habilitada() to anon,authenticated;
+-- Solo datos de difusión de proyectos aprobados con autorización explícita.
+create or replace function public.feria_proyectos_publicos()
+returns jsonb language sql stable security definer set search_path='' as $$
+ select coalesce(jsonb_agg(jsonb_build_object('id',p.id,'titulo',p.datos->>'titulo','institucion',p.datos->>'institucion','areas',p.datos->'areas') order by p.actualizado_en desc),'[]'::jsonb)
+ from public.feria_proyectos_externos p where p.estado='aprobado' and p.datos->'publicar'='true'::jsonb;
+$$;
+revoke all on function public.feria_proyectos_publicos() from public;
+grant execute on function public.feria_proyectos_publicos() to anon,authenticated;
 commit;
