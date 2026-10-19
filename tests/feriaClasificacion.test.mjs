@@ -3,7 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {crearFeriaDb,uid,uuid} from './fixtures/feriaDb.mjs';
 import {datosFeria,leerBorradorFeria,validarFeria} from '../src/feriaCiencia.js';
 const{db,identity,rpc}=await crearFeriaDb();
-const datos={...datosFeria(),titulo:'Puente de papel',integrantes:'Ana y Luis',propuesta:'Construir un puente',procedimiento:'Probar distintas formas',areas:['engineering','mathematics'],asesor_id:uid(1)};
+const datos={...datosFeria(),integrantes_ids:[],titulo:'Puente de papel',integrantes:'Ana y Luis',propuesta:'Construir un puente',procedimiento:'Probar distintas formas',areas:['engineering','mathematics'],asesor_id:uid(1)};
 await identity(3);const contexto=await rpc('feria_contexto');assert.deepEqual(contexto.docentes.map(d=>d.id).sort(),[uid(1),uid(2)]);assert.deepEqual(Object.keys(contexto.docentes[0]).sort(),['id','nombre']);
 const guardar=(d=datos,v=0,id=uuid(400),request=uuid(401))=>rpc('feria_guardar',[id,d,v,true,request],['uuid','jsonb','integer','boolean','uuid']);
 for(const areas of [[],['foo'],['science','science'],[null],'science',[1],null])await assert.rejects(guardar({...datos,areas}));
