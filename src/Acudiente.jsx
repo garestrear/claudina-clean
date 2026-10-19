@@ -16,7 +16,7 @@ import escudo from './assets/escudo-claudina.png';
 import './Acudiente.css';
 const dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const estado={cumplio:'✅ Cumplió',ausente:'🚫 Ausente',no_cumplio:'❌ No cumplió'};
-const tabs=[['inicio','🏠 Mi hijo'],['horario','🕒 Horario'],['aseo','🧹 Aseo y evidencias'],['avisos','📚 Tareas y Avisos'],['reportes','🚨 Reportes de mi hijo'],['convivencia','🤝 Convivencia y compromisos'],['eventos','⭐ Evaluar eventos'],['encuestas','📋 Resultados de encuestas'],['feria','🔬 Feria de la Ciencia'],['cuenta','🔐 Mi cuenta']];
+const tabs=[['inicio','🏠 Mi hijo'],['horario','🕒 Horario'],['aseo','🧹 Aseo y evidencias'],['avisos','📚 Tareas y Avisos'],['reportes','🚨 Reportes de mi hijo'],['convivencia','🤝 Convivencia y compromisos'],['eventos','⭐ Evaluar eventos'],['encuestas','📋 Resultados de encuestas'],['feria','🔬 Feria STEAM'],['cuenta','🔐 Mi cuenta']];
 export function IngresoAcudiente({onVolver}){
  const[documento,setDocumento]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[msg,setMsg]=useState('');
  async function entrar(e){e.preventDefault();if(busy)return;setBusy(true);setMsg('');try{
