@@ -21,3 +21,13 @@
 - Crear migración supabase/evaluacion-eventos.sql, componente src/EvaluacionEventos.jsx y pruebas.
 - Verificar build y tests antes de fusionar; desplegar después de ejecutar migración SQL y probar en teléfonos reales.
 - No modificar producción ni activar envío masivo durante desarrollo.
+
+## Eliminar evaluaciones creadas por error
+
+Ejecutar `supabase/evento-eliminar.sql` en SQL Editor. La instalación es repetible y no elimina datos. En cada evaluación, un docente puede abrir Más opciones → Eliminar evaluación. Se consulta el conteo actual de respuestas y se pide escribir el título exacto antes de eliminar definitivamente la evaluación, sus respuestas, comentarios y participantes. Cancelar conserva todo. Si cambia el título o llegan respuestas nuevas, el servidor exige revisar la confirmación. Los estudiantes y acudientes no pueden eliminar. La función valida los permisos en Supabase, sin abrir acceso directo a las tablas. No se elimina ninguna evaluación automáticamente al publicar.
+
+Pruebas: `node tests/eventoEliminar.test.mjs` y `node tests/eventoEliminarUi.test.mjs`.
+
+## Descargar informe
+
+Dentro de Resultados, «Descargar informe» consulta nuevamente los datos autorizados de Supabase y descarga un documento HTML independiente. Incluye título, descripción, estado, fecha de generación en Colombia, grados, total y promedio general, tabla de los tres grupos, distribución 1–10 y comentarios por grupo. Distingue resultados parciales de una evaluación abierta y conserva respuestas históricas sin clasificar. El documento puede abrirse sin conexión e imprimirse o guardarse como PDF desde su botón. Los textos introducidos por participantes se escapan para evitar ejecución de HTML. No exporta cuentas, correos ni identificadores.
