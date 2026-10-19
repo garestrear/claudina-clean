@@ -27,7 +27,7 @@ revoke all on function public.es_miembro_claudina() from public,anon;
 grant execute on function public.es_miembro_claudina() to authenticated;
 do $$declare r record;begin
  for r in select n.nspname esquema,c.relname tabla from pg_class c join pg_namespace n on n.oid=c.relnamespace
- where c.relkind='r' and c.relrowsecurity and n.nspname in('public','storage') loop
+ where c.relkind='r' and c.relrowsecurity and (n.nspname='public' or (n.nspname='storage' and c.relname='objects')) loop
   execute format('drop policy if exists acceso_institucional on %I.%I',r.esquema,r.tabla);
   execute format('create policy acceso_institucional on %I.%I as restrictive for all to authenticated using(public.es_miembro_claudina()) with check(public.es_miembro_claudina())',r.esquema,r.tabla);
  end loop;
