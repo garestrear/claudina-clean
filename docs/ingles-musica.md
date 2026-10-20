@@ -21,7 +21,7 @@ La activación es repetible y no borra intentos ni modifica actividades anterior
 
 Los estudiantes pueden pausar, retroceder diez segundos y escuchar a 0.75×. La revisión se realiza en Supabase: ignora mayúsculas y separadores, conserva el último intento y el mejor resultado, y evita duplicar el envío al reintentar una misma solicitud. Los borradores se guardan en el navegador por cuenta. La puntuación de práctica se expresa sobre 10.
 
-Los docentes ven una vista previa, pueden ocultar el banco de palabras o cerrar la actividad y consultar resultados filtrados por sus grupos. El módulo no modifica las notas de aseo. Las tablas no admiten acceso directo de usuarios; las funciones comprueban la cuenta, su rol, la ficha activa y el grado.
+Los docentes pueden completar el ejercicio por diversión y revisar sus aciertos (sin guardar su puntaje ni mezclarlo con estudiantes). Para habilitar la corrección docente, ejecutar completo `supabase/ingles-practica-profesor.sql` en Supabase SQL Editor; es repetible y no modifica intentos existentes. La lista de estudiantes que ya practicaron aparece al abrir la actividad, con nombre, grado, intentos y puntajes último y mejor sobre 10. Los docentes también pueden ocultar el banco de palabras o cerrar la actividad y consultar resultados filtrados por sus grupos. El módulo no modifica las notas de aseo. Las tablas no admiten acceso directo de usuarios; las funciones comprueban la cuenta, su rol, la ficha activa y el grado.
 
 ## Verificación
 

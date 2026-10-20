@@ -29,4 +29,13 @@ await identity(1);let listado=await rpc('ingles_resultados',['lemon-tree'],['tex
 await rpc('ingles_configurar',['lemon-tree',false,true],['text','boolean','boolean']);await identity(2);assert.deepEqual((await rpc('ingles_contexto'))[0].banco,[]);
 await identity(1);await rpc('ingles_configurar',['lemon-tree',false,false],['text','boolean','boolean']);await identity(2);assert.deepEqual(await rpc('ingles_contexto'),[]);await assert.rejects(respond());
 await db.exec('set role authenticated');await assert.rejects(db.query('select * from ingles_progreso'));await assert.rejects(db.query('select contenido from ingles_actividades'));await db.exec('reset role');
+const teacherSql=await readFile(new URL('../supabase/ingles-practica-profesor.sql',import.meta.url),'utf8');await db.exec(teacherSql);await db.exec(teacherSql);
+const practice=(choices=answer)=>rpc('ingles_practicar_profesor',['lemon-tree',choices,request(99)],['text','jsonb','uuid']);
+for(const n of [0,2,3,4]){await identity(n);await assert.rejects(practice());}
+await identity(1);const before=(await db.query('select count(*)::int n from ingles_progreso')).rows[0].n;
+const perfect=await practice();assert.equal(perfect.aciertos,7);assert.equal(perfect.total,7);
+const partial=await practice({...answer,1:'wrong'});assert.equal(partial.aciertos,6);assert.equal(partial.correccion['1'],false);
+await assert.rejects(practice({1:'room'}));await assert.rejects(practice({...answer,1:42}));
+assert.equal((await db.query('select count(*)::int n from ingles_progreso')).rows[0].n,before,'practicar como docente no crea resultados de estudiantes');
+assert.equal((await rpc('ingles_resultados',['lemon-tree'],['text'])).length,1);
 console.log('PASS: SQL repetible, grados 6/7/8, aislamiento, corrección, mejor intento, reintento idempotente, configuración, cierre y privacidad');await db.close();
