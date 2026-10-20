@@ -22,4 +22,20 @@ await act(async()=>view.root.findAllByType('button').find(b=>b.props.className==
 fail=true;await act(async()=>view.root.findByType('form').props.onSubmit({preventDefault(){}}));assert.match(JSON.stringify(view.toJSON()),/No se pudo guardar/);assert.equal(view.root.findAllByType('input')[1].props.value,'time');
 await act(async()=>view.unmount());fail=false;await act(async()=>{view=create(React.createElement(Modulo,{perfil:{id:'other',rol:'estudiante'}}))});await act(async()=>view.root.findAllByType('button').find(b=>b.props.className==='englishStart').props.onClick());assert.equal(view.root.findAllByType('input')[0].props.value,'');await act(async()=>view.unmount());
 await act(async()=>{view=create(React.createElement(Modulo,{perfil:{id:'teacher',rol:'profesor'}}))});await act(async()=>view.root.findAllByType('button').find(b=>b.props.className==='englishStart').props.onClick());assert.ok(view.root.findAllByType('input').every(i=>i.props.disabled));assert.match(JSON.stringify(view.toJSON()),/Sexto/);assert.ok(!JSON.stringify(view.toJSON()).includes('Séptimo'));assert.equal(view.root.findAllByType('form')[0].findAllByType('button').length,0);
+await act(async()=>view.unmount());
+actividad.opciones={'1':['room','roof'],'2':['time','team']};fail=false;
+await act(async()=>{view=create(React.createElement(Modulo,{perfil:{id:'choice-student',rol:'estudiante'}}))});
+await act(async()=>view.root.findAllByType('button').find(b=>b.props.className==='englishStart').props.onClick());
+assert.equal(view.root.findAllByType('input').length,0,'nivel fácil usa opciones visibles');
+const opciones=view.root.findAll(n=>n.props.role==='group'&&String(n.props['aria-label']).startsWith('Opciones para la palabra'));
+assert.equal(opciones.length,2);assert.equal(submit().props.disabled,true);
+await act(async()=>opciones[0].findAllByType('button')[0].props.onClick());
+await act(async()=>opciones[1].findAllByType('button')[1].props.onClick());
+assert.equal(submit().props.disabled,false);
+await act(async()=>view.root.findByType('form').props.onSubmit({preventDefault(){}}));
+assert.deepEqual(calls.filter(c=>c[0]==='ingles_responder').at(-1)[1].elecciones,{'1':'room','2':'team'});
+assert.match(JSON.stringify(view.toJSON()),/Escucha de nuevo/);
+await act(async()=>view.root.findAll(n=>n.props.role==='group'&&n.props['aria-label']==='Opciones para la palabra 2')[0].findAllByType('button')[0].props.onClick());
+assert.ok(!JSON.stringify(view.toJSON()).includes('Escucha de nuevo'),'cambiar una opción limpia la corrección anterior');
+
 await act(async()=>view.unmount());await unlink(outfile);console.log('PASS: audio, formulario, progreso tras envío, corrección, fallo conserva respuestas, borradores separados y resultados por grupos');
