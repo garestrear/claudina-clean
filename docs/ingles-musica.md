@@ -37,3 +37,17 @@ Los docentes pueden completar el ejercicio por diversión y revisar sus aciertos
 Ejecutar completo `supabase/ingles-clasificacion.sql` para habilitar la clasificación a estudiantes con ficha activa y acceso a la actividad publicada. Muestra nombres, grados, intentos y puntajes, ordenada por el mejor resultado; los empates comparten puesto. No expone respuestas, correcciones, correos ni identificadores de cuentas. No concede acceso anónimo ni modifica las tablas. La clasificación se actualiza tras calificar y también con «Actualizar resultados».
 
 Verificación adicional: `node tests/inglesClasificacion.test.mjs` comprueba permisos, empates y campos expuestos. `node tests/inglesImagine.test.mjs` verifica calificación, clasificación, reinicio vacío tras recarga y conservación del progreso en navegador.
+
+## Puntaje, tiempo y top 10
+
+Ejecutar completo `supabase/ingles-ranking-tiempo.sql` para actualizar las funciones y añadir los registros de tiempo, sin borrar progreso. Reemplaza la versión anterior de la clasificación; no es necesario volver a ejecutar `ingles-clasificacion.sql` si se ejecuta esta migración.
+
+Cada estudiante recibe hasta 100 puntos: `100 × máximo de aciertos / total de espacios`. El orden compara el valor exacto antes de redondear: mayor puntuación, menos intentos calificados, menor tiempo del intento con ese máximo, y fecha/hora más temprana de ese intento. Un identificador estable resuelve coincidencias exactas. Si vuelve a igualar su máximo en menos tiempo, se conserva ese nuevo tiempo y su fecha. Los intentos de menor puntaje no reemplazan estos datos.
+
+El servidor registra el inicio al primer uso del audio o al escribir y el final al calificar. Incluye pausas y el tiempo fuera de la pestaña; recargar no reinicia el reloj. «Realizar otro intento» prepara una sesión nueva, que empezará con la siguiente interacción. Reenviar una misma solicitud no duplica intentos ni cambia su duración.
+
+Los resultados históricos y envíos de versiones anteriores conservan su puntaje; sin medición real muestran «Sin registro» y quedan después de tiempos conocidos cuando empatan en puntos e intentos. No se deduce la fecha del máximo a partir de la fecha del último envío.
+
+Los estudiantes reciben solo los primeros diez desde Supabase, incluso si consultan la función directamente. La función interna que genera la lista completa no está disponible a usuarios. El docente recibe todos los resultados y mantiene sus filtros por grupos. Las tablas están al final de cada actividad. Las fechas se muestran en hora de Colombia.
+
+Prueba: `node tests/inglesRankingTiempo.test.mjs` cubre medición, reanudación, idempotencia, conservación del mejor resultado, los cuatro criterios de orden, límite del top 10 en el servidor, lista docente completa y permisos.
