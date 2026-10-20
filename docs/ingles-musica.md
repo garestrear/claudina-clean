@@ -29,3 +29,11 @@ Los docentes pueden completar el ejercicio por diversión y revisar sus aciertos
 - `node tests/inglesUi.test.mjs`: formulario, errores, borradores y filtros docentes.
 - `node tests/inglesBrowser.test.mjs`: navegador móvil, MP3, RPC, PostgreSQL, recarga y resultados. Puede usarse `INGLES_TEST_CHROMIUM` para seleccionar un ejecutable local de Chromium.
 - `npm run build`: compilación de producción.
+
+## Calificar, nuevo intento y clasificación estudiantil
+
+«Calificar» revisa el formulario actual. «Realizar otro intento» vacía los campos y la corrección, guarda un borrador vacío (también tras recargar) y reinicia el audio sin crear un intento ni borrar el mejor resultado anterior.
+
+Ejecutar completo `supabase/ingles-clasificacion.sql` para habilitar la clasificación a estudiantes con ficha activa y acceso a la actividad publicada. Muestra nombres, grados, intentos y puntajes, ordenada por el mejor resultado; los empates comparten puesto. No expone respuestas, correcciones, correos ni identificadores de cuentas. No concede acceso anónimo ni modifica las tablas. La clasificación se actualiza tras calificar y también con «Actualizar resultados».
+
+Verificación adicional: `node tests/inglesClasificacion.test.mjs` comprueba permisos, empates y campos expuestos. `node tests/inglesImagine.test.mjs` verifica calificación, clasificación, reinicio vacío tras recarga y conservación del progreso en navegador.
