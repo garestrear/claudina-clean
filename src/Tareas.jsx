@@ -10,7 +10,7 @@ export function TareasEstudiante({ficha}){
  const clave=`claudina-clean:tarea:${ficha.id}`,borrador=leerBorrador(clave)||{};
  const[fotos,setFotos]=useState([]);
  const[materia,setMateria]=useState(borrador.materia||''),[titulo,setTitulo]=useState(borrador.titulo||''),[contenido,setContenido]=useState(borrador.contenido||''),[fecha,setFecha]=useState(borrador.fecha||''),[propuestas,setPropuestas]=useState([]),[tareas,setTareas]=useState([]),[msg,setMsg]=useState(''),[busy,setBusy]=useState(false);
- async function cargar(){const[{data:p,error:ep},{data:t,error:et}]=await Promise.all([supabase.rpc('tareas_propuestas_listar'),supabase.from('avisos').select('id,titulo,contenido,grado,fecha_evento,foto_path').eq('publicado',true).eq('tipo','tarea').order('fecha_evento',{ascending:true})]);if(ep||et)setMsg('No se pudieron cargar las tareas: '+(ep||et).message);else{setPropuestas(p||[]);setTareas(t||[])}}
+ async function cargar(){const[{data:p,error:ep},{data:t,error:et}]=await Promise.all([supabase.rpc('tareas_propuestas_listar'),supabase.from('avisos').select('id,titulo,contenido,grado,fecha_evento,foto_path').eq('publicado',true).eq('tipo','tarea').order('fecha_evento',{ascending:true,nullsFirst:false})]);if(ep||et)setMsg('No se pudieron cargar las tareas: '+(ep||et).message);else{setPropuestas(p||[]);setTareas([...(t||[])].sort((a,b)=>(a.fecha_evento||'9999-12-31').localeCompare(b.fecha_evento||'9999-12-31')))}}
  useEffect(()=>{cargar();leerFotosBorrador(clave).then(setFotos)},[]);
  useEffect(()=>{guardarBorrador(clave,{materia,titulo,contenido,fecha})},[materia,titulo,contenido,fecha]);
  function seleccionarFotos(archivos){setFotos(archivos);guardarFotosBorrador(clave,archivos).catch(()=>setMsg('No se pudo conservar la foto para una recarga.'))}
