@@ -11,6 +11,14 @@ El script puede ejecutarse de nuevo sin borrar intentos ni restablecer la config
 
 ## Uso
 
+### Imagine · John Lennon
+
+Ejecutar completo `supabase/ingles-imagine-imagen.sql` después de activar el módulo con `supabase/ingles-musica.sql`. No hace falta ejecutar el antiguo `ingles-imagine.sql` ni configurar Storage: el audio proporcionado por el docente se incluye en `public/audio/imagine.mp3` y estará disponible al desplegar esta versión de la app.
+
+La actividad transcribe la imagen del docente: cada par subrayado se sustituye por un espacio cuya respuesta es la opción correcta de la canción. Son 26 espacios y un banco inicial de 18 palabras distintas; algunas se utilizan varias veces. Se conserva la redacción de la imagen. La revisión utiliza las funciones existentes del módulo.
+
+La activación es repetible y no borra intentos ni modifica actividades anteriores. Si ya existía la versión de nivel fácil, ambas se conservan.
+
 Los estudiantes pueden pausar, retroceder diez segundos y escuchar a 0.75×. La revisión se realiza en Supabase: ignora mayúsculas y separadores, conserva el último intento y el mejor resultado, y evita duplicar el envío al reintentar una misma solicitud. Los borradores se guardan en el navegador por cuenta. La puntuación de práctica se expresa sobre 10.
 
 Los docentes ven una vista previa, pueden ocultar el banco de palabras o cerrar la actividad y consultar resultados filtrados por sus grupos. El módulo no modifica las notas de aseo. Las tablas no admiten acceso directo de usuarios; las funciones comprueban la cuenta, su rol, la ficha activa y el grado.
