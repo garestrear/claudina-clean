@@ -19,7 +19,7 @@ La actividad transcribe la imagen del docente: cada par subrayado se sustituye p
 
 La activación es repetible y no borra intentos ni modifica actividades anteriores. Si ya existía la versión de nivel fácil, ambas se conservan.
 
-Los estudiantes pueden pausar, retroceder diez segundos y escuchar a 0.75×. La revisión se realiza en Supabase: ignora mayúsculas y separadores, conserva el último intento y el mejor resultado, y evita duplicar el envío al reintentar una misma solicitud. Los borradores se guardan en el navegador por cuenta. La puntuación de práctica se expresa sobre 10.
+Los estudiantes pueden pausar, retroceder diez segundos y escuchar a 0.75×. La revisión se realiza en Supabase: ignora mayúsculas y separadores, conserva el último intento y el mejor resultado, y evita duplicar el envío al reintentar una misma solicitud. Las respuestas de estudiantes permanecen solo durante la actividad abierta; salir de la app o cambiar de sección las borra. La puntuación de práctica se expresa sobre 10.
 
 Los docentes pueden completar el ejercicio por diversión y revisar sus aciertos (sin guardar su puntaje ni mezclarlo con estudiantes). Para habilitar la corrección docente, ejecutar completo `supabase/ingles-practica-profesor.sql` en Supabase SQL Editor; es repetible y no modifica intentos existentes. La lista de estudiantes que ya practicaron aparece al abrir la actividad, con nombre, grado, intentos y puntajes último y mejor sobre 10. Los docentes también pueden ocultar el banco de palabras o cerrar la actividad y consultar resultados filtrados por sus grupos. El módulo no modifica las notas de aseo. Las tablas no admiten acceso directo de usuarios; las funciones comprueban la cuenta, su rol, la ficha activa y el grado.
 
@@ -32,11 +32,11 @@ Los docentes pueden completar el ejercicio por diversión y revisar sus aciertos
 
 ## Calificar, nuevo intento y clasificación estudiantil
 
-«Calificar» revisa el formulario actual. «Realizar otro intento» vacía los campos y la corrección, guarda un borrador vacío (también tras recargar) y reinicia el audio sin crear un intento ni borrar el mejor resultado anterior.
+«Calificar» revisa el formulario actual. «Realizar otro intento» vacía los campos y la corrección, borra las respuestas escritas y reinicia el audio sin crear un intento ni borrar el mejor resultado anterior.
 
 Ejecutar completo `supabase/ingles-clasificacion.sql` para habilitar la clasificación a estudiantes con ficha activa y acceso a la actividad publicada. Muestra nombres, grados, intentos y puntajes, ordenada por el mejor resultado; los empates comparten puesto. No expone respuestas, correcciones, correos ni identificadores de cuentas. No concede acceso anónimo ni modifica las tablas. La clasificación se actualiza tras calificar y también con «Actualizar resultados».
 
-Verificación adicional: `node tests/inglesClasificacion.test.mjs` comprueba permisos, empates y campos expuestos. `node tests/inglesImagine.test.mjs` verifica calificación, clasificación, reinicio vacío tras recarga y conservación del progreso en navegador.
+Verificación adicional: `node tests/inglesClasificacion.test.mjs` comprueba permisos, empates y campos expuestos. `node tests/inglesImagine.test.mjs` verifica calificación, clasificación, reinicio vacío tras recarga y conservación del puntaje en navegador.
 
 ## Puntaje, tiempo y top 10
 
@@ -61,3 +61,9 @@ En **Aprende Inglés → Agregar canción**, el docente escribe título y artist
 «Publicar canción» sube el audio y crea una actividad con banco mezclado, corrección, progreso y clasificación existentes. Reintentar una solicitud no crea otra actividad ni vuelve a subir un audio ya confirmado. El aviso de derechos y uso educativo aparece al pie del módulo. Las canciones existentes conservan sus rutas, actividades e intentos.
 
 Verificación: `node tests/crearCancion.test.mjs`, `node tests/crearCancionSql.test.mjs` y `node tests/crearCancionBrowser.test.mjs` (acepta `INGLES_TEST_CHROMIUM`).
+
+## Revisión temporal para estudiantes
+
+Después de calificar se muestran el puntaje y las respuestas con su revisión durante 120 segundos, con contador visible. Los campos quedan bloqueados: para cambiar respuestas se debe iniciar otro intento completo. Al terminar ese plazo se ocultan letra, banco, audio y respuestas; permanece el puntaje y el botón para realizar otro intento.
+
+Salir de la app, cambiar de pestaña, bloquear la pantalla o abrir otra sección descarta lo escrito. La revisión no se recupera al volver ni al recargar. El puntaje y los resultados ya calificados se conservan. Los nuevos intentos empiezan con todos los campos vacíos y el audio desde el inicio. Este cambio no requiere SQL adicional. La práctica de docentes conserva su funcionamiento anterior.
