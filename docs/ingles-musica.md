@@ -51,3 +51,13 @@ Los resultados históricos y envíos de versiones anteriores conservan su puntaj
 Los estudiantes reciben solo los primeros diez desde Supabase, incluso si consultan la función directamente. La función interna que genera la lista completa no está disponible a usuarios. El docente recibe todos los resultados y mantiene sus filtros por grupos. Las tablas están al final de cada actividad. Las fechas se muestran en hora de Colombia.
 
 Prueba: `node tests/inglesRankingTiempo.test.mjs` cubre medición, reanudación, idempotencia, conservación del mejor resultado, los cuatro criterios de orden, límite del top 10 en el servidor, lista docente completa y permisos.
+
+## Agregar canciones desde la aplicación
+
+Ejecutar una sola vez `supabase/ingles-crear-canciones.sql` en Supabase SQL Editor, después de activar el módulo. Crea el bucket `ingles-audios` (MP3 de hasta 25 MB) y la función de publicación, restringida a docentes autenticados. Los audios de las actividades son públicos como los MP3 anteriores; las respuestas se mantienen en las tablas protegidas.
+
+En **Aprende Inglés → Agregar canción**, el docente escribe título y artista, carga el MP3, pega la letra y escribe las palabras separadas por comas o saltos de línea. «Marcar palabras» selecciona todas sus apariciones sin distinguir mayúsculas; después puede pulsar cada aparición para ocultarla o conservarla. La vista previa muestra los espacios. Al cambiar la letra se reinicia la selección para evitar marcas desplazadas. Admite entre 1 y 100 espacios y grados 6°, 7° y 8°.
+
+«Publicar canción» sube el audio y crea una actividad con banco mezclado, corrección, progreso y clasificación existentes. Reintentar una solicitud no crea otra actividad ni vuelve a subir un audio ya confirmado. El aviso de derechos y uso educativo aparece al pie del módulo. Las canciones existentes conservan sus rutas, actividades e intentos.
+
+Verificación: `node tests/crearCancion.test.mjs`, `node tests/crearCancionSql.test.mjs` y `node tests/crearCancionBrowser.test.mjs` (acepta `INGLES_TEST_CHROMIUM`).

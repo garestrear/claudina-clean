@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {seleccionarPalabras,marcarLetra} from '../src/crearCancion.js';
+const letra="Head, head! Ahead.\nYour child’s head is here: 1916.";
+const r=seleccionarPalabras(letra,'HEAD, 1916, missing');
+assert.deepEqual(r.indices,[0,1,5,8]);
+assert.deepEqual(r.faltantes,['missing']);
+assert.equal(marcarLetra(letra,r.indices),"[[Head]], [[head]]! Ahead.\nYour child’s [[head]] is here: [[1916]].");
+assert.equal(marcarLetra(letra,[1]),"Head, [[head]]! Ahead.\nYour child’s head is here: 1916.");
+assert.deepEqual(seleccionarPalabras("I'm here; I’m here", "I'm").indices,[0,2]);
+assert.equal(marcarLetra('line one\nline two',[]),'line one\nline two');
+console.log('Selección: mayúsculas, límites de palabra, apóstrofes, repetición, números y saltos de línea OK');
