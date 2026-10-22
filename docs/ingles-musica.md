@@ -87,3 +87,11 @@ Para el resaltado, el docente usa «Sincronizar el resaltado de las líneas»: r
 Verificación: `node tests/inglesAutomatico.test.mjs`, `node tests/inglesUi.test.mjs`, `node tests/inglesModosBrowser.test.mjs` (opcional `INGLES_TEST_CHROMIUM`), `npm run build`.
 
 El reproductor está fuera del contenedor de letras y se fija al área visible (Visual Viewport). Recalcula su posición al abrir el teclado, desplazar la pantalla o cambiar la orientación, y utiliza la geometría del teclado cuando está disponible. En escritura se compacta y mantiene accesibles pausa/reproducción y retroceso de cinco segundos. La prueba móvil simula un viewport reducido y desplazado; la experiencia final depende del navegador y debe comprobarse también en el celular.
+
+## Ayuda progresiva desde el tercer intento
+
+El banco se entrega al estudiante desde el tercer intento, contando intentos enviados para calificar en esa actividad. Abrir, recargar o iniciar una sesión no aumenta este contador. El servidor retiene el número de intento al iniciar la sesión y no entrega el banco en los dos primeros. El docente puede deshabilitar la ayuda desde «Administrar actividad».
+
+El banco mezcla una entrada por espacio, incluidas repeticiones. Al acertar se retira exactamente una entrada de la palabra correspondiente; los errores y el texto aún sin validar no retiran opciones. La ayuda se carga al iniciar un nuevo intento sin recargar la página. El docente puede previsualizar el banco.
+
+Volver a ejecutar completo `supabase/ingles-respuestas-automaticas.sql` para activar la entrega progresiva del banco. Prueba: `node tests/inglesAyuda.test.mjs`; el navegador comprueba dos envíos y ayuda en el tercero con descarte automático.
