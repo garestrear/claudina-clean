@@ -67,3 +67,17 @@ Verificación: `node tests/crearCancion.test.mjs`, `node tests/crearCancionSql.t
 Después de calificar se muestran el puntaje y las respuestas con su revisión durante 120 segundos, con contador visible. Los campos quedan bloqueados: para cambiar respuestas se debe iniciar otro intento completo. Al terminar ese plazo se ocultan letra, banco, audio y respuestas; permanece el puntaje y el botón para realizar otro intento.
 
 Salir de la app, cambiar de pestaña, bloquear la pantalla o abrir otra sección descarta lo escrito. La revisión no se recupera al volver ni al recargar. El puntaje y los resultados ya calificados se conservan. Los nuevos intentos empiezan con todos los campos vacíos y el audio desde el inicio. Este cambio no requiere SQL adicional. La práctica de docentes conserva su funcionamiento anterior.
+
+## Modos, dos respuestas y escucha mínima
+
+Ejecutar `supabase/ingles-modos-escucha.sql` después de `ingles-ranking-tiempo.sql`. Es repetible y conserva los resultados históricos. La interfaz mantiene el comportamiento anterior mientras esta actualización no esté aplicada.
+
+En «Administrar actividad», cargar los metadatos del reproductor y elegir «Práctica» o «Evaluación», luego guardar. Por defecto las actividades comienzan en práctica: da ayuda sin modificar puntos ni clasificación. Evaluación conserva resultados y aplica la regla de escucha. El docente puede probar sin guardar puntaje estudiantil.
+
+Cada espacio se confirma con Enter o «Comprobar». No se cuentan pulsaciones de letras. Una respuesta correcta bloquea el espacio en verde y mueve el foco; el primer error permite otra respuesta; el segundo bloquea en rojo y avanza. Las respuestas y bloqueos se registran en servidor, con solicitudes idempotentes para no consumir oportunidades por reintentos de red. Un intento nuevo empieza vacío. La revisión final conserva el límite de dos minutos existente.
+
+En evaluación, más de 90 % de aciertos con menos de 70 % de la duración reproducida otorga cero aciertos puntuables a ese intento y muestra exactamente el mensaje solicitado por el docente. El resultado anterior mejor no se elimina. Los límites son estrictos: 90 % exacto no activa la regla, y 70 % exacto de escucha es suficiente. Se utiliza la duración registrada por el docente, no una duración enviada por el estudiante. El servidor limita los créditos con tiempo transcurrido y avance del audio; pausas, saltos y pestaña oculta no suman. La telemetría de navegador mide reproducción, no atención, y no constituye una prueba infalible de fraude. El puntaje siempre se calcula con las respuestas bloqueadas en servidor, ignorando cambios enviados al finalizar.
+
+Para el resaltado, el docente usa «Sincronizar el resaltado de las líneas»: reproduce y marca el inicio de cada línea, incluidas pausas, luego guarda. Los tiempos deben estar completos, ordenados y dentro de la duración del audio. Sin marcas no se inventa una sincronización. Al reproducir se resalta la línea activa y, cuando queda fuera de la vista, se desplaza suavemente (respeta movimiento reducido).
+
+Verificación: `node tests/inglesModos.test.mjs`, `node tests/inglesUi.test.mjs`, `node tests/inglesModosBrowser.test.mjs` (opcional `INGLES_TEST_CHROMIUM`), `npm run build`.
