@@ -1,4 +1,4 @@
--- Actualización completa: reemplaza ingles-modos-escucha.sql. Ejecutar después de ingles-ranking-tiempo.sql.
+-- Actualización completa: permite vacíos y clasificación en práctica. Reemplaza versiones anteriores. Ejecutar después de ingles-ranking-tiempo.sql.
 -- Repetible: conserva resultados. Sin botones, revisión automática y error tras >3 segundos.
 begin;
 alter table public.ingles_actividades add column if not exists modo_actividad text not null default 'practica' check(modo_actividad in ('practica','evaluacion'));
@@ -137,7 +137,7 @@ begin
 end;
 $$;
 create or replace function public.ingles_responder(actividad text,elecciones jsonb,solicitud uuid) returns jsonb language plpgsql security definer set search_path='' as $$
-declare a public.ingles_actividades;ficha public.estudiantes;correctas text[];revision jsonb:='{}'::jsonb;puntos integer:=0;cantidad integer;i integer;salida public.ingles_progreso;inicio timestamptz;duracion numeric;fecha timestamptz:=clock_timestamp();ses public.ingles_sesiones;penalizado boolean:=false;real_aciertos integer;
+declare a public.ingles_actividades;ficha public.estudiantes;correctas text[];revision jsonb:='{}'::jsonb;puntos integer:=0;cantidad integer;i integer;salida public.ingles_progreso;inicio timestamptz;duracion numeric;fecha timestamptz:=clock_timestamp();ses public.ingles_sesiones;penalizado boolean:=false;real_aciertos integer;texto text;enviadas jsonb;oficiales jsonb:='{}'::jsonb;
 begin
  if auth.uid() is null or coalesce(public.es_profesor(),false) then raise exception 'Ingresa como estudiante para guardar el intento';end if;
  select * into ficha from public.estudiantes where auth_user_id=auth.uid() and activo limit 1;
@@ -148,23 +148,23 @@ begin
  if ses.solicitud_id is null then raise exception 'Inicia un intento con la versión actualizada de la app';end if;
  if ses.resultado is not null then return ses.resultado;end if;
  if ses.modo_actividad<>a.modo_actividad then raise exception 'El docente cambió el modo; inicia otro intento';end if;
- elecciones:=ses.respuestas;
+ enviadas:=elecciones;
  select array_agg(m[1]) into correctas from regexp_matches(a.contenido,'\[\[([^]]+)\]\]','g') m;
  cantidad:=coalesce(array_length(correctas,1),0);
- if cantidad=0 or (select count(*) from jsonb_object_keys(elecciones))<>cantidad then raise exception 'Completa todos los espacios';end if;
+ if cantidad=0 or exists(select 1 from jsonb_object_keys(enviadas) k where k !~ '^[1-9][0-9]*$' or length(k)>5) then raise exception 'Respuestas no válidas';end if;
+ if exists(select 1 from jsonb_object_keys(enviadas) k where k::integer>cantidad) then raise exception 'Espacio no válido';end if;
  for i in 1..cantidad loop
-  if jsonb_typeof(elecciones->i::text) is distinct from 'string' or length(trim(elecciones->>i::text))=0 or length(elecciones->>i::text)>80 then raise exception 'Completa todos los espacios';end if;
-  revision:=revision||jsonb_build_object(i::text,public.ingles_normalizar(elecciones->>i::text)=public.ingles_normalizar(correctas[i]));
+  if enviadas ? i::text and (jsonb_typeof(enviadas->i::text) is distinct from 'string' or length(enviadas->>i::text)>80) then raise exception 'Respuesta no válida';end if;
+  texto:=case when ses.bloqueadas ? i::text then ses.respuestas->>i::text else coalesce(enviadas->>i::text,'') end;
+  oficiales:=oficiales||jsonb_build_object(i::text,texto);
+  revision:=revision||jsonb_build_object(i::text,case when ses.bloqueadas ? i::text then (ses.bloqueadas->>i::text)::boolean else length(trim(texto))>0 and public.ingles_normalizar(texto)=public.ingles_normalizar(correctas[i]) end);
   if (revision->>i::text)::boolean then puntos:=puntos+1;end if;
  end loop;
- if (select count(*) from jsonb_object_keys(ses.bloqueadas))<>cantidad then raise exception 'Confirma todos los espacios';end if;
+ elecciones:=oficiales;
+ update public.ingles_sesiones set respuestas=oficiales,bloqueadas=revision where solicitud_id=solicitud;
  real_aciertos:=puntos;
  penalizado:=ses.modo_actividad='evaluacion' and puntos::numeric/cantidad>0.9 and ses.escuchado<ses.duracion_audio*0.7;
  if penalizado then puntos:=0;end if;
- if ses.modo_actividad='practica' then
-  update public.ingles_sesiones set resultado=jsonb_build_object('aciertos',puntos,'total',cantidad,'correccion',revision,'respuestas',elecciones,'practica',true,'penalizado',false) where solicitud_id=solicitud returning resultado into revision;
-  return revision;
- end if;
  select iniciada_at,coalesce(finalizada_at,fecha) into inicio,fecha from public.ingles_intentos_tiempo where solicitud_id=solicitud and usuario_id=auth.uid() and actividad_id=actividad for update;
  if inicio is null then fecha:=clock_timestamp();end if;
  if exists(select 1 from public.ingles_intentos_tiempo t where t.solicitud_id=solicitud and t.finalizada_at is not null) and not exists(select 1 from public.ingles_progreso p where p.actividad_id=actividad and p.usuario_id=auth.uid() and p.solicitud_id=solicitud) then raise exception 'Inicia otro intento';end if;
@@ -185,5 +185,27 @@ $$;
 revoke all on function public.ingles_preparar(text,uuid),public.ingles_comprobar(text,uuid,integer,text,uuid),public.ingles_pulso(text,uuid,numeric,boolean),public.ingles_configurar_modo(text,text,numeric,jsonb) from public,anon;
 grant execute on function public.ingles_preparar(text,uuid),public.ingles_auto(text,uuid,integer,text,bigint),public.ingles_pulso(text,uuid,numeric,boolean),public.ingles_configurar_modo(text,text,numeric,jsonb) to authenticated;
 revoke all on function public.ingles_auto(text,uuid,integer,text,bigint) from public,anon;
+create or replace function public.ingles_practicar_profesor(actividad text,elecciones jsonb,solicitud uuid) returns jsonb language plpgsql security definer set search_path='' as $$
+declare a public.ingles_actividades;correctas text[];revision jsonb:='{}'::jsonb;puntos integer:=0;cantidad integer;i integer;
+begin
+ if auth.uid() is null or not coalesce(public.es_profesor(),false) then raise exception 'Solo docentes pueden practicar aquí';end if;
+ select * into a from public.ingles_actividades where id=actividad;
+ if a.id is null then raise exception 'Actividad no encontrada';end if;
+ if solicitud is null or jsonb_typeof(elecciones) is distinct from 'object' or octet_length(elecciones::text)>10000 then raise exception 'Revisa tus respuestas';end if;
+ select array_agg(m[1]) into correctas from regexp_matches(a.contenido,'\[\[([^]]+)\]\]','g') m;
+ cantidad:=coalesce(array_length(correctas,1),0);
+ if cantidad=0 then raise exception 'Actividad sin espacios';end if;
+ for i in 1..cantidad loop
+  if not (elecciones ? i::text) then elecciones:=elecciones||jsonb_build_object(i::text,'');end if;
+  if jsonb_typeof(elecciones->i::text) is distinct from 'string' or length(elecciones->>i::text)>80 then raise exception 'Respuesta no válida';end if;
+  revision:=revision||jsonb_build_object(i::text,public.ingles_normalizar(elecciones->>i::text)=public.ingles_normalizar(correctas[i]));
+  if (revision->>i::text)::boolean then puntos:=puntos+1;end if;
+ end loop;
+ return jsonb_build_object('respuestas',elecciones,'correccion',revision,'aciertos',puntos,'total',cantidad);
+end;
+$$;
+revoke all on function public.ingles_practicar_profesor(text,jsonb,uuid) from public,anon;
+grant execute on function public.ingles_practicar_profesor(text,jsonb,uuid) to authenticated;
+
 notify pgrst,'reload schema';
 commit;

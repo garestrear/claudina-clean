@@ -15,13 +15,13 @@ assert.equal(view.root.findAllByType('audio').length,0,'la biblioteca no carga t
 await act(async()=>view.root.findAllByType('button').find(b=>b.props.className==='englishStart').props.onClick());
 assert.equal(view.root.findAllByType('audio').length,1);assert.equal(view.root.findAllByType('input').length,2);
 
-const submit=()=>view.root.findAllByType('button').find(b=>b.props.className==='save');assert.equal(submit().props.disabled,true);
+const submit=()=>view.root.findAllByType('button').find(b=>b.props.className==='save');assert.equal(submit().props.disabled,false);
 await act(async()=>view.root.findAllByType('input')[0].props.onChange({target:{value:'room'}}));await act(async()=>view.root.findAllByType('input')[1].props.onChange({target:{value:'wrong'}}));assert.equal(submit().props.disabled,false);
 await act(async()=>view.root.findByType('form').props.onSubmit({preventDefault(){}}));assert.equal(view.root.findAllByType('p').find(n=>n.props.className==='musicScore').findByType('b').props.children.join(''),'1/2');assert.equal(view.root.findAllByType('input')[1].props['aria-invalid'],true);assert.equal(calls.filter(c=>c[0]==='ingles_responder').length,1);
 const submitsBefore=calls.filter(c=>c[0]==='ingles_responder').length;
 await act(async()=>view.root.findAllByType('button').find(b=>b.props.children==='Realizar otro intento').props.onClick());
 assert.ok(view.root.findAllByType('input').every(i=>i.props.value===''));
-assert.equal(submit().props.disabled,true);assert.equal(view.root.findAllByType('p').filter(n=>n.props.className==='musicScore').length,0);
+assert.equal(submit().props.disabled,false);assert.equal(view.root.findAllByType('p').filter(n=>n.props.className==='musicScore').length,0);
 assert.equal(calls.filter(c=>c[0]==='ingles_responder').length,submitsBefore);
 assert.equal(local.get('claudina:ingles:v1:student:lemon-tree'),undefined);
 await act(async()=>view.root.findAllByType('input')[0].props.onChange({target:{value:'room'}}));
