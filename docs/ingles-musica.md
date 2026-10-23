@@ -95,3 +95,5 @@ El banco se entrega al estudiante desde el tercer intento, contando intentos env
 El banco mezcla una entrada por espacio, incluidas repeticiones. Al acertar se retira exactamente una entrada de la palabra correspondiente; los errores y el texto aún sin validar no retiran opciones. La ayuda se carga al iniciar un nuevo intento sin recargar la página. El docente puede previsualizar el banco.
 
 Volver a ejecutar completo `supabase/ingles-respuestas-automaticas.sql` para activar la entrega progresiva del banco. Prueba: `node tests/inglesAyuda.test.mjs`; el navegador comprueba dos envíos y ayuda en el tercero con descarte automático.
+
+La lista de ayuda flota en la parte superior del área visible mientras se recorre la letra, también al abrir el teclado. Se limita a una fracción de la altura disponible; si hay muchas palabras, la lista tiene su propio desplazamiento. «Ocultar/Mostrar» permite compactarla. Sigue disponible desde el tercer intento y conserva el descarte de palabras correctas. Este ajuste de presentación no requiere SQL adicional.
