@@ -1,6 +1,7 @@
 -- Corrección específica del banco: una entrada por cada espacio, sin DISTINCT.
 -- Ejecutar completo después de ingles-respuestas-automaticas.sql. No borra intentos.
 begin;
+alter table public.ingles_sesiones add column if not exists numero_intento integer;
 create or replace function public.ingles_preparar(actividad text,solicitud uuid)
 returns jsonb language plpgsql security definer set search_path='' as $$
 declare a public.ingles_actividades;s public.ingles_sesiones;
