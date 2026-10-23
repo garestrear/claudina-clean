@@ -4,6 +4,7 @@ import {palabrasLetra,seleccionarPalabras,marcarLetra} from './crearCancion.js';
 const LIMITE=25*1024*1024;
 export default function CrearCancion({perfil,onCreada}){
  const[abierta,setAbierta]=useState(false);
+ const[comentario,setComentario]=useState('');
  const[titulo,setTitulo]=useState(''),[artista,setArtista]=useState(''),[letra,setLetra]=useState(''),[lista,setLista]=useState(''),[elegidas,setElegidas]=useState([]),[grados,setGrados]=useState([6,7,8]),[archivo,setArchivo]=useState(null),[url,setUrl]=useState(''),[busy,setBusy]=useState(false),[msg,setMsg]=useState(''),[error,setError]=useState(false);
  const detalles=useRef(null),entrada=useRef(null),id=useRef(crypto.randomUUID()),subido=useRef(null),bloqueo=useRef(false);
  useEffect(()=>{if(!archivo){setUrl('');return}const local=URL.createObjectURL(archivo);setUrl(local);return()=>URL.revokeObjectURL(local)},[archivo]);
@@ -19,16 +20,17 @@ export default function CrearCancion({perfil,onCreada}){
   try{
    if(!subido.current){const{error}=await supabase.storage.from('ingles-audios').upload(ruta,archivo,{contentType:'audio/mpeg',upsert:false});if(error&&String(error.statusCode)!=='409')throw error;subido.current=ruta}
    avisar('Publicando la actividad…');
-   const{error}=await supabase.rpc('ingles_crear_actividad',{identificador:id.current,titulo_cancion:titulo.trim()+' · '+artista.trim(),letra_marcada:marcada,ruta_audio:ruta,grados_destino:grados});if(error)throw error;
-   setTitulo('');setArtista('');setLetra('');setLista('');setElegidas([]);setArchivo(null);if(entrada.current)entrada.current.value='';subido.current=null;id.current=crypto.randomUUID();
+   const{error}=await supabase.rpc('ingles_crear_actividad_con_comentario',{identificador:id.current,titulo_cancion:titulo.trim()+' · '+artista.trim(),letra_marcada:marcada,ruta_audio:ruta,grados_destino:grados,comentario_cancion:comentario.trim()});if(error)throw error;
+   setTitulo('');setArtista('');setComentario('');setLetra('');setLista('');setElegidas([]);setArchivo(null);if(entrada.current)entrada.current.value='';subido.current=null;id.current=crypto.randomUUID();
    avisar('¡Canción publicada! Ya está disponible para los grados elegidos.');
    await onCreada?.();
-  }catch(e){avisar('No se pudo completar la publicación: '+e.message+'. Puedes volver a pulsar Publicar. Si es la primera vez, el administrador debe ejecutar ingles-crear-canciones.sql.',true)}finally{bloqueo.current=false;setBusy(false)}
+  }catch(e){avisar('No se pudo completar la publicación: '+e.message+'. Puedes volver a pulsar Publicar. Si es la primera vez, el administrador debe ejecutar ingles-crear-canciones.sql e ingles-comentarios-canciones.sql.',true)}finally{bloqueo.current=false;setBusy(false)}
  }
  let cursor=0;
  return <details className="musicCreate" ref={detalles} onToggle={e=>setAbierta(e.currentTarget.open)}><summary>＋ Agregar canción</summary>{abierta&&<form onSubmit={publicar}><fieldset disabled={busy}><legend>Crea una actividad de escucha</legend>
  <label>Nombre de la canción<input required maxLength={140} value={titulo} onChange={e=>setTitulo(e.target.value)}/></label>
  <label>Artista<input required maxLength={100} value={artista} onChange={e=>setArtista(e.target.value)}/></label>
+ <label>Comentario para despertar curiosidad (opcional)<textarea rows={3} maxLength={600} value={comentario} placeholder="Cuenta algo interesante de la canción o invita a descubrir su historia…" onChange={e=>setComentario(e.target.value)}/></label><small>{comentario.length}/600 · Aparecerá en la tarjeta de la canción.</small>
  <label>Audio MP3 · máximo 25 MB<input ref={entrada} required type="file" accept=".mp3,audio/mpeg" disabled={!!subido.current} onChange={e=>{setArchivo(e.target.files?.[0]||null);avisar('')}}/></label>
  {url&&<audio src={url} controls preload="metadata" onError={()=>avisar('El navegador no pudo reproducir este audio. Comprueba el archivo.',true)}/>}
  <label>Letra de la canción<textarea required maxLength={20000} rows={10} value={letra} onChange={e=>{setLetra(e.target.value);setElegidas([])}}/></label>

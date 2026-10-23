@@ -99,3 +99,11 @@ Volver a ejecutar completo `supabase/ingles-respuestas-automaticas.sql` para act
 La lista de ayuda flota en la parte superior del área visible mientras se recorre la letra, también al abrir el teclado. Se limita a una fracción de la altura disponible; si hay muchas palabras, la lista tiene su propio desplazamiento. «Ocultar/Mostrar» permite compactarla. Sigue disponible desde el tercer intento y conserva el descarte de palabras correctas. Este ajuste de presentación no requiere SQL adicional.
 
 El banco flotante agrupa palabras iguales y muestra su cantidad pendiente (por ejemplo, «people ×3»). Cada acierto resta una unidad; la opción desaparece al llegar a cero. El total de la cabecera cuenta espacios pendientes, no palabras distintas. `supabase/ingles-banco-repeticiones.sql` actualiza específicamente las dos funciones que entregan el banco sin deduplicar y sin modificar los intentos; usarlo si permanece activa una definición anterior en Supabase.
+
+## Comentario de la canción
+
+Ejecutar completo `supabase/ingles-comentarios-canciones.sql` después de las actualizaciones de creación de canciones y respuestas automáticas. Añade un comentario opcional de hasta 600 caracteres sin modificar audios, letras ni intentos.
+
+Al subir una canción, «Comentario para despertar curiosidad» guarda el texto junto con la publicación en una sola operación del servidor. También se puede agregar o editar desde la tarjeta con «Agregar/Editar comentario». Solo los docentes tienen esos controles y permiso para guardar; los estudiantes ven el comentario en el lugar del texto genérico. Dejarlo vacío restaura el texto predeterminado. Si una canción tiene varias actividades con el mismo audio, comparten el comentario. Los reintentos de publicación no sobreescriben una edición posterior.
+
+Pruebas: `node tests/inglesComentarios.test.mjs`, `node tests/inglesComentariosUi.test.mjs`, `node tests/crearCancionBrowser.test.mjs` (opcional `INGLES_TEST_CHROMIUM`) y compilación de producción.

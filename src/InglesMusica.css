@@ -19,3 +19,4 @@
 .musicWordBankFloating header{padding:0;background:transparent;color:#715b11}
 
 .musicWordBankFloating .musicWordCount{margin-left:5px;background:#f5e6a7;border-radius:5px;padding:1px 4px;font-size:11px;color:#674f00}
+.musicSongComment p{white-space:pre-wrap;overflow-wrap:anywhere}.musicSongComment>button{padding:5px 8px;font-size:12px;margin-bottom:8px}.musicCommentEdit{display:grid;gap:7px;margin:10px 0}.musicCommentEdit label{display:grid;gap:5px;font-size:13px}.musicCommentEdit textarea{width:100%;box-sizing:border-box;font:inherit}.musicCommentEdit>div{display:flex;gap:6px;flex-wrap:wrap}.musicCommentEdit small{font-size:11px;color:#557267}
