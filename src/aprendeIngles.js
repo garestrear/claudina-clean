@@ -21,3 +21,9 @@ export function palabrasPendientes(banco=[],respuestas={},casillas={},revision=n
  const usadas=new Map();for(const[id,valor]of Object.entries(respuestas)){if(casillas[id]?.correcta===true||revision?.[id]===true){const palabra=normalizar(valor);usadas.set(palabra,(usadas.get(palabra)||0)+1)}}
  return banco.flatMap((palabra,indice)=>{const clave=normalizar(palabra),cantidad=usadas.get(clave)||0;if(cantidad){usadas.set(clave,cantidad-1);return []}return [{palabra,indice}]});
 }
+
+export function contarPalabrasPendientes(pendientes=[]){
+ const grupos=new Map();
+ for(const {palabra,indice} of pendientes){const clave=palabra.trim().toLowerCase().replace(/[^a-z0-9]/g,'');if(!grupos.has(clave))grupos.set(clave,{palabra,indice,cantidad:0});grupos.get(clave).cantidad++}
+ return [...grupos.values()];
+}
