@@ -1,0 +1,12 @@
+import {build} from 'esbuild';import React from 'react';import {create,act} from 'react-test-renderer';import assert from 'node:assert/strict';import {readFile,unlink} from 'node:fs/promises';
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+const root=new URL('..',import.meta.url).pathname.replace(/\/$/,'');const outfile=root+'/node_modules/acudiente-feria-test.mjs';
+await build({entryPoints:[root+'/src/Acudiente.jsx'],bundle:true,format:'esm',outfile,packages:'external',loader:{'.css':'empty','.png':'dataurl'},plugins:[{name:'test',setup(b){b.onLoad({filter:/\/Acudiente.jsx$/},async args=>({contents:await readFile(args.path,'utf8')+'\nexport {FeriaAcudientes,NavegacionAcudiente};',loader:'jsx'}));b.onLoad({filter:/\/FeriaCiencia.jsx$/},()=>({contents:'import React from "react";export default function Feria({familia}){return React.createElement("p",null,familia?"Formulario emprendimiento":"Formulario estudiante")}'}));b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:'export const supabase={};'}));}}]});
+const {FeriaAcudientes,NavegacionAcudiente}=await import(outfile);
+const text=n=>typeof n==='string'?n:Array.isArray(n)?n.map(text).join(''):n?.children?text(n.children):n?.props?text(n.props.children):'';let view;
+await act(async()=>{view=create(React.createElement(FeriaAcudientes,{perfil:{id:'p',rol:'acudiente'},hijo:{genero:'F'}}))});
+const btn=label=>view.root.findAllByType('button').find(b=>text(b).includes(label));
+assert.ok(btn('Inscribe tu emprendimiento'));assert.ok(btn('Ayuda a tu hija'));await act(async()=>btn('Inscribe tu emprendimiento').props.onClick());assert.match(text(view.root),/Formulario emprendimiento/);await act(async()=>btn('Cambiar opción').props.onClick());await act(async()=>btn('Ayuda a tu hija').props.onClick());assert.match(text(view.root),/Formulario estudiante/);await act(async()=>view.unmount());
+let selected;
+await act(async()=>{view=create(React.createElement(NavegacionAcudiente,{tab:'aseo',seleccionar:id=>selected=id,hijo:{genero:'F'},novedades:{eventos:{cantidad:1}}}))});
+const nav=view.root.findByType('nav');assert.equal(nav.children.filter(c=>c.type==='button').length,4);assert.equal(view.root.findAllByType('details').length,1);assert.match(text(view.root),/Convivencia/);await act(async()=>btn('Feria STEAM').props.onClick());assert.equal(selected,'feria');await act(async()=>view.unmount());await unlink(outfile);console.log('PASS: two guardian entry points, child gender, route switching, compact primary navigation and access to remaining sections');

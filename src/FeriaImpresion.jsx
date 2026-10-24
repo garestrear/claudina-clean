@@ -1,3 +1,4 @@
+import {esEmprendimiento,tituloFeria,camposEmprendimiento} from './feriaFamilias.js';
 import React,{useEffect,useState} from 'react';
 import {createPortal} from 'react-dom';
 import {areasSteam,camposFeria,gradoFeria} from './feriaCiencia.js';
@@ -6,10 +7,12 @@ function Cabecera({continuacion=false}){return <header className="fairPaperHeade
 function Indicaciones(){return <aside className="fairPaperInfo"><p><strong>¿Qué significa STEAM?</strong> Science (Ciencias), Technology (Tecnología), Engineering (Ingeniería), Arts (Artes) y Mathematics (Matemáticas).</p><p><strong>Inscripción y aprobación:</strong> el proyecto debe subirse a Claudina App y ser aprobado por un profesor. Para ingresar como estudiante se requiere el correo institucional. Las familias pueden ayudar desde la cuenta de acudiente vinculada.</p><p><strong>¡Experimentemos con cuidado!</strong> Realicen las actividades con acompañamiento de un adulto y orientación del profesor. Antes de experimentar, revisen los riesgos y usen protección adecuada. No manipulen fuego, sustancias peligrosas ni electricidad de la red sin autorización y supervisión.</p></aside>}
 function Campo({campo,proyecto,blanco}){return <section className={'fairPaperField '+(blanco?'isBlank':'')}><h2>{campo.titulo}</h2>{blanco?<><small>{campo.id==='integrantes'?'Escribe los nombres y grados de todos los integrantes del equipo.':campo.ayuda}</small><div className={'fairWritingLines fairLines-'+(campo.id==='bibliografia'?5:campo.id==='procedimiento'?5:4)}/></>:<p>{proyecto[campo.id]||'No indicado.'}</p>}</section>}
 function Hoja({proyecto,asesor,blanco}){
- const principales=camposFeria.filter(c=>['titulo','integrantes','propuesta','procedimiento'].includes(c.id));
- const adicionales=camposFeria.filter(c=>!['titulo','integrantes','propuesta','procedimiento'].includes(c.id));
+ const campos=esEmprendimiento(proyecto)?camposEmprendimiento:camposFeria;
+ const imprimirProyecto=proyecto?{...proyecto,titulo:tituloFeria(proyecto)}:proyecto;
+ const principales=campos.filter(c=>['titulo','integrantes','propuesta','procedimiento'].includes(c.id));
+ const adicionales=campos.filter(c=>!['titulo','integrantes','propuesta','procedimiento'].includes(c.id));
  const intro=<><div className="fairPaperMeta"><span>Grado: {blanco?'________________':gradoFeria(proyecto.grado)}</span><span>Fecha de registro: __________________</span></div><section className="fairPaperAreas"><h2>Áreas STEAM</h2><small>Marca una o varias áreas relacionadas con el proyecto.</small><div>{areasSteam.map(a=><span key={a.id}><i className={proyecto?.areas?.includes(a.id)&&!blanco?'checked':''}/>{a.nombre} · {a.es}</span>)}</div></section><section className="fairPaperAdvisor"><h2>Profesor asesor</h2><p>{blanco?'________________________________________________________________':asesor||'Sin asignar'}</p></section></>;
- if(!blanco)return <article className="fairPaperCompleted"><Cabecera/><Indicaciones/>{intro}{camposFeria.map(c=><Campo key={c.id} campo={c} proyecto={proyecto} blanco={false}/>)}</article>;
+ if(!blanco)return <article className="fairPaperCompleted"><Cabecera/><Indicaciones/>{intro}{campos.map(c=><Campo key={c.id} campo={c} proyecto={imprimirProyecto} blanco={false}/>)}</article>;
  return <><article className="fairPaperPage"><Cabecera/><Indicaciones/>{intro}{principales.map(c=>c.id==='titulo'?<section className="fairPaperTitle" key={c.id}><h2>{c.titulo}</h2><div className="fairSingleLine"/></section>:<Campo key={c.id} campo={c} blanco/>) }<footer>Página 1 de 2 · Completa también el reverso o la segunda hoja.</footer></article><article className="fairPaperPage"><Cabecera continuacion/><div className="fairPaperRepeat">Nombre del proyecto: ___________________________________________________________</div>{adicionales.map(c=><Campo key={c.id} campo={c} blanco/>)}<footer>Página 2 de 2 · Entrega este formato al docente para acompañar y registrar el proyecto.</footer></article></>;
 }
 export default function BotonImprimirFeria({proyecto,asesor}){

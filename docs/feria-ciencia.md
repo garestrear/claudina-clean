@@ -72,3 +72,14 @@ La cuenta de acudiente tiene una pestaña Feria de la Ciencia. Puede crear, guar
 «Imprimir formato en blanco» prepara dos hojas A4 con todos los campos, incluyendo áreas, asesor, integrantes y bibliografía. «Imprimir proyecto» imprime los datos guardados. El diálogo del navegador permite imprimir o guardar como PDF. El papel diligenciado debe entregarse al docente para acompañar su registro; imprimir no registra respuestas automáticamente.
 
 `node tests/feriaFamilias.test.mjs` verifica acceso compartido, separación entre familias, vínculo revocado, roles y migración repetible. La prueba de navegador verifica inscripción desde acudiente, consulta desde estudiante y ambas impresiones.
+
+
+### Participación de familias y navegación de acudientes
+
+En Feria STEAM el acudiente elige entre inscribir su emprendimiento familiar y acompañar el proyecto estudiantil. Se usan los mismos RPC de feria, permisos por estudiante vinculado, control de versión y revisiones docentes; no se requiere una migración adicional. El título persistido lleva el prefijo reservado `[Emprendimiento familiar] ` para distinguir el tipo sin cambiar la tabla. `feriaFamilias.js` concentra la conversión; la interfaz y la impresión presentan el título sin ese prefijo. El máximo visible de 125 caracteres mantiene el título completo dentro del límite SQL de 150.
+
+En emprendimientos: `materiales` conserva responsable y familiares, `propuesta` lo que ofrecen, `procedimiento` cómo lo elaboran, `resultados_esperados` sus objetivos y `apoyo` las necesidades de exposición. Se conserva la ficha del estudiante como vínculo, sin atribuirle la autoría del emprendimiento. Estos datos son visibles para el estudiante y el acudiente vinculados; los docentes ven los enviados a revisión. No registrar documentos ni teléfonos en estos campos. Los borradores nuevos de familia y estudiante tienen claves locales independientes.
+
+El panel docente permite filtrar por proyectos estudiantiles o emprendimientos familiares. El menú de acudientes muestra cuatro accesos principales y Más para las demás secciones, con sus indicadores de novedades.
+
+Validación: `node tests/feriaEmprendimientos.test.mjs`, `node tests/acudienteFeriaOpciones.test.mjs` y pruebas previas de feria y acudientes.
