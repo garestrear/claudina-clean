@@ -1,1 +1,1 @@
-import React from 'react';import{createRoot}from'react-dom/client';import App from'./App';import ActualizarApp from './ActualizarApp';import'./styles.css';createRoot(document.getElementById('root')).render(<><App/><ActualizarApp/></>);
+import React from 'react';import{createRoot}from'react-dom/client';import App from'./App';import ActualizarApp from './ActualizarApp';import InstalarApp from './InstalarApp';import'./styles.css';createRoot(document.getElementById('root')).render(<><App/><InstalarApp/><ActualizarApp/></>);
