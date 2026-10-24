@@ -5,7 +5,7 @@ begin;
 alter table public.feria_proyectos add column if not exists areas text[] not null default '{}'::text[];
 do $$begin
  if not exists(select 1 from pg_constraint where conname='feria_areas_validas' and conrelid='public.feria_proyectos'::regclass) then
-  alter table public.feria_proyectos add constraint feria_areas_validas check(cardinality(areas)<=5 and array_position(areas,null) is null and areas<@array['science','technology','engineering','arts','mathematics']::text[]);
+  alter table public.feria_proyectos add constraint feria_areas_validas check(cardinality(areas)<=6 and array_position(areas,null) is null and areas<@array['science','technology','engineering','arts','mathematics','emprendimiento']::text[]);
  end if;
 end;$$;
 alter table public.feria_proyectos add column if not exists asesor_id uuid references public.perfiles(id) on delete set null;
@@ -80,7 +80,7 @@ begin
  if jsonb_typeof(datos->'areas') is distinct from 'array' then raise exception 'Selecciona una o varias áreas STEAM';end if;
  if exists(select 1 from jsonb_array_elements(datos->'areas') a where jsonb_typeof(a) is distinct from 'string') then raise exception 'Selecciona áreas STEAM válidas';end if;
  select array_agg(a) into areas_elegidas from jsonb_array_elements_text(datos->'areas') a;
- if coalesce(cardinality(areas_elegidas),0) not between 1 and 5 or not(areas_elegidas<@array['science','technology','engineering','arts','mathematics']::text[]) or cardinality(areas_elegidas)<>(select count(distinct a) from unnest(areas_elegidas) a) then raise exception 'Selecciona una o varias áreas STEAM válidas, sin repetir';end if;
+ if coalesce(cardinality(areas_elegidas),0) not between 1 and 6 or not(areas_elegidas<@array['science','technology','engineering','arts','mathematics','emprendimiento']::text[]) or cardinality(areas_elegidas)<>(select count(distinct a) from unnest(areas_elegidas) a) then raise exception 'Selecciona una o varias áreas STEAM válidas, sin repetir';end if;
  foreach campo in array array['titulo','integrantes','propuesta','procedimiento','materiales','resultados_esperados','apoyo'] loop
   limite:=case when campo='titulo' then 150 when campo in('propuesta','procedimiento') then 4000 else 2000 end;
   if jsonb_typeof(datos->campo) is distinct from 'string' or length(datos->>campo)>limite then raise exception 'Revisa el campo % y su longitud',campo;end if;

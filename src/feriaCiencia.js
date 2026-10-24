@@ -3,9 +3,10 @@ export const areasSteam=[
  {id:'technology',nombre:'Technology',es:'Tecnología'},
  {id:'engineering',nombre:'Engineering',es:'Ingeniería'},
  {id:'arts',nombre:'Arts',es:'Artes'},
- {id:'mathematics',nombre:'Mathematics',es:'Matemáticas'}
+ {id:'mathematics',nombre:'Mathematics',es:'Matemáticas'},
+ {id:'emprendimiento',nombre:'Emprendimiento',es:'Productos, servicios e iniciativas'}
 ];
-export const areasFeriaValidas=valor=>Array.isArray(valor)&&valor.length<=5&&valor.every(a=>areasSteam.some(opcion=>opcion.id===a))&&new Set(valor).size===valor.length;
+export const areasFeriaValidas=valor=>Array.isArray(valor)&&valor.length<=6&&valor.every(a=>areasSteam.some(opcion=>opcion.id===a))&&new Set(valor).size===valor.length;
 export const estadosFeria={borrador:'Borrador',enviado:'Por revisar',ajustes:'En ajustes',aprobado:'Aprobado'};
 export const camposFeria=[
  {id:'titulo',titulo:'Nombre del proyecto',max:150,corto:true,obligatorio:true,ayuda:'Un nombre que cuente su idea.'},

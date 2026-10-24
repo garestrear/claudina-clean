@@ -75,7 +75,7 @@ begin
  end loop;
  if length(d->>'titulo')<3 or length(d->>'institucion')<3 or length(d->>'responsable')<3 or length(d->>'municipio')<2 then raise exception 'Completa institución, municipio, persona responsable y título';end if;
  if jsonb_typeof(datos->'areas') is distinct from 'array' then raise exception 'Selecciona las áreas STEAM';end if;
- if jsonb_array_length(datos->'areas') not between 1 and 5 or exists(select 1 from jsonb_array_elements(datos->'areas') a where jsonb_typeof(a)<>'string' or (a#>>'{}') not in('science','technology','engineering','arts','mathematics')) or (select count(distinct a) from jsonb_array_elements(datos->'areas') a)<>jsonb_array_length(datos->'areas') then raise exception 'Áreas STEAM inválidas';end if;
+ if jsonb_array_length(datos->'areas') not between 1 and 6 or exists(select 1 from jsonb_array_elements(datos->'areas') a where jsonb_typeof(a)<>'string' or (a#>>'{}') not in('science','technology','engineering','arts','mathematics','emprendimiento')) or (select count(distinct a) from jsonb_array_elements(datos->'areas') a)<>jsonb_array_length(datos->'areas') then raise exception 'Áreas STEAM inválidas';end if;
  if enviar and (length(d->>'integrantes')=0 or length(d->>'propuesta')=0 or length(d->>'procedimiento')=0) then raise exception 'Completa integrantes, propuesta y procedimiento antes de enviar';end if;
  if datos->'acepta' is distinct from 'true'::jsonb then raise exception 'Confirma la autorización institucional para registrar el equipo';end if;
  select u.email into correo from auth.users u where u.id=auth.uid();

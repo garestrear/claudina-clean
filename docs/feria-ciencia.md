@@ -83,3 +83,7 @@ En emprendimientos: `materiales` conserva responsable y familiares, `propuesta` 
 El panel docente permite filtrar por proyectos estudiantiles o emprendimientos familiares. El menú de acudientes muestra cuatro accesos principales y Más para las demás secciones, con sus indicadores de novedades.
 
 Validación: `node tests/feriaEmprendimientos.test.mjs`, `node tests/acudienteFeriaOpciones.test.mjs` y pruebas previas de feria y acudientes.
+
+### Categoría Emprendimiento
+
+El selector admite las cinco áreas STEAM y el enfoque adicional `emprendimiento`, combinables sin duplicados. Antes de guardar esta categoría en una base existente, ejecutar `supabase/feria-emprendimiento.sql` una vez en SQL Editor. La actualización amplía la restricción y las funciones existentes, conserva sus permisos y no elimina proyectos. Es repetible. Las migraciones acumulativas de feria también admiten la nueva categoría.

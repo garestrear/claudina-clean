@@ -1,0 +1,8 @@
+import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';import {crearFeriaDb,uuid,uid} from './fixtures/feriaDb.mjs';import {areasSteam,areasFeriaValidas,datosFeria} from '../src/feriaCiencia.js';
+assert.ok(areasSteam.some(a=>a.id==='emprendimiento'));assert.ok(areasFeriaValidas(['emprendimiento']));assert.ok(areasFeriaValidas(areasSteam.map(a=>a.id)));assert.ok(!areasFeriaValidas(['emprendimiento','emprendimiento']));
+const {db,identity,rpc}=await crearFeriaDb();
+// Simular una instalación anterior para probar la migración, sin depender del SQL base nuevo.
+const previous=(await readFile(new URL('../supabase/feria-familias.sql',import.meta.url),'utf8')).replaceAll(",'emprendimiento'",'').replaceAll('between 1 and 6','between 1 and 5').replaceAll('cardinality(areas)<=6','cardinality(areas)<=5');await db.exec(previous);
+await identity(3);const d={...datosFeria(),titulo:'Venta de artesanías',areas:['emprendimiento'],asesor_id:uid(1),integrantes_ids:[],propuesta:'Artesanías',procedimiento:'Tejer'};
+const guardar=()=>rpc('feria_guardar',[uuid(850),d,0,true,uuid(951)],['uuid','jsonb','integer','boolean','uuid']);await assert.rejects(guardar());
+const migration=await readFile(new URL('../supabase/feria-emprendimiento.sql',import.meta.url),'utf8');await db.exec(migration);await db.exec(migration);const result=await guardar();assert.deepEqual(result.proyecto.areas,['emprendimiento']);await identity(2);assert.equal((await rpc('feria_contexto')).proyectos[0].areas[0],'emprendimiento');await db.close();console.log('PASS: Emprendimiento selectable, old schema upgrade, repeated migration, save and teacher list');
