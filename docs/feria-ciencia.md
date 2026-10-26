@@ -87,3 +87,14 @@ Validación: `node tests/feriaEmprendimientos.test.mjs`, `node tests/acudienteFe
 ### Categoría Emprendimiento
 
 El selector admite las cinco áreas STEAM y el enfoque adicional `emprendimiento`, combinables sin duplicados. Antes de guardar esta categoría en una base existente, ejecutar `supabase/feria-emprendimiento.sql` una vez en SQL Editor. La actualización amplía la restricción y las funciones existentes, conserva sus permisos y no elimina proyectos. Es repetible. Las migraciones acumulativas de feria también admiten la nueva categoría.
+
+
+### Proyectos visibles para todo el equipo
+
+Ejecutar `supabase/feria-proyectos-compartidos.sql` en SQL Editor de Supabase sobre la instalación actual. No requiere repetir los scripts anteriores. La actualización es transaccional y repetible: conserva proyectos y revisiones.
+
+`feria_contexto` y `feria_proyecto` incluyen el mismo proyecto para cada estudiante seleccionado en `integrantes_ids` y su acudiente vinculado, incluso si pertenece a otro grado. También incluye los borradores guardados. El estudiante responsable y su acudiente conservan la edición; los demás consultan los datos y las observaciones. Quitar un integrante revoca ese acceso. No crea copias del proyecto.
+
+Aplica a inscripciones existentes con integrantes seleccionados de la lista. Las inscripciones antiguas con nombres escritos sin IDs necesitan que su responsable confirme el equipo en el selector. Después de ejecutar el SQL, abrir Feria STEAM y pulsar **Actualizar lista** desde la cuenta del compañero.
+
+Validación: `node tests/feriaProyectosCompartidos.test.mjs` y `node tests/feriaUi.test.mjs`.
