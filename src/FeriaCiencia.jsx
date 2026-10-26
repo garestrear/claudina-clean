@@ -1,6 +1,7 @@
 import {esEmprendimiento,tituloFeria,datosEmprendimiento,camposEmprendimiento} from './feriaFamilias.js';
 import {ProyectosExternos} from './FeriaInvitados';
 import BotonImprimirFeria from './FeriaImpresion';
+import FeriaJurados from './FeriaJurados';
 import React,{useEffect,useRef,useState} from 'react';
 import {supabase} from './lib/supabase';
 import {areasSteam,camposFeria,datosFeria,estadosFeria,gradoFeria,claveBorradorFeria,leerBorradorFeria,validarFeria} from './feriaCiencia.js';
@@ -115,4 +116,4 @@ function FeriaInterna({perfil,familia=false}){
  </section>;
 }
 
-export default function FeriaCiencia({perfil,familia=false}){const[origen,setOrigen]=useState('claudina');return <>{perfil.rol==='profesor'&&<div className="fairOriginTabs" role="group" aria-label="Origen de los proyectos"><button type="button" aria-pressed={origen==='claudina'} onClick={()=>setOrigen('claudina')}>Proyectos Claudina</button><button type="button" aria-pressed={origen==='invitados'} onClick={()=>setOrigen('invitados')}>Instituciones invitadas</button></div>}{origen==='invitados'&&perfil.rol==='profesor'?<ProyectosExternos docente cuenta={perfil.id}/>:<FeriaInterna perfil={perfil} familia={familia}/>}</>}
+export default function FeriaCiencia({perfil,familia=false}){const[origen,setOrigen]=useState('claudina');return <>{perfil.rol==='profesor'&&<div className="fairOriginTabs" role="group" aria-label="Origen de los proyectos"><button type="button" aria-pressed={origen==='claudina'} onClick={()=>setOrigen('claudina')}>Proyectos Claudina</button><button type="button" aria-pressed={origen==='invitados'} onClick={()=>setOrigen('invitados')}>Instituciones invitadas</button><button type="button" aria-pressed={origen==='jurados'} onClick={()=>setOrigen('jurados')}>Jurados inscritos</button></div>}{origen==='jurados'&&perfil.rol==='profesor'?<FeriaJurados/>:origen==='invitados'&&perfil.rol==='profesor'?<ProyectosExternos docente cuenta={perfil.id}/>:<FeriaInterna perfil={perfil} familia={familia}/>}</>}

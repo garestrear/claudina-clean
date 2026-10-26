@@ -1,0 +1,12 @@
+import {crearFeriaDb,uid} from './fixtures/feriaDb.mjs';
+import {readFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const {db,identity,rpc}=await crearFeriaDb();const sql=await readFile('supabase/feria-jurados.sql','utf8');await db.exec(sql);await db.exec(sql);
+const datos={nombre:'María Álvarez',institucion:'Corantioquia',profesion:'Educadora ambiental',correo:'maria@ejemplo.edu',telefono:'3185377167'};
+await identity(null);await db.exec('set role anon');await rpc('feria_jurado_postular',[datos,true],['jsonb','boolean']);await assert.rejects(()=>db.query('select * from feria_jurados'),/permission denied/);await db.exec('reset role');
+await assert.rejects(()=>rpc('feria_jurado_postular',[datos,false],['jsonb','boolean']),/autorización/);
+await identity(3);await db.exec('set role authenticated');assert.equal((await db.query('select * from feria_jurados')).rows.length,0);await db.exec('reset role');
+await identity(5);await db.exec('set role authenticated');assert.equal((await db.query('select * from feria_jurados')).rows.length,0);await db.exec('reset role');
+await identity(1);await db.exec('set role authenticated');const persona=(await db.query('select * from feria_jurados')).rows[0];assert.equal(persona.nombre,datos.nombre);assert.equal(persona.correo,datos.correo);assert.equal(persona.telefono,datos.telefono);await assert.rejects(()=>db.query('delete from feria_jurados'),/permission denied/);await db.exec('reset role');
+await rpc('feria_jurado_postular',[{...datos,nombre:'Intento de reemplazo'},true],['jsonb','boolean']);assert.equal((await db.query('select nombre from feria_jurados')).rows[0].nombre,datos.nombre);
+await db.close();console.log('PASS: candidatos consultables por docentes, privacidad ante estudiantes/acudientes/anónimos, consentimiento y registros conservados');

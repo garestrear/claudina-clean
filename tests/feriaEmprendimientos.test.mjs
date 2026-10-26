@@ -13,7 +13,7 @@ const local=new Map();globalThis.localStorage={getItem:k=>local.get(k)||null,set
 let actor=5,fail=false;const calls=[];
 const specs={feria_estudiantes_grado:[['grado_elegido','integer']],feria_contexto:[],feria_proyecto:[['proyecto','uuid']],feria_guardar:[['proyecto','uuid'],['datos','jsonb'],['version_esperada','integer'],['enviar','boolean'],['solicitud','uuid']],feria_revisar:[['proyecto','uuid'],['version_esperada','integer'],['decision','text'],['comentario','text'],['solicitud','uuid']]};
 globalThis.familyRpc=async(n,args={})=>{calls.push([n,args]);if(fail)return {error:{message:'Sin conexión'}};await identity(actor);try{return {data:await rpc(n,specs[n].map(([k])=>args[k]),specs[n].map(([,t])=>t))}}catch(e){return {error:{message:e.message}}}};
-await build({entryPoints:[root+'/src/FeriaCiencia.jsx'],bundle:true,format:'esm',outfile,packages:'external',loader:{'.css':'empty','.png':'dataurl'},plugins:[{name:'db',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:'export const supabase={rpc:(...a)=>globalThis.familyRpc(...a)};'}))}}]});
+await build({entryPoints:[root+'/src/FeriaCiencia.jsx'],bundle:true,format:'esm',outfile,packages:'external',loader:{'.css':'empty','.png':'dataurl','.jpg':'dataurl','.ttf':'dataurl'},plugins:[{name:'db',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:'export const supabase={rpc:(...a)=>globalThis.familyRpc(...a)};'}))}}]});
 const {default:Feria}=await import(outfile);let view;
 const text=n=>typeof n==='string'?n:Array.isArray(n)?n.map(text).join(''):n?.children?text(n.children):n?.props?text(n.props.children):'';
 const button=name=>view.root.findAllByType('button').find(n=>text(n).includes(name));
