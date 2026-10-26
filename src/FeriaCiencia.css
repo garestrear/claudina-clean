@@ -16,3 +16,5 @@
 .fairOtherGrade{margin:12px 0 18px}.fairOtherGrade>button{background:#eaf1fb;border:1px solid #d0dfef;color:#315d87;width:100%;text-align:left}.fairOtherGrade>div{display:grid;grid-template-columns:1fr 1fr;gap:12px;background:#f4f8fc;border-radius:12px;padding:14px;margin-top:9px}.fairOtherGrade label{display:grid;gap:7px;font-size:12px}.fairOtherGrade .error{grid-column:1/-1}@media(max-width:560px){.fairOtherGrade>div{grid-template-columns:1fr}}
 
 .fairPrintActions{display:flex;justify-content:flex-end;margin:0 0 16px}.fairPrintButton{border:1px solid #cadbdb;background:#eff5f6!important;color:#305960!important}
+
+.fairStatus--rechazado{background:#ffe5e5;color:#962d2d}.fairOverview{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}

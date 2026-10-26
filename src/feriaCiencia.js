@@ -7,7 +7,7 @@ export const areasSteam=[
  {id:'emprendimiento',nombre:'Emprendimiento',es:'Productos, servicios e iniciativas'}
 ];
 export const areasFeriaValidas=valor=>Array.isArray(valor)&&valor.length<=6&&valor.every(a=>areasSteam.some(opcion=>opcion.id===a))&&new Set(valor).size===valor.length;
-export const estadosFeria={borrador:'Borrador',enviado:'Por revisar',ajustes:'En ajustes',aprobado:'Aprobado'};
+export const estadosFeria={borrador:'Borrador',enviado:'Por revisar',ajustes:'En ajustes',aprobado:'Aprobado',rechazado:'Rechazado'};
 export const camposFeria=[
  {id:'titulo',titulo:'Nombre del proyecto',max:150,corto:true,obligatorio:true,ayuda:'Un nombre que cuente su idea.'},
  {id:'integrantes',titulo:'¿Quiénes participan?',max:2000,obligatorio:true,selector:true,ayuda:'Escoge a los compañeros que harán parte del equipo.'},
