@@ -1,19 +1,23 @@
 -- Placas de mesa Feria STEAM 2026. Ejecutar completo; no borra proyectos.
 begin;
 create table if not exists public.feria_placa_contadores(
- clave text primary key check(clave in('general','stem','arte','emprendimiento')),
+ clave text primary key check(clave in('general','stem','arte','emprendimiento','familias')),
  ultimo integer not null default 0 check(ultimo>=0)
 );
-insert into public.feria_placa_contadores(clave) values('general'),('stem'),('arte'),('emprendimiento') on conflict do nothing;
+alter table public.feria_placa_contadores drop constraint if exists feria_placa_contadores_clave_check;
+alter table public.feria_placa_contadores add constraint feria_placa_contadores_clave_check check(clave in('general','stem','arte','emprendimiento','familias'));
+insert into public.feria_placa_contadores(clave) values('general'),('stem'),('arte'),('emprendimiento'),('familias') on conflict do nothing;
 create table if not exists public.feria_placas(
  origen text not null check(origen in('claudina','invitados')),
  proyecto_id uuid not null,
- categoria text not null check(categoria in('stem','arte','emprendimiento')),
+ categoria text not null check(categoria in('stem','arte','emprendimiento','familias')),
  numero_general integer not null unique check(numero_general>0),
  numero_categoria integer not null check(numero_categoria>0),
  creado_en timestamptz not null default now(),
  primary key(origen,proyecto_id),unique(categoria,numero_categoria)
 );
+alter table public.feria_placas drop constraint if exists feria_placas_categoria_check;
+alter table public.feria_placas add constraint feria_placas_categoria_check check(categoria in('stem','arte','emprendimiento','familias'));
 alter table public.feria_placas enable row level security;
 alter table public.feria_placa_contadores enable row level security;
 revoke all on public.feria_placas,public.feria_placa_contadores from public,anon,authenticated;
@@ -24,7 +28,7 @@ begin
  -- Un bloqueo común serializa contadores internos y externos, incluida la reclasificación.
  perform pg_advisory_xact_lock(20261106,2026);
  if exists(select 1 from public.feria_placas p where p.origen=fuente and p.proyecto_id=proyecto) then return;end if;
- categoria_nueva:=case when titulo like '[Emprendimiento familiar] %' or 'emprendimiento'=any(areas) then 'emprendimiento' when 'arts'=any(areas) then 'arte' else 'stem' end;
+ categoria_nueva:=case when titulo like '[Emprendimiento familiar] %' then 'familias' when 'emprendimiento'=any(areas) then 'emprendimiento' when 'arts'=any(areas) then 'arte' else 'stem' end;
  update public.feria_placa_contadores set ultimo=ultimo+1 where clave='general' returning ultimo into general_nuevo;
  update public.feria_placa_contadores set ultimo=ultimo+1 where clave=categoria_nueva returning ultimo into categoria_numero;
  insert into public.feria_placas(origen,proyecto_id,categoria,numero_general,numero_categoria) values(fuente,proyecto,categoria_nueva,general_nuevo,categoria_numero);
@@ -58,6 +62,18 @@ do $$declare r record;begin
   perform public.feria_asignar_placa(r.origen,r.id,r.areas,r.titulo);
  end loop;
 end $$;
+-- Reclasifica emprendimientos familiares ya numerados sin cambiar el número general.
+do $$declare r record;n integer;begin
+ perform pg_advisory_xact_lock(20261106,2026);
+ for r in select pl.origen,pl.proyecto_id from public.feria_placas pl
+ where pl.categoria<>'familias' and (
+ (pl.origen='claudina' and exists(select 1 from public.feria_proyectos p where p.id=pl.proyecto_id and p.titulo like '[Emprendimiento familiar] %')) or
+ (pl.origen='invitados' and exists(select 1 from public.feria_proyectos_externos p where p.id=pl.proyecto_id and p.datos->>'titulo' like '[Emprendimiento familiar] %')))
+ order by pl.numero_general loop
+  update public.feria_placa_contadores set ultimo=ultimo+1 where clave='familias' returning ultimo into n;
+  update public.feria_placas set categoria='familias',numero_categoria=n where origen=r.origen and proyecto_id=r.proyecto_id;
+ end loop;
+end $$;
 create or replace function public.feria_placas_contexto()
 returns jsonb language plpgsql stable security definer set search_path='' as $$
 declare docente boolean:=coalesce(public.es_profesor(),false);ficha uuid;externo boolean;salida jsonb;resumen jsonb;
@@ -67,7 +83,7 @@ begin
  if auth.uid() is null or not(docente or ficha is not null or externo) then raise exception 'Ingresa con una cuenta autorizada para consultar las placas';end if;
  select coalesce(jsonb_agg(to_jsonb(q) order by q.numero_general),'[]'::jsonb) into salida from (
   select pl.origen,pl.proyecto_id,pl.categoria,pl.numero_general,pl.numero_categoria,
-   case pl.categoria when 'stem' then 'STEM' when 'arte' then 'ART' else 'EMP' end||'-'||lpad(pl.numero_categoria::text,greatest(3,length(pl.numero_categoria::text)),'0') codigo,
+   case pl.categoria when 'stem' then 'STEM' when 'arte' then 'ART' when 'familias' then 'FAM' else 'EMP' end||'-'||lpad(pl.numero_categoria::text,greatest(3,length(pl.numero_categoria::text)),'0') codigo,
    case when p.titulo like '[Emprendimiento familiar] %' then substr(p.titulo,27) else p.titulo end titulo,
    case when p.titulo like '[Emprendimiento familiar] %' and length(trim(p.materiales))>0 then p.materiales else p.integrantes end integrantes,
    p.grado::text grado,'C.E.R. Claudina Múnera'::text institucion
@@ -75,14 +91,14 @@ begin
   where p.estado='aprobado' and (docente or p.estudiante_id=ficha or ficha=any(p.integrantes_ids))
   union all
   select pl.origen,pl.proyecto_id,pl.categoria,pl.numero_general,pl.numero_categoria,
-   case pl.categoria when 'stem' then 'STEM' when 'arte' then 'ART' else 'EMP' end||'-'||lpad(pl.numero_categoria::text,greatest(3,length(pl.numero_categoria::text)),'0'),
+   case pl.categoria when 'stem' then 'STEM' when 'arte' then 'ART' when 'familias' then 'FAM' else 'EMP' end||'-'||lpad(pl.numero_categoria::text,greatest(3,length(pl.numero_categoria::text)),'0'),
    p.datos->>'titulo',p.datos->>'integrantes',null::text,p.datos->>'institucion'
   from public.feria_placas pl join public.feria_proyectos_externos p on pl.origen='invitados' and p.id=pl.proyecto_id
   where p.estado='aprobado' and (docente or (externo and p.autor=auth.uid()))
  ) q;
  select jsonb_build_object(
   'registrados',(select count(*) from public.feria_proyectos where estado<>'borrador')+(select count(*) from public.feria_proyectos_externos where estado<>'borrador'),
-  'aprobados',count(*),'stem',count(*) filter(where categoria='stem'),'arte',count(*) filter(where categoria='arte'),'emprendimiento',count(*) filter(where categoria='emprendimiento')
+  'aprobados',count(*),'stem',count(*) filter(where categoria='stem'),'arte',count(*) filter(where categoria='arte'),'emprendimiento',count(*) filter(where categoria='emprendimiento'),'familias',count(*) filter(where categoria='familias')
  ) into resumen from public.feria_placas pl where
   (pl.origen='claudina' and exists(select 1 from public.feria_proyectos p where p.id=pl.proyecto_id and p.estado='aprobado')) or
   (pl.origen='invitados' and exists(select 1 from public.feria_proyectos_externos p where p.id=pl.proyecto_id and p.estado='aprobado'));
@@ -95,7 +111,7 @@ returns jsonb language plpgsql security definer set search_path='' as $$
 declare actual public.feria_placas;numero integer;
 begin
  if not coalesce(public.es_profesor(),false) then raise exception 'Solo un docente puede definir la categoría principal de la placa';end if;
- if fuente not in('claudina','invitados') or categoria_nueva not in('stem','arte','emprendimiento') or categoria_nueva is null then raise exception 'Categoría no válida';end if;
+ if fuente not in('claudina','invitados') or categoria_nueva not in('stem','arte','emprendimiento','familias') or categoria_nueva is null then raise exception 'Categoría no válida';end if;
  -- Mismo orden de bloqueo que aprobación: primero proyecto, después contadores.
  if fuente='claudina' then
   perform 1 from public.feria_proyectos where id=proyecto and estado='aprobado' for update;
