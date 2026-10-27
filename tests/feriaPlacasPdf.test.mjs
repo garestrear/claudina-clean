@@ -3,7 +3,8 @@ const placas=Object.keys(categoriasPlaca).map((categoria,i)=>({origen:'claudina'
 assert.equal(codigoPlaca(placas[0]),'STEM-001');assert.equal(nombreArchivoPlaca(placas[1]),'Placa-ART-001-Feria-STEAM-2026.pdf');
 assert.throws(()=>construirPlacasFeria(jsPDF,[]));assert.throws(()=>construirPlacasFeria(jsPDF,[{...placas[0],categoria:'otro'}]));
 const datos={escudo:'data:image/png;base64,'+(await readFile('src/assets/escudo-membrete.png')).toString('base64'),fuenteRegular:(await readFile('src/assets/carta-regular.ttf')).toString('base64'),fuenteNegrita:(await readFile('src/assets/carta-bold.ttf')).toString('base64')};
-const pdf=construirPlacasFeria(jsPDF,placas,datos);assert.equal(pdf.getNumberOfPages(),4);assert.equal(pdf.internal.pageSize.getWidth(),279.4);await writeFile('/tmp/placas-feria-qa.pdf',Buffer.from(pdf.output('arraybuffer')));
+const pdf=construirPlacasFeria(jsPDF,placas,datos);assert.equal(pdf.getNumberOfPages(),2);assert.ok(Math.abs(pdf.internal.pageSize.getWidth()-215.9)<.001);await writeFile('/tmp/placas-feria-qa.pdf',Buffer.from(pdf.output('arraybuffer')));
+const impar=construirPlacasFeria(jsPDF,placas.slice(0,3),datos);assert.equal(impar.getNumberOfPages(),2);const unica=construirPlacasFeria(jsPDF,[placas[0]],datos);assert.equal(unica.getNumberOfPages(),1);assert.ok(Math.abs(pdf.internal.pageSize.getHeight()-279.4)<.001);
 const extensa={...placas[0],titulo:'Proyecto interdisciplinario de ciencia, tecnología y matemáticas: investigación de la biodiversidad, la lluvia y las semillas de nuestro territorio rural',integrantes:Array.from({length:70},(_,i)=>`Expositor número ${i+1} Apellido`).join('\n').slice(0,2000)};
 const otro=construirPlacasFeria(jsPDF,[extensa],datos);assert.ok(otro.getNumberOfPages()>1);await writeFile('/tmp/placas-feria-extensa-qa.pdf',Buffer.from(otro.output('arraybuffer')));
-console.log('PASS: PDF carta horizontal, 4 categorías, códigos y nombres, escudo, títulos largos y continuación para no recortar expositores');
+console.log('PASS: PDF carta vertical, dos placas por hoja, 4 categorías, códigos y nombres, escudo, títulos largos y continuación para no recortar expositores');
