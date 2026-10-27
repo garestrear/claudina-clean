@@ -1,7 +1,8 @@
 export const categoriasPlaca={
  stem:{nombre:'S-T-E-M',detalle:'Ciencia · Tecnología · Ingeniería · Matemáticas',prefijo:'STEM',color:'#16844b',oscuro:'#10552f',claro:'#edf8f0'},
  arte:{nombre:'Arte y Creatividad',detalle:'Expresión · Imaginación · Creación',prefijo:'ART',color:'#823bb5',oscuro:'#532070',claro:'#f5eefb'},
- emprendimiento:{nombre:'Emprendimiento',detalle:'Ideas · Productos · Servicios',prefijo:'EMP',color:'#e67714',oscuro:'#833b08',claro:'#fff5e9'}
+ emprendimiento:{nombre:'Emprendimiento',detalle:'Ideas · Productos · Servicios',prefijo:'EMP',color:'#e67714',oscuro:'#833b08',claro:'#fff5e9'},
+ familias:{nombre:'Emprendimientos de mamás y papás',detalle:'Familias que crean · Saberes que emprenden',prefijo:'FAM',color:'#2168b5',oscuro:'#123d70',claro:'#edf4fc'}
 };
 const texto=v=>String(v??'').replace(/\t/g,' ').trim();
 export function validarPlaca(placa){return placa&&categoriasPlaca[placa.categoria]&&Number.isInteger(placa.numero_general)&&placa.numero_general>0&&Number.isInteger(placa.numero_categoria)&&placa.numero_categoria>0&&texto(placa.titulo)&&texto(placa.integrantes)}
@@ -26,7 +27,7 @@ export function construirPlacasFeria(jsPDF,placas,{escudo,fuenteRegular,fuenteNe
    pdf.setFillColor(cat.claro);pdf.rect(0,0,279.4,215.9,'F');
    pdf.setFillColor(cat.color);pdf.roundedRect(8,8,263.4,35,4,4,'F');
    letra(11,true,'#ffffff');pdf.text('FERIA STEAM 2026  /  CLAUDINA MÚNERA',16,19);
-   letra(22,true,'#ffffff');pdf.text(cat.nombre.toUpperCase(),16,32);
+   letra(22,true,'#ffffff');let encabezadoSize=22;while(pdf.getTextWidth(cat.nombre.toUpperCase())>224)letra(--encabezadoSize,true,'#ffffff');pdf.text(cat.nombre.toUpperCase(),16,32);
    letra(9,false,'#ffffff');pdf.text(cat.detalle,16,39);
    if(escudo){pdf.setFillColor('#ffffff');pdf.roundedRect(245,12,21,26,2,2,'F');pdf.addImage(escudo,'PNG',247,14,17,21);}
    pdf.setDrawColor(cat.color);pdf.setLineWidth(.7);pdf.setFillColor('#ffffff');pdf.roundedRect(12,52,67,44,3,3,'FD');
