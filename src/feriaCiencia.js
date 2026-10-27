@@ -16,15 +16,18 @@ export const camposFeria=[
  {id:'materiales',titulo:'Materiales y recursos',max:2000,ayuda:'¿Qué necesitarán? Pueden indicar lo que ya tienen y lo que les hace falta.'},
  {id:'resultados_esperados',titulo:'¿Qué esperamos lograr?',max:2000,ayuda:'¿Qué les gustaría aprender o mostrar el día de la feria?'},
  {id:'bibliografia',titulo:'Bibliografía',max:4000,ayuda:'Anota los libros, páginas web, videos u otras fuentes que consultaron. Si puedes, incluye el autor, el título y el enlace.'},
+ {id:'poster_url',titulo:'Enlace al póster (opcional)',max:2000,corto:true,tipo:'url',ayuda:'Pega el enlace al diseño listo para imprimir (Canva, Google Drive u otro). Activa el permiso de visualización para que los profesores puedan abrirlo e imprimirlo.'},
  {id:'apoyo',titulo:'¿En qué necesitamos ayuda?',max:2000,ayuda:'Pueden escribir sus dudas o el apoyo que esperan del colegio.'}
 ];
 export const datosFeria=p=>({...Object.fromEntries(camposFeria.map(c=>[c.id,typeof p?.[c.id]==='string'?p[c.id]:''])),areas:areasFeriaValidas(p?.areas)?[...p.areas]:[],asesor_id:typeof p?.asesor_id==='string'?p.asesor_id:'',integrantes_ids:Array.isArray(p?.integrantes_ids)?[...p.integrantes_ids]:[]});
 export const gradoFeria=g=>Number(g)===0?'TS y JR':`${g}°`;
 export const claveBorradorFeria=(cuenta,id)=>`claudina:feria:v1:${cuenta}:${id}`;
 export function leerBorradorFeria(storage,clave){
- try{const b=JSON.parse(storage.getItem(clave));return b&&typeof b==='object'&&typeof b.proyectoId==='string'&&Number.isInteger(b.versionBase)&&b.datos&&(b.datos.areas===undefined||areasFeriaValidas(b.datos.areas))&&camposFeria.every(c=>(c.id==='bibliografia'&&b.datos[c.id]===undefined)||(typeof b.datos[c.id]==='string'&&b.datos[c.id].length<=c.max))?{...b,datos:datosFeria(b.datos),referencias:Array.isArray(b.referencias)?b.referencias.filter(e=>e&&typeof e.id==='string'&&typeof e.nombre==='string'&&Number.isInteger(e.grado)&&e.grado>=0&&e.grado<=8):[]}:null}catch{return null}
+ try{const b=JSON.parse(storage.getItem(clave));return b&&typeof b==='object'&&typeof b.proyectoId==='string'&&Number.isInteger(b.versionBase)&&b.datos&&(b.datos.areas===undefined||areasFeriaValidas(b.datos.areas))&&camposFeria.every(c=>(['bibliografia','poster_url'].includes(c.id)&&b.datos[c.id]===undefined)||(typeof b.datos[c.id]==='string'&&b.datos[c.id].length<=c.max))?{...b,datos:datosFeria(b.datos),referencias:Array.isArray(b.referencias)?b.referencias.filter(e=>e&&typeof e.id==='string'&&typeof e.nombre==='string'&&Number.isInteger(e.grado)&&e.grado>=0&&e.grado<=8):[]}:null}catch{return null}
 }
+export const enlacePosterValido=valor=>{try{const u=new URL(valor);return ['http:','https:'].includes(u.protocol)&&!!u.hostname&&!u.username&&!u.password}catch{return false}};
 export function validarFeria(datos,enviar){
+ if(datos.poster_url?.trim()&&!enlacePosterValido(datos.poster_url.trim()))return 'Pega un enlace válido al póster que comience por https:// o http://.';
  if(!areasFeriaValidas(datos.areas)||datos.areas.length===0)return 'Selecciona una o varias áreas STEAM para clasificar el proyecto.';
  if(!datos.asesor_id)return 'Escoge un profesor asesor de la lista de docentes.';
  if(datos.titulo.trim().length<3)return 'Escribe un nombre de al menos 3 caracteres para el proyecto.';
