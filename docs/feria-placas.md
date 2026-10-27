@@ -9,7 +9,7 @@ Ejecutar `supabase/feria-familias-estados.sql` completo en Supabase SQL Editor s
 - Docente: Feria STEAM → Placas y ubicación. Contadores generales y por categoría, búsqueda por código/número/título/expositor/institución, filtros y descarga individual o de toda la lista visible.
 - Estudiante o acudiente: abrir su proyecto aprobado → Ver placa / Descargar placa PDF.
 - Institución invitada: abrir su propuesta aprobada → placa disponible.
-- Formato: carta horizontal al 100 %, con escudo, título, institución, expositores, código y número general. Las listas extensas continúan en otra hoja con el mismo código, sin recortar nombres.
+- Formato: carta vertical al 100 %, dos placas de media carta (21,59 × 13,97 cm) por hoja, con línea central de corte, con escudo, título, institución, expositores, código y número general. La descarga conjunta empareja proyectos distintos; una descarga individual deja libre la otra mitad de la hoja. Si el total es impar, la última mitad queda libre. Las listas extensas continúan en medias hojas adicionales con el mismo código, sin recortar nombres.
 
 ## Identificación
 
