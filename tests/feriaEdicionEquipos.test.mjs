@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {crearFeriaDb,uid,uuid} from './fixtures/feriaDb.mjs';
+const {db,identity,rpc}=await crearFeriaDb();
+await db.exec("create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);create schema storage;create table storage.objects(id int);alter table storage.objects enable row level security;");
+for(const file of ['feria-invitados','feria-rechazar','feria-poster','feria-edicion-equipos','feria-edicion-equipos'])await db.exec(await readFile(`supabase/${file}.sql`,'utf8'));
+await db.query('insert into perfiles values($1,$2,$3)',[uid(7),'Compañero','estudiante']);await db.query('update estudiantes set auth_user_id=$1 where id=$2',[uid(7),uuid(7)]);
+const datos={titulo:'Proyecto editable',integrantes:'',propuesta:'Explorar',procedimiento:'Medir',materiales:'',resultados_esperados:'',bibliografia:'',poster_url:'',apoyo:'',areas:['science'],asesor_id:uid(1),integrantes_ids:[uuid(7)]};
+const save=(v,n,d=datos)=>rpc('feria_guardar',[uuid(850),d,v,true,uuid(n)],['uuid','jsonb','integer','boolean','uuid']);
+await identity(3);let p=await save(0,851);
+await identity(7);assert.equal((await rpc('feria_proyecto',[uuid(850)],['uuid'])).puede_editar,true);
+p=await save(1,852,{...datos,poster_url:'https://example.com/poster.pdf'});assert.equal(p.proyecto.poster_url,'https://example.com/poster.pdf');assert.ok(p.proyecto.integrantes_ids.includes(uuid(3)));
+await assert.rejects(save(1,853));await identity(4);await assert.rejects(save(2,854));
+await identity(1);await rpc('feria_revisar',[uuid(850),2,'aprobado','Listo',uuid(855)],['uuid','integer','text','text','uuid']);await identity(7);p=await save(3,856);assert.equal(p.proyecto.estado,'enviado');
+await identity(1);await rpc('feria_revisar',[uuid(850),4,'rechazado','Repetido',uuid(857)],['uuid','integer','text','text','uuid']);await identity(7);p=await save(5,858,{...datos,propuesta:'Idea corregida'});assert.equal(p.proyecto.estado,'rechazado');assert.equal(p.proyecto.propuesta,'Idea corregida');assert.equal(p.revisiones.length,2);
+await identity(3);assert.equal((await rpc('feria_proyecto',[uuid(850)],['uuid'])).puede_editar,true);
+await db.close();console.log('PASS: integrantes editan, responsable conservado, terceros excluidos, conflicto de versión, aprobados y rechazados editables sin anular revisión');
