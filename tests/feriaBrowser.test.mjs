@@ -31,7 +31,7 @@ try{const context=await browser.newContext({viewport:{width:390,height:844}});aw
  await docente.locator('.fairProjectHeading .fairStatus--rechazado').waitFor();
  await estudiante.reload();await estudiante.locator('.fairCard .fairStatus--rechazado').waitFor();
  await estudiante.getByRole('button',{name:'Ver proyecto'}).click();
- assert.equal(await estudiante.getByRole('button',{name:'Editar proyecto',exact:true}).count(),1);
+ assert.equal(await estudiante.getByRole('button',{name:'Editar proyecto',exact:true}).count(),0);
  await estudiante.getByText('Proyecto repetido: continuar con la otra inscripción.',{exact:true}).waitFor();
  await docente.getByRole('button',{name:'← Proyectos',exact:true}).click();
  assert.equal(await docente.locator('.fairCard').count(),0);
