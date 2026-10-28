@@ -18,3 +18,5 @@
 .fairPrintActions{display:flex;justify-content:flex-end;margin:0 0 16px}.fairPrintButton{border:1px solid #cadbdb;background:#eff5f6!important;color:#305960!important}
 
 .fairStatus--rechazado{background:#ffe5e5;color:#962d2d}.fairOverview{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+
+.fairHistory details{margin:12px 0;padding:14px;border:1px solid #d5e2d9;border-radius:12px;background:#fff}.fairHistory details summary{cursor:pointer;font-weight:700;overflow-wrap:anywhere}.fairHistory details p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}.fairHistory details section{border-top:1px solid #e0e9e3;margin-top:14px;padding-top:8px}

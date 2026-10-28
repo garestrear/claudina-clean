@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';import{readFile}from'node:fs/promises';import{crearFeriaDb,uid,uuid}from'./fixtures/feriaDb.mjs';
+const{db,identity,rpc}=await crearFeriaDb();
+await db.exec("create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);create schema storage;create table storage.objects(id int);alter table storage.objects enable row level security;");
+for(const f of ['feria-invitados','feria-rechazar','feria-jurados','feria-poster','feria-edicion-equipos','feria-familias-estados','feria-rechazados-solo-lectura','feria-correcciones-docentes'])await db.exec(await readFile('supabase/'+f+'.sql','utf8'));
+await db.exec(await readFile('supabase/feria-correcciones-docentes.sql','utf8'));
+let peticion=1200;const guardar=(origen,proyecto,datos,version,solicitud=uuid(peticion++))=>rpc('feria_corregir_proyecto',[origen,proyecto,datos,version,solicitud],['text','uuid','jsonb','integer','uuid']);
+await identity(3);let ctx=await rpc('feria_guardar',[uuid(800),{titulo:'La lampara',propuesta:'Explorar',procedimiento:'Medir',materiales:'Agua',resultados_esperados:'Aprender',apoyo:'',bibliografia:'Libro',areas:['science'],asesor_id:uid(1),integrantes_ids:[uuid(7)]},0,true,uuid(peticion++)],['uuid','jsonb','integer','boolean','uuid']);
+const original=(await db.query('select * from feria_proyectos where id=$1',[uuid(800)])).rows[0];
+await identity(2);const request=uuid(peticion++);ctx=await guardar('claudina',uuid(800),{titulo:'La lámpara',propuesta:'Explorar la luz.'},original.version,request);assert.equal(ctx.proyecto.estado,'enviado');assert.equal(ctx.proyecto.version,original.version+1);
+await guardar('claudina',uuid(800),{titulo:'La lámpara',propuesta:'Explorar la luz.'},original.version,request);assert.equal((await db.query('select count(*)::int n from feria_correcciones_docentes')).rows[0].n,1);
+await assert.rejects(guardar('claudina',uuid(800),{titulo:'Cambio obsoleto'},original.version));
+await assert.rejects(guardar('claudina',uuid(800),{estado:'rechazado'},ctx.proyecto.version));
+await assert.rejects(guardar('claudina',uuid(800),{integrantes:'Otro equipo'},ctx.proyecto.version));
+await assert.rejects(guardar('claudina',uuid(800),{poster_url:'javascript:alert(1)'},ctx.proyecto.version));
+await assert.rejects(guardar('claudina',uuid(800),{propuesta:42},ctx.proyecto.version));
+await assert.rejects(guardar('claudina',uuid(800),{propuesta:'x'.repeat(4001)},ctx.proyecto.version));
+const despues=(await db.query('select * from feria_proyectos where id=$1',[uuid(800)])).rows[0];for(const k of ['autor','estudiante_id','grado','asesor_id','estado'])assert.equal(despues[k],original[k]);assert.deepEqual(despues.integrantes_ids,original.integrantes_ids);
+await identity(3);const h=await rpc('feria_correcciones_contexto',['claudina',uuid(800)],['text','uuid']);assert.equal(h[0].nombre_docente,'Docente Dos');assert.equal(h[0].antes.titulo,'La lampara');assert.equal(h[0].despues.titulo,'La lámpara');
+await assert.rejects(guardar('claudina',uuid(800),{titulo:'Cambio estudiante'},ctx.proyecto.version));
+await identity(4);await assert.rejects(rpc('feria_correcciones_contexto',['claudina',uuid(800)],['text','uuid']));await assert.rejects(guardar('claudina',uuid(800),{titulo:'Cambio ajeno'},ctx.proyecto.version));
+await identity(null);await assert.rejects(guardar('claudina',uuid(800),{},ctx.proyecto.version));
+await identity(1);
+for(const estado of ['borrador','ajustes','aprobado','rechazado']){
+ let p=(await rpc('feria_proyecto',[uuid(800)],['uuid'])).proyecto;
+ await rpc('feria_revisar',[p.id,p.version,estado,'Prueba de estado',uuid(peticion++)],['uuid','integer','text','text','uuid']);
+ p=(await rpc('feria_proyecto',[uuid(800)],['uuid'])).proyecto;
+ const r=await guardar('claudina',p.id,{materiales:'Material '+estado},p.version);assert.equal(r.proyecto.estado,estado);
+}
+await identity(3);await assert.rejects(rpc('feria_guardar',[uuid(800),{...original,titulo:'Intento rechazado'},999,false,uuid(peticion++)],['uuid','jsonb','integer','boolean','uuid']));
+await identity(1);
+await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,'invitado@test.co',now())",[uid(90)]);
+await db.query("insert into feria_proyectos_externos(id,autor,datos,estado,ultima_solicitud) values($1,$2,$3,'aprobado',$4)",[uuid(900),uid(90),{titulo:'Cohete',institucion:'Otra institución',municipio:'Caldas',responsable:'Docente externo',telefono:'123',correo:'invitado@test.co',acepta:true,publicar:true,areas:['science'],integrantes:'Alumna A',propuesta:'Un coete',procedimiento:'Construir'},uuid(peticion++)]);
+const externo=await guardar('invitados',uuid(900),{propuesta:'Un cohete',integrantes:'Alumna Á'},1);assert.equal(externo.proyecto.estado,'aprobado');assert.equal(externo.proyecto.datos.acepta,true);assert.equal(externo.proyecto.datos.responsable,'Docente externo');assert.equal(externo.proyecto.datos.propuesta,'Un cohete');
+await assert.rejects(guardar('invitados',uuid(900),{publicar:false},2));
+await identity(3);let f=await rpc('feria_guardar',[uuid(810),{titulo:'[Emprendimiento familiar] Mis galletas',propuesta:'Galletas',procedimiento:'Hornear',materiales:'Familia',resultados_esperados:'',apoyo:'',bibliografia:'',areas:['emprendimiento'],asesor_id:uid(1),integrantes_ids:[]},0,true,uuid(peticion++)],['uuid','jsonb','integer','boolean','uuid']);await identity(2);f=await guardar('claudina',uuid(810),{titulo:'Galletas artesanales'},f.proyecto.version);assert.equal(f.proyecto.titulo,'[Emprendimiento familiar] Galletas artesanales');
+await identity(3);await db.exec('set role authenticated');await assert.rejects(db.query('select * from feria_correcciones_docentes'));await db.exec('reset role');
+await db.close();console.log('PASS: dos docentes corrigen, conserva estado/equipo/categoría y datos externos, historial autorizado, límites, idempotencia, conflicto y rechazo estudiantil');
