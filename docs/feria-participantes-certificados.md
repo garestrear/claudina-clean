@@ -72,3 +72,8 @@ El certificado usa carta horizontal, escudo original, nombre destacado, acentos 
 Si ya se activó la carga de firmas, ejecutar `supabase/feria-certificados-firmantes-multiples.sql` para habilitar de uno a seis firmantes. Para una instalación nueva, ejecutar primero `feria-certificados-firmas.sql` y después esta actualización. Ambas conservan la configuración y los certificados anteriores.
 
 El parámetro Número de firmantes se guarda junto con los datos de cada persona: el servidor devuelve `numero_firmantes`, calculado a partir de la lista guardada para evitar inconsistencias. Los campos se muestran automáticamente. Reducir el número y guardar retira los firmantes finales de futuras emisiones; no cambia los certificados anteriores. Antes de guardar, volver a aumentar el número recupera los campos ocultos de la sesión.
+
+
+### Encabezado institucional y diseño conmemorativo
+
+El encabezado incluye literalmente: “Aprobado por Resolución Departamental N° S201500094400 de Marzo 12 de 2015”. Diseño carta horizontal con banda STEAM en azul petróleo, acentos dorados, escudo original y nombre destacado. Los textos, marcos y ornamentos se dibujan como vectores para mantener nitidez al imprimir. La frase conmemorativa es: “Por hacer de las ideas una experiencia que transforma.” Se conserva la distribución de uno a seis firmantes, el folio del certificado y la ausencia del código del proyecto. Este cambio visual no requiere SQL adicional.
