@@ -56,7 +56,7 @@ Se verifican permisos, funciones, vinculación de cuentas, repetición de aproba
 Ejecutar `supabase/feria-certificados-firmas.sql` después de `feria-participantes-certificados.sql`. Es idempotente y no modifica los certificados emitidos.
 
 En Feria STEAM → Participantes y certificados → Diseño y firmas de los certificados:
-1. Revisar los dos nombres y cargos.
+1. Elegir el número de firmantes (de uno a seis) y revisar los nombres y cargos.
 2. Cargar una imagen PNG, JPG o WebP de hasta 5 MB para cada firma. La app elimina el papel claro, conserva la tinta y recorta los márgenes en el dispositivo. La cuadrícula de la vista previa indica transparencia; no se imprime.
 3. Para conservar la firma existente del docente, pulsar Usar firma actual de Gustavo.
 4. Guardar firmantes y firmas; luego abrir Vista previa del certificado antes de emitir.
@@ -64,4 +64,11 @@ En Feria STEAM → Participantes y certificados → Diseño y firmas de los cert
 
 La configuración de firmas sólo es consultable y modificable por docentes. Las firmas se guardan como PNG con fondo transparente; la emisión conserva una copia dentro del certificado y los estudiantes sólo acceden a sus propios certificados. Un control de versión evita que un docente sobrescriba cambios guardados por otro.
 
-El certificado usa carta horizontal, escudo original, nombre destacado, acentos de color según función/categoría y dos espacios de firma. Conserva un folio propio del certificado para identificación, distinto de la numeración de proyectos.
+El certificado usa carta horizontal, escudo original, nombre destacado, acentos de color según función/categoría y entre uno y seis espacios de firma, hasta tres por fila. Conserva un folio propio del certificado para identificación, distinto de la numeración de proyectos.
+
+
+### Más profesores firmantes
+
+Si ya se activó la carga de firmas, ejecutar `supabase/feria-certificados-firmantes-multiples.sql` para habilitar de uno a seis firmantes. Para una instalación nueva, ejecutar primero `feria-certificados-firmas.sql` y después esta actualización. Ambas conservan la configuración y los certificados anteriores.
+
+El parámetro Número de firmantes se guarda junto con los datos de cada persona: el servidor devuelve `numero_firmantes`, calculado a partir de la lista guardada para evitar inconsistencias. Los campos se muestran automáticamente. Reducir el número y guardar retira los firmantes finales de futuras emisiones; no cambia los certificados anteriores. Antes de guardar, volver a aumentar el número recupera los campos ocultos de la sesión.
