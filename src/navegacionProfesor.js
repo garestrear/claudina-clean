@@ -16,7 +16,7 @@ export const herramientasDocente={
  feria:['🔬','Feria STEAM','Acompaña y revisa los proyectos de tus estudiantes.'],
  eventos:['⭐','Evaluar eventos','Responde evaluaciones y consulta resultados.'],
  encuestas:['📋','Encuestas','Participa y consulta las encuestas institucionales.'],
- ingles:['🎧','Aprende Inglés','Canciones, actividades de escucha y resultados.'],
+ ingles:['🎧','Aprende inglés','Canciones, actividades de escucha y resultados.'],
  reportes:['🚨','Reportes','Consulta los reportes de tus estudiantes.'],
  misgrupos:['⚙️','Mis grupos','Escoge los grupos en los que impartes clase.'],
  administracion:['🔐','Administración','Gestiona estudiantes, docentes y asignaciones.'],

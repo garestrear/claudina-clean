@@ -9,15 +9,15 @@ export const areasSteam=[
 export const areasFeriaValidas=valor=>Array.isArray(valor)&&valor.length<=6&&valor.every(a=>areasSteam.some(opcion=>opcion.id===a))&&new Set(valor).size===valor.length;
 export const estadosFeria={borrador:'Borrador',enviado:'Por revisar',ajustes:'En ajustes',aprobado:'Aprobado',rechazado:'Rechazado'};
 export const camposFeria=[
- {id:'titulo',titulo:'Nombre del proyecto',max:150,corto:true,obligatorio:true,ayuda:'Un nombre que cuente su idea.'},
+ {id:'titulo',titulo:'Nombre del proyecto',max:150,corto:true,obligatorio:true,ayuda:'Un nombre que cuente tu idea.'},
  {id:'integrantes',titulo:'¿Quiénes participan?',max:2000,obligatorio:true,selector:true,ayuda:'Escoge a los compañeros que harán parte del equipo.'},
- {id:'propuesta',titulo:'¿Qué queremos hacer?',max:4000,obligatorio:true,ayuda:'Cuéntanos su idea con sus propias palabras. ¿Qué quieren crear, investigar o resolver?'},
- {id:'procedimiento',titulo:'¿Cómo lo vamos a hacer?',max:4000,obligatorio:true,ayuda:'Explica los pasos o las pruebas que quieren realizar.'},
- {id:'materiales',titulo:'Materiales y recursos',max:2000,ayuda:'¿Qué necesitarán? Pueden indicar lo que ya tienen y lo que les hace falta.'},
- {id:'resultados_esperados',titulo:'¿Qué esperamos lograr?',max:2000,ayuda:'¿Qué les gustaría aprender o mostrar el día de la feria?'},
- {id:'bibliografia',titulo:'Bibliografía',max:4000,ayuda:'Anota los libros, páginas web, videos u otras fuentes que consultaron. Si puedes, incluye el autor, el título y el enlace.'},
+ {id:'propuesta',titulo:'¿Qué queremos hacer?',max:4000,obligatorio:true,ayuda:'Cuéntanos tu idea con tus propias palabras. ¿Qué quieres crear, investigar o resolver?'},
+ {id:'procedimiento',titulo:'¿Cómo lo vamos a hacer?',max:4000,obligatorio:true,ayuda:'Explica los pasos o las pruebas que quieres realizar.'},
+ {id:'materiales',titulo:'Materiales y recursos',max:2000,ayuda:'¿Qué necesitarás? Indica lo que ya tienes y lo que te hace falta.'},
+ {id:'resultados_esperados',titulo:'¿Qué esperamos lograr?',max:2000,ayuda:'¿Qué te gustaría aprender o mostrar el día de la feria?'},
+ {id:'bibliografia',titulo:'Bibliografía',max:4000,ayuda:'Anota los libros, páginas web, videos u otras fuentes que consultaste. Si puedes, incluye el autor, el título y el enlace.'},
  {id:'poster_url',titulo:'Enlace al póster (opcional)',max:2000,corto:true,tipo:'url',ayuda:'Pega el enlace al diseño listo para imprimir (Canva, Google Drive u otro). Activa el permiso de visualización para que los profesores puedan abrirlo e imprimirlo.'},
- {id:'apoyo',titulo:'¿En qué necesitamos ayuda?',max:2000,ayuda:'Pueden escribir sus dudas o el apoyo que esperan del colegio.'}
+ {id:'apoyo',titulo:'¿En qué necesitamos ayuda?',max:2000,ayuda:'Puedes escribir tus dudas o indicar el apoyo que esperas del colegio.'}
 ];
 export const datosFeria=p=>({...Object.fromEntries(camposFeria.map(c=>[c.id,typeof p?.[c.id]==='string'?p[c.id]:''])),areas:areasFeriaValidas(p?.areas)?[...p.areas]:[],asesor_id:typeof p?.asesor_id==='string'?p.asesor_id:'',integrantes_ids:Array.isArray(p?.integrantes_ids)?[...p.integrantes_ids]:[]});
 export const gradoFeria=g=>Number(g)===0?'TS y JR':`${g}°`;
@@ -31,6 +31,6 @@ export function validarFeria(datos,enviar){
  if(!areasFeriaValidas(datos.areas)||datos.areas.length===0)return 'Selecciona una o varias áreas STEAM para clasificar el proyecto.';
  if(!datos.asesor_id)return 'Escoge un profesor asesor de la lista de docentes.';
  if(datos.titulo.trim().length<3)return 'Escribe un nombre de al menos 3 caracteres para el proyecto.';
- if(enviar&&camposFeria.some(c=>c.obligatorio&&c.id!=='integrantes'&&!datos[c.id].trim()))return 'Antes de enviar, completa qué harán y cómo lo harán.';
+ if(enviar&&camposFeria.some(c=>c.obligatorio&&c.id!=='integrantes'&&!datos[c.id].trim()))return 'Antes de enviar, completa qué harás y cómo lo harás.';
  return '';
 }

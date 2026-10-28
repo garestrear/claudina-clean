@@ -31,7 +31,7 @@ export function crearHandlerFeriaAprobados(factory=createClient,env=process.env)
    db.from('feria_proyectos_externos').select('id',{count:'exact',head:true}).neq('estado','borrador')
   ]);
   const [internos,externos,conteoInternos,conteoExternos]=resultados;
-  if(conteoInternos.error||conteoExternos.error)throw new Error('No se pudo contar los proyectos');
+  if(conteoInternos.error||conteoExternos.error)throw new Error('No se pudieron contar los proyectos');
   // Only the approved exhibition roster leaves the server, never contact details or drafts.
   const proyectos=[...internos.map(p=>{
    const familiar=p.titulo.startsWith('[Emprendimiento familiar] ');

@@ -9,7 +9,7 @@ export const gruposEstudiante=[
  {id:'mas',icono:'☰',titulo:'Más',paginas:['horario','encuestas','eventos']}
 ];
 const accesos={
- aprender:[['ingles','🎧','Aprende Inglés','Canciones y actividades para practicar.']],
+ aprender:[['ingles','🎧','Aprende inglés','Canciones y actividades para practicar.']],
  colegio:[['valoraciones','⭐','Valorar aseo','Participa en el cuidado del salón.'],['evidencias','📸','Evidencias y reportes','Consulta tus actividades y registros.'],['calificaciones','📈','Calificaciones de aseo','Revisa tus valoraciones e historial.'],['convivencia','🤝','Convivencia','Acuerdos y seguimiento del grupo.']],
  mas:[['horario','🕒','Horario','Consulta tus clases.'],['encuestas','📋','Encuestas','Comparte tu opinión y participa.'],['eventos','⭐','Evaluar eventos','Cuéntanos cómo viviste cada jornada.']]
 };

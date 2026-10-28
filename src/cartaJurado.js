@@ -6,7 +6,7 @@ export function nombreArchivoJurado(nombre){
 }
 // Texto nativo en PDF, sin depender de imprimir ni de una captura de pantalla.
 export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fuenteNegrita,fecha=new Date()}={}){
- if(!limpio(jurado?.nombre)||!limpio(jurado?.institucion))throw new Error('Faltan el nombre o la institución de la persona inscrita.');
+ if(!limpio(jurado?.nombre)||!limpio(jurado?.institucion))throw new Error('Falta el nombre o la institución de la persona inscrita.');
  const pdf=new jsPDF({unit:'mm',format:'letter',compress:true});
  if(fuenteRegular&&fuenteNegrita){pdf.addFileToVFS('carta-regular.ttf',fuenteRegular);pdf.addFont('carta-regular.ttf','Carta','normal');pdf.addFileToVFS('carta-bold.ttf',fuenteNegrita);pdf.addFont('carta-bold.ttf','Carta','bold');}
  const fuente=fuenteRegular&&fuenteNegrita?'Carta':'helvetica';

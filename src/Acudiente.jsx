@@ -16,7 +16,7 @@ import escudo from './assets/escudo-claudina.png';
 import './Acudiente.css';
 const dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const estado={cumplio:'✅ Cumplió',ausente:'🚫 Ausente',no_cumplio:'❌ No cumplió'};
-const tabs=[['inicio','🏠 Mi hijo'],['horario','🕒 Horario'],['aseo','🧹 Aseo y evidencias'],['avisos','📚 Tareas y Avisos'],['reportes','🚨 Reportes de mi hijo'],['convivencia','🤝 Convivencia y compromisos'],['eventos','⭐ Evaluar eventos'],['encuestas','📋 Resultados de encuestas'],['feria','🔬 Feria STEAM'],['cuenta','🔐 Mi cuenta']];
+const tabs=[['inicio','🏠 Mi hijo'],['horario','🕒 Horario'],['aseo','🧹 Aseo y evidencias'],['avisos','📚 Tareas y avisos'],['reportes','🚨 Reportes de mi hijo'],['convivencia','🤝 Convivencia y compromisos'],['eventos','⭐ Evaluar eventos'],['encuestas','📋 Resultados de encuestas'],['feria','🔬 Feria STEAM'],['cuenta','🔐 Mi cuenta']];
 export function IngresoAcudiente({onVolver}){
  const[documento,setDocumento]=useState(''),[password,setPassword]=useState(''),[busy,setBusy]=useState(false),[msg,setMsg]=useState('');
  async function entrar(e){e.preventDefault();if(busy)return;setBusy(true);setMsg('');try{
@@ -29,7 +29,7 @@ export function IngresoAcudiente({onVolver}){
 function FotosAseo({evidencias,hijo}){
  const[urls,setUrls]=useState([]),[error,setError]=useState('');
  useEffect(()=>{let vigente=true;setUrls([]);setError('');Promise.all(evidencias.map(async f=>{const{data,error}=await supabase.storage.from('evidencias').createSignedUrl(f.path,300);if(error)throw error;return{...f,url:data.signedUrl}})).then(f=>{if(vigente)setUrls(f)}).catch(()=>{if(vigente)setError('No se pudieron abrir las evidencias. Vuelve a intentar más tarde.')});return()=>{vigente=false}},[evidencias]);
- return error?<p className="error">{error}</p>:<div className="evidenceGrid">{urls.map(f=><a key={f.id} href={f.url} target="_blank" rel="noreferrer"><img loading="lazy" src={f.url} alt={`Evidencia del aseo de su ${referencia(hijo)}`}/></a>)}</div>;
+ return error?<p className="error">{error}</p>:<div className="evidenceGrid">{urls.map(f=><a key={f.id} href={f.url} target="_blank" rel="noreferrer"><img loading="lazy" src={f.url} alt={`Evidencia del aseo de tu ${referencia(hijo)}`}/></a>)}</div>;
 }
 function AseosAcudiente({filas,hijo}){
  const[abierto,setAbierto]=useState(null);
@@ -38,7 +38,7 @@ function AseosAcudiente({filas,hijo}){
 function AvisosAcudiente({avisos,mensajes,hijo}){
  const tareas=avisos.filter(a=>a.tipo==='tarea').sort((a,b)=>a.fecha_evento&&b.fecha_evento?a.fecha_evento.localeCompare(b.fecha_evento):a.fecha_evento?-1:b.fecha_evento?1:0),publicaciones=avisos.filter(a=>a.tipo!=='tarea'),hoy=fechaBogota();
  const tarjeta=(a,tarea=false)=><article className="card" key={a.id}><small>{a.grado!=null?`Grado ${a.grado}°`:'Todos los grados'}</small><h4>{a.titulo}</h4><p>{a.contenido}</p><FotoTarea path={a.foto_path}/>{a.fecha_evento&&<b>{tarea?'Fecha de entrega':'Fecha'}: {a.fecha_evento}{tarea&&a.fecha_evento<hoy?' · Fecha vencida':tarea&&a.fecha_evento===hoy?' · Para hoy':''}</b>}</article>;
- return <section><h2>📚 Tareas y Avisos</h2><p>Información publicada para el grado de tu {referencia(hijo)} y para toda la institución.</p><section aria-label="Tareas pendientes"><h3>📚 Tareas pendientes</h3><p>Tareas publicadas por los profesores. Permanecen visibles mientras el profesor mantenga la publicación activa.</p>{tareas.length?tareas.map(a=>tarjeta(a,true)):<p>No hay tareas pendientes publicadas.</p>}</section><section aria-label="Avisos para la familia"><h3>📣 Avisos para la familia</h3>{publicaciones.length?publicaciones.map(a=>tarjeta(a)):<p>No hay avisos publicados.</p>}{mensajes.length>0&&<><h4>Mensajes aprobados de la comunidad</h4>{mensajes.map(m=><article className="card" key={m.id}><h4>{m.titulo}</h4><p>{m.contenido}</p></article>)}</>}</section></section>;
+ return <section><h2>📚 Tareas y avisos</h2><p>Información publicada para el grado de tu {referencia(hijo)} y para toda la institución.</p><section aria-label="Tareas pendientes"><h3>📚 Tareas pendientes</h3><p>Tareas publicadas por los profesores. Permanecen visibles mientras sus publicaciones estén activas.</p>{tareas.length?tareas.map(a=>tarjeta(a,true)):<p>No hay tareas pendientes publicadas.</p>}</section><section aria-label="Avisos para la familia"><h3>📣 Avisos para la familia</h3>{publicaciones.length?publicaciones.map(a=>tarjeta(a)):<p>No hay avisos publicados.</p>}{mensajes.length>0&&<><h4>Mensajes aprobados de la comunidad</h4>{mensajes.map(m=><article className="card" key={m.id}><h4>{m.titulo}</h4><p>{m.contenido}</p></article>)}</>}</section></section>;
 }
 function HorarioAcudiente({datos}){
  const[hoy,setHoy]=useState(fechaBogota),hijo=datos.estudiante;
