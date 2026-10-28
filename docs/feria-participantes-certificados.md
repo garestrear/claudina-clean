@@ -77,3 +77,8 @@ El parámetro Número de firmantes se guarda junto con los datos de cada persona
 ### Encabezado institucional y diseño conmemorativo
 
 El encabezado incluye literalmente: “Aprobado por Resolución Departamental N° S201500094400 de Marzo 12 de 2015”. Diseño carta horizontal con banda STEAM en azul petróleo, acentos dorados, escudo original y nombre destacado. Los textos, marcos y ornamentos se dibujan como vectores para mantener nitidez al imprimir. La frase conmemorativa es: “Por hacer de las ideas una experiencia que transforma.” Se conserva la distribución de uno a seis firmantes, el folio del certificado y la ausencia del código del proyecto. Este cambio visual no requiere SQL adicional.
+
+
+### Alternativa juvenil aprobada
+
+El diseño juvenil usa el marco ilustrado de ciencia, tecnología, arte y matemáticas aprobado: robot, cohete, planeta, átomo y materiales de arte. El centro queda blanco y los datos se dibujan sobre él como texto nítido: nombre, función, resolución institucional y firmas. El escudo se inserta desde el original institucional, sin recrearlo. Se incluye “¡Tus ideas pueden cambiar el mundo!”. Se conserva carta horizontal y la distribución de uno a seis firmantes. El fondo se carga sólo al descargar certificados; las escarapelas conservan su diseño. No requiere una migración SQL adicional.

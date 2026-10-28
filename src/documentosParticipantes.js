@@ -52,47 +52,38 @@ export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=
  const pdf=new jsPDF({unit:'mm',format:'letter',orientation:'landscape',compress:true}),fuente=fuentes(pdf,recursos);
  certificados.forEach((cert,i)=>{
   if(i)pdf.addPage('letter','landscape');const p=cert.contenido,c=temaParticipante(p);
-  const tinta='#12343b',oro='#b39352';
-  pdf.setFillColor('#fffef9');pdf.rect(0,0,279.4,215.9,'F');
-  // Composición vectorial: banda monumental, órbitas y marco editorial.
-  pdf.setFillColor(tinta);pdf.rect(0,0,18,215.9,'F');
-  pdf.setFillColor(c.color);pdf.rect(18,0,2,215.9,'F');
-  pdf.setDrawColor(oro);pdf.setLineWidth(.35);pdf.line(25,10,267.4,10);pdf.line(267.4,10,267.4,204);pdf.line(25,204,267.4,204);
-  pdf.setDrawColor('#eadfc8');pdf.setLineWidth(.2);pdf.line(264.4,13,264.4,201);pdf.line(25,201,264.4,201);
-  pdf.setTextColor('#ffffff');pdf.setFont(fuente,'bold');pdf.setFontSize(17);
-  ['S','T','E','A','M'].forEach((letra,n)=>pdf.text(letra,9,74+n*14,{align:'center'}));
-  pdf.setFontSize(8);pdf.setTextColor('#e1c98e');pdf.text('2026',9,151,{align:'center'});
-  pdf.setDrawColor(oro);pdf.setLineWidth(.3);pdf.circle(9,24,4);pdf.line(5,24,13,24);pdf.line(9,20,9,28);pdf.circle(9,24,1);
-  pdf.setFillColor(c.claro);pdf.lines([[28,0],[0,28],[-28,-28]],251.4,0,[1,1],'F',true);
-  pdf.setDrawColor(oro);pdf.setLineWidth(.45);pdf.line(251.4,0,279.4,28);
-  pdf.setDrawColor('#e2d5b8');pdf.setLineWidth(.25);pdf.ellipse(250,65,9,3);pdf.ellipse(250,65,3,9);pdf.circle(250,65,1);
-  pdf.addImage(escudoOriginal,'PNG',29,18,15,19.5);
-  pdf.setTextColor(tinta);pdf.setFont(fuente,'bold');pdf.setFontSize(10.5);pdf.text('CENTRO EDUCATIVO RURAL CLAUDINA MÚNERA',49,24);
-  pdf.setFont(fuente,'normal');pdf.setFontSize(7);pdf.text('VEREDA LA CORRALA · CALDAS, ANTIOQUIA',49,30);
-  pdf.setFontSize(7);pdf.text('Aprobado por Resolución Departamental N° S201500094400 de Marzo 12 de 2015',49,36);
-  pdf.setFont(fuente,'bold');pdf.setFontSize(9);pdf.setTextColor(c.color);pdf.text('FERIA STEAM 2026',139.7,48,{align:'center'});
-  pdf.setTextColor(tinta);pdf.setFontSize(34);pdf.text('CERTIFICADO',139.7,64,{align:'center'});
-  pdf.setFont(fuente,'normal');pdf.setFontSize(10);pdf.text('D E  P A R T I C I P A C I Ó N',139.7,73,{align:'center'});
-  pdf.setDrawColor(oro);pdf.setLineWidth(.5);pdf.line(115,78,164.4,78);
-  pdf.setFillColor(oro);pdf.circle(139.7,78,1,'F');
-  pdf.setTextColor(tinta);pdf.setFontSize(9);pdf.text('Por hacer de las ideas una experiencia que transforma.',139.7,85,{align:'center'});
-  const nombre=ajustar(pdf,p.nombre,228,19,{size:25,min:11,fuente,color:tinta});pdf.text(nombre.lineas,139.7,97,{align:'center',lineHeightFactor:1.15});
-  const institucion=ajustar(pdf,p.institucion||'',228,8,{size:9,min:6,bold:false,fuente,color:tinta});pdf.text(institucion.lineas,139.7,115,{align:'center',lineHeightFactor:1.15});
+  const tinta='#0b2f70',azul='#0754d8';
+  if(!recursos.fondoCertificado)throw new Error('No se pudo cargar el diseño del certificado. Actualiza la app e inténtalo otra vez.');
+  pdf.addImage(recursos.fondoCertificado,'PNG',0,0,279.4,215.9);
+  // Fondo ilustrado aprobado; escudo, textos y firmas se añaden como datos independientes.
+  pdf.addImage(escudoOriginal,'PNG',44,14,17,22.1);
+  pdf.setTextColor(tinta);pdf.setFont(fuente,'bold');pdf.setFontSize(9.5);pdf.text('CENTRO EDUCATIVO RURAL CLAUDINA MÚNERA',66,21);
+  pdf.setFont(fuente,'normal');pdf.setFontSize(6.5);pdf.text('VEREDA LA CORRALA · CALDAS, ANTIOQUIA',66,27);
+  const resolucion=ajustar(pdf,'Aprobado por Resolución Departamental N° S201500094400 de Marzo 12 de 2015',166,7,{size:6.5,min:5.5,bold:false,fuente,color:tinta});pdf.text(resolucion.lineas,66,33,{lineHeightFactor:1.15});
+  pdf.setFillColor(azul);pdf.roundedRect(99.7,42,80,10,5,5,'F');pdf.setFont(fuente,'bold');pdf.setFontSize(12);pdf.setTextColor('#ffffff');pdf.text('FERIA STEAM 2026',139.7,48.8,{align:'center'});
+  pdf.setTextColor(azul);pdf.setFontSize(34);pdf.text('CERTIFICADO',139.7,67,{align:'center'});
+  pdf.setTextColor(tinta);pdf.setFont(fuente,'bold');pdf.setFontSize(10);pdf.text('D E  P A R T I C I P A C I Ó N',139.7,76,{align:'center'});
+  pdf.setDrawColor('#ffc31a');pdf.setLineWidth(1);pdf.line(103,87,176.4,87);
+  pdf.setFont(fuente,'bold');pdf.setFontSize(11);pdf.text('¡Tus ideas pueden cambiar el mundo!',139.7,84,{align:'center'});
+  const nombre=ajustar(pdf,p.nombre,184,19,{size:25,min:10,fuente,color:tinta});pdf.text(nombre.lineas,139.7,97,{align:'center',lineHeightFactor:1.15});
+  const institucion=ajustar(pdf,p.institucion||'',184,8,{size:9,min:6,bold:false,fuente,color:tinta});pdf.text(institucion.lineas,139.7,115,{align:'center',lineHeightFactor:1.15});
   const firmantes=Array.isArray(p.firmantes)&&p.firmantes.length>=1&&p.firmantes.length<=6?p.firmantes:firmantesPredeterminados.map((f,n)=>({...f,firma:n===1?recursos.firmaTransparente:null}));
   const dosFilas=firmantes.length>3;
-  const cuerpo=ajustar(pdf,textoCertificado(p),224,dosFilas?17:24,{size:dosFilas?10:11,min:6,bold:false,fuente,color:tinta});pdf.text(cuerpo.lineas,139.7,126,{align:'center',lineHeightFactor:1.15});
-  pdf.setFont(fuente,'normal');pdf.setFontSize(8);pdf.setTextColor(tinta);pdf.text(borrador?'Vista previa para revisión. Pendiente de confirmar la participación.':`Se expide en Caldas, Antioquia, el ${fecha(cert.emitido_en)}.`,139.7,dosFilas?145:153,{align:'center'});
+  const cuerpo=ajustar(pdf,textoCertificado(p),184,dosFilas?17:24,{size:dosFilas?10:11,min:6,bold:false,fuente,color:tinta});pdf.text(cuerpo.lineas,139.7,126,{align:'center',lineHeightFactor:1.15});
+  pdf.setFont(fuente,'normal');pdf.setFontSize(7);pdf.setTextColor(tinta);pdf.text(borrador?'Vista previa para revisión. Pendiente de confirmar la participación.':`Se expide en Caldas, Antioquia, el ${fecha(cert.emitido_en)}.`,139.7,dosFilas?145:153,{align:'center'});
+  pdf.setFillColor('#ffffff');pdf.roundedRect(47.7,dosFilas?148:158,184,dosFilas?49:39,3,3,'F');
   firmantes.forEach((f,n)=>{
-   const fila=Math.floor(n/3),cantidadFila=Math.min(3,firmantes.length-fila*3),anchoCelda=230/cantidadFila,ancho=Math.min(96,anchoCelda-8);
-   const centro=24.7+anchoCelda*(n%3+.5),linea=dosFilas?161+fila*25:179,altoFirma=dosFilas?10:16;
+   const fila=Math.floor(n/3),cantidadFila=Math.min(3,firmantes.length-fila*3),anchoCelda=184/cantidadFila,ancho=Math.min(84,anchoCelda-7);
+   const centro=47.7+anchoCelda*(n%3+.5),linea=dosFilas?161+fila*25:179,altoFirma=dosFilas?10:16;
    if(f.firma){const info=pdf.getImageProperties(f.firma),ratio=info.width/info.height,w=Math.min(ancho-8,50,altoFirma*ratio),h=w/ratio;pdf.addImage(f.firma,'PNG',centro-w/2,linea-2-h,w,h);}
    pdf.setDrawColor(c.color);pdf.setLineWidth(.25);pdf.line(centro-ancho/2,linea,centro+ancho/2,linea);
    const nombreFirma=ajustar(pdf,f.nombre,ancho,dosFilas?5:7,{size:cantidadFila===3?7.5:9,min:4.5,fuente,color:tinta});pdf.text(nombreFirma.lineas,centro,linea+4,{align:'center',lineHeightFactor:1.15});
    const cargo=ajustar(pdf,f.cargo,ancho,dosFilas?5:7,{size:7,min:4.5,bold:false,fuente,color:tinta});pdf.text(cargo.lineas,centro,linea+(dosFilas?9:11),{align:'center',lineHeightFactor:1.15});
   });
-  pdf.setFont(fuente,'normal');pdf.setFontSize(6);pdf.setTextColor(tinta);pdf.text(borrador?'VISTA PREVIA · SIN EMITIR':codigoCertificado(cert),25,200);
-  pdf.text('CIENCIA · TECNOLOGÍA · INGENIERÍA · ARTE · MATEMÁTICAS',254,200,{align:'right'});
-  if(borrador){pdf.setTextColor('#aa4555');pdf.setFont(fuente,'bold');pdf.setFontSize(9);pdf.text('BORRADOR',254,44,{align:'right'});}
+  pdf.setFillColor('#ffffff');pdf.roundedRect(47.7,197.2,184,5,1,1,'F');
+  pdf.setFont(fuente,'normal');pdf.setFontSize(5.3);pdf.setTextColor(tinta);pdf.text(borrador?'VISTA PREVIA · SIN EMITIR':codigoCertificado(cert),47.7,200);
+  pdf.text('CIENCIA · TECNOLOGÍA · INGENIERÍA · ARTE · MATEMÁTICAS',231.7,200,{align:'right'});
+  if(borrador){pdf.setTextColor('#aa4555');pdf.setFont(fuente,'bold');pdf.setFontSize(9);pdf.text('BORRADOR',231,40,{align:'right'});}
  });pdf.setProperties({title:'Certificados - Feria STEAM 2026',author:'C.E.R. Claudina Múnera'});return pdf;
 }
 
@@ -100,4 +91,6 @@ let recursosPromise;
 async function recurso(url){const r=await fetch(url);if(!r.ok)throw new Error('No se pudieron cargar los recursos de impresión. Revisa tu conexión.');const b=await r.blob();return new Promise((resolve,reject)=>{const f=new FileReader();f.onload=()=>resolve(f.result);f.onerror=()=>reject(new Error('No se pudo leer el archivo de impresión.'));f.readAsDataURL(b)})}
 async function recursos(){if(!recursosPromise)recursosPromise=(async()=>{const [{jsPDF},escudo,firma,regular,bold]=await Promise.all([import('jspdf'),import('./assets/escudo-membrete.png'),import('./assets/firma-gustavo-prae.jpg'),import('./assets/carta-regular.ttf?url'),import('./assets/carta-bold.ttf?url')]);const[e,f,r,b]=await Promise.all([recurso(escudo.default),recurso(firma.default),recurso(regular.default),recurso(bold.default)]);const firmaTransparente=await prepararFirma(await(await fetch(firma.default)).blob());return{jsPDF,recursos:{escudo:e,firma:f,firmaTransparente,fuenteRegular:r.split(',')[1],fuenteNegrita:b.split(',')[1]}}})().catch(e=>{recursosPromise=null;throw e});return recursosPromise}
 export async function descargarEscarapelas(personas){const r=await recursos();construirEscarapelas(r.jsPDF,personas,r.recursos).save(personas.length===1?`Escarapela-${codigoParticipante(personas[0])}.pdf`:'Escarapelas-Feria-STEAM-2026.pdf')}
-export async function descargarCertificados(certificados,{borrador=false}={}){const r=await recursos();construirCertificados(r.jsPDF,certificados,r.recursos,{borrador}).save(borrador?'Vista-previa-certificado-STEAM.pdf':certificados.length===1?`Certificado-${codigoCertificado(certificados[0])}.pdf`:'Certificados-Feria-STEAM-2026.pdf')}
+let fondoCertificadoPromise;
+async function cargarFondoCertificado(){if(!fondoCertificadoPromise)fondoCertificadoPromise=import('./assets/certificado-steam-juvenil.png').then(m=>recurso(m.default)).catch(e=>{fondoCertificadoPromise=null;throw e});return fondoCertificadoPromise}
+export async function descargarCertificados(certificados,{borrador=false}={}){const[r,fondoCertificado]=await Promise.all([recursos(),cargarFondoCertificado()]);construirCertificados(r.jsPDF,certificados,{...r.recursos,fondoCertificado},{borrador}).save(borrador?'Vista-previa-certificado-STEAM.pdf':certificados.length===1?`Certificado-${codigoCertificado(certificados[0])}.pdf`:'Certificados-Feria-STEAM-2026.pdf')}
