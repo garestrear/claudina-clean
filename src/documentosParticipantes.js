@@ -1,4 +1,5 @@
 import escudoOriginal from './assets/escudo-original.js';
+import {firmantesPredeterminados,prepararFirma} from './firmasCertificados.js';
 import {categoriasPlaca} from './placaFeria.js';
 export const tiposParticipante={
  expositor:{nombre:'Expositor(a)',prefijo:'EXP',color:'#16844b',oscuro:'#10552f',claro:'#edf8f0'},
@@ -43,24 +44,46 @@ export function construirEscarapelas(jsPDF,personas,recursos={}){
 }
 export function textoCertificado(p){
  const evento=limpio(p.evento)||'Feria STEAM 2026',dia=limpio(p.fecha_evento)||'6 de noviembre de 2026';
- const accion={expositor:`participó como expositor(a)${p.proyecto_titulo?' con el proyecto «'+limpio(p.proyecto_titulo)+'»':''}${p.proyecto_codigo?' ('+p.proyecto_codigo+')':''}`,evaluador:'participó como evaluador(a) de los proyectos',logistica:'integró el equipo de logística y apoyó la organización',ponente:`participó como ponente${p.detalle?' con la actividad «'+limpio(p.detalle)+'»':''}`,asistente:'participó como asistente'}[p.tipo];
+ const accion={expositor:`participó como expositor(a)${p.proyecto_titulo?' con el proyecto «'+limpio(p.proyecto_titulo)+'»':''}`,evaluador:'participó como evaluador(a) de los proyectos',logistica:'integró el equipo de logística y apoyó la organización',ponente:`participó como ponente${p.detalle?' con la actividad «'+limpio(p.detalle)+'»':''}`,asistente:'participó como asistente'}[p.tipo];
  if(!accion)throw new Error('Tipo de participante no válido.');return `${accion} en la ${evento}, realizada el ${dia} en el C.E.R. Claudina Múnera, vereda La Corrala, Caldas, Antioquia.`;
 }
 export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=false}={}){
  if(!certificados.length||certificados.some(c=>!c.contenido?.nombre||!tiposParticipante[c.contenido.tipo]||(!borrador&&(!c.folio||!c.emitido_en||c.anulado_en))))throw new Error('El certificado debe estar emitido y vigente.');
  const pdf=new jsPDF({unit:'mm',format:'letter',orientation:'landscape',compress:true}),fuente=fuentes(pdf,recursos);
- certificados.forEach((cert,i)=>{if(i)pdf.addPage('letter','landscape');const p=cert.contenido,c=temaParticipante(p);pdf.setFillColor(c.claro);pdf.rect(0,0,279.4,215.9,'F');pdf.setDrawColor(c.color);pdf.setLineWidth(.6);pdf.rect(8,8,263.4,199.9);pdf.setFillColor(c.color);pdf.rect(8,8,4,199.9,'F');
-  if(recursos.escudo)pdf.addImage(recursos.escudo,'PNG',131,15,17,21);pdf.setTextColor(c.oscuro);pdf.setFont(fuente,'bold');pdf.setFontSize(13);pdf.text('CENTRO EDUCATIVO RURAL CLAUDINA MÚNERA',139.7,45,{align:'center'});pdf.setFont(fuente,'normal');pdf.setFontSize(9);pdf.text('LA CORRALA · CALDAS, ANTIOQUIA',139.7,51,{align:'center'});pdf.setFont(fuente,'bold');pdf.setFontSize(22);pdf.text('CERTIFICADO DE PARTICIPACIÓN',139.7,65,{align:'center'});pdf.setFont(fuente,'normal');pdf.setFontSize(11);pdf.text('El C.E.R. Claudina Múnera certifica que',139.7,77,{align:'center'});
-  const nombre=ajustar(pdf,p.nombre,238,22,{size:25,min:14,fuente,color:c.oscuro});pdf.text(nombre.lineas,139.7,91,{align:'center',lineHeightFactor:1.15});const institucion=ajustar(pdf,p.institucion||'',238,8,{size:9,min:7,bold:false,fuente,color:c.oscuro});pdf.text(institucion.lineas,139.7,112,{align:'center',lineHeightFactor:1.15});
-  const cuerpo=ajustar(pdf,textoCertificado(p),232,28,{size:12,min:9,bold:false,fuente,color:c.oscuro});pdf.text(cuerpo.lineas,139.7,123,{align:'center',lineHeightFactor:1.15});
-  pdf.setFont(fuente,'normal');pdf.setFontSize(9);pdf.setTextColor(c.oscuro);pdf.text(borrador?'Vista previa para revisión. La emisión requiere confirmar la participación.':`Se expide en Caldas, Antioquia, el ${fecha(cert.emitido_en)}.`,139.7,154,{align:'center'});
-  if(recursos.firma)pdf.addImage(recursos.firma,'JPEG',114,158,51,13.9);pdf.setDrawColor(c.color);pdf.setLineWidth(.2);pdf.line(93,174,186,174);pdf.setFont(fuente,'bold');pdf.setFontSize(10);pdf.text(p.firmante||'GUSTAVO ADOLFO RESTREPO ARBOLEDA',139.7,180,{align:'center'});pdf.setFont(fuente,'normal');pdf.setFontSize(8.5);pdf.text(p.cargo||'Docente líder PRAE - Organizador Feria STEAM',139.7,186,{align:'center'});
-  pdf.setFont(fuente,'bold');pdf.setFontSize(9);pdf.text(borrador?'VISTA PREVIA · SIN EMITIR':codigoCertificado(cert),139.7,199,{align:'center'});pdf.setFont(fuente,'normal');pdf.setFontSize(7);pdf.text('Feria STEAM 2026 · '+tiposParticipante[p.tipo].nombre,139.7,204,{align:'center'});
-  if(borrador){pdf.setTextColor('#aa4555');pdf.setFont(fuente,'bold');pdf.setFontSize(10);pdf.text('BORRADOR',255,16,{align:'right'});}
+ certificados.forEach((cert,i)=>{
+  if(i)pdf.addPage('letter','landscape');const p=cert.contenido,c=temaParticipante(p);
+  pdf.setFillColor('#fbfcf8');pdf.rect(0,0,279.4,215.9,'F');
+  pdf.setFillColor(c.color);pdf.rect(0,0,7,215.9,'F');pdf.setFillColor(c.oscuro);pdf.rect(7,0,2,215.9,'F');
+  pdf.setDrawColor('#d4b775');pdf.setLineWidth(.45);pdf.rect(14,12,253.4,191.9);
+  pdf.setFillColor(c.claro);pdf.lines([[23,0],[0,24],[-23,-24]],244.4,12,[1,1],'F',true);
+  pdf.addImage(escudoOriginal,'PNG',25,20,17,22.1);
+  pdf.setTextColor(c.oscuro);pdf.setFont(fuente,'bold');pdf.setFontSize(11);pdf.text('CENTRO EDUCATIVO RURAL CLAUDINA MÚNERA',49,28);
+  pdf.setFont(fuente,'normal');pdf.setFontSize(8);pdf.text('VEREDA LA CORRALA · CALDAS, ANTIOQUIA',49,34);
+  pdf.setFont(fuente,'bold');pdf.setFontSize(10);pdf.text('FERIA STEAM 2026',49,41);
+  pdf.setFontSize(30);pdf.text('CERTIFICADO',139.7,62,{align:'center'});
+  pdf.setFont(fuente,'normal');pdf.setFontSize(11);pdf.text('D E  P A R T I C I P A C I Ó N',139.7,71,{align:'center'});
+  pdf.setDrawColor('#d4b775');pdf.line(118,77,161.4,77);
+  pdf.setFontSize(10);pdf.text('El C.E.R. Claudina Múnera otorga el presente reconocimiento a',139.7,85,{align:'center'});
+  const nombre=ajustar(pdf,p.nombre,228,19,{size:25,min:11,fuente,color:c.oscuro});pdf.text(nombre.lineas,139.7,97,{align:'center',lineHeightFactor:1.15});
+  const institucion=ajustar(pdf,p.institucion||'',228,8,{size:9,min:6,bold:false,fuente,color:c.oscuro});pdf.text(institucion.lineas,139.7,115,{align:'center',lineHeightFactor:1.15});
+  const cuerpo=ajustar(pdf,textoCertificado(p),224,24,{size:11,min:7,bold:false,fuente,color:c.oscuro});pdf.text(cuerpo.lineas,139.7,126,{align:'center',lineHeightFactor:1.15});
+  pdf.setFont(fuente,'normal');pdf.setFontSize(8);pdf.setTextColor(c.oscuro);pdf.text(borrador?'Vista previa para revisión. Pendiente de confirmar la participación.':`Se expide en Caldas, Antioquia, el ${fecha(cert.emitido_en)}.`,139.7,153,{align:'center'});
+  const firmantes=Array.isArray(p.firmantes)&&p.firmantes.length===2?p.firmantes:firmantesPredeterminados.map((f,n)=>({...f,firma:n===1?recursos.firmaTransparente:null}));
+  firmantes.forEach((f,n)=>{
+   const centro=n===0?82:197.4;
+   if(f.firma){const info=pdf.getImageProperties(f.firma),ratio=info.width/info.height,w=Math.min(50,16*ratio),h=w/ratio;pdf.addImage(f.firma,'PNG',centro-w/2,177-h,w,h);}
+   pdf.setDrawColor(c.color);pdf.setLineWidth(.25);pdf.line(centro-47,179,centro+47,179);
+   const nombreFirma=ajustar(pdf,f.nombre,96,7,{size:9,min:6,fuente,color:c.oscuro});pdf.text(nombreFirma.lineas,centro,184,{align:'center',lineHeightFactor:1.15});
+   const cargo=ajustar(pdf,f.cargo,96,7,{size:7.5,min:5.5,bold:false,fuente,color:c.oscuro});pdf.text(cargo.lineas,centro,190,{align:'center',lineHeightFactor:1.15});
+  });
+  pdf.setFont(fuente,'normal');pdf.setFontSize(6.5);pdf.setTextColor(c.oscuro);pdf.text(borrador?'VISTA PREVIA · SIN EMITIR':codigoCertificado(cert),25,200);
+  pdf.text('CIENCIA · TECNOLOGÍA · INGENIERÍA · ARTE · MATEMÁTICAS',254,200,{align:'right'});
+  if(borrador){pdf.setTextColor('#aa4555');pdf.setFont(fuente,'bold');pdf.setFontSize(9);pdf.text('BORRADOR',254,20,{align:'right'});}
  });pdf.setProperties({title:'Certificados - Feria STEAM 2026',author:'C.E.R. Claudina Múnera'});return pdf;
 }
+
 let recursosPromise;
 async function recurso(url){const r=await fetch(url);if(!r.ok)throw new Error('No se pudieron cargar los recursos de impresión. Revisa tu conexión.');const b=await r.blob();return new Promise((resolve,reject)=>{const f=new FileReader();f.onload=()=>resolve(f.result);f.onerror=()=>reject(new Error('No se pudo leer el archivo de impresión.'));f.readAsDataURL(b)})}
-async function recursos(){if(!recursosPromise)recursosPromise=(async()=>{const [{jsPDF},escudo,firma,regular,bold]=await Promise.all([import('jspdf'),import('./assets/escudo-membrete.png'),import('./assets/firma-gustavo-prae.jpg'),import('./assets/carta-regular.ttf?url'),import('./assets/carta-bold.ttf?url')]);const[e,f,r,b]=await Promise.all([recurso(escudo.default),recurso(firma.default),recurso(regular.default),recurso(bold.default)]);return{jsPDF,recursos:{escudo:e,firma:f,fuenteRegular:r.split(',')[1],fuenteNegrita:b.split(',')[1]}}})().catch(e=>{recursosPromise=null;throw e});return recursosPromise}
+async function recursos(){if(!recursosPromise)recursosPromise=(async()=>{const [{jsPDF},escudo,firma,regular,bold]=await Promise.all([import('jspdf'),import('./assets/escudo-membrete.png'),import('./assets/firma-gustavo-prae.jpg'),import('./assets/carta-regular.ttf?url'),import('./assets/carta-bold.ttf?url')]);const[e,f,r,b]=await Promise.all([recurso(escudo.default),recurso(firma.default),recurso(regular.default),recurso(bold.default)]);const firmaTransparente=await prepararFirma(await(await fetch(firma.default)).blob());return{jsPDF,recursos:{escudo:e,firma:f,firmaTransparente,fuenteRegular:r.split(',')[1],fuenteNegrita:b.split(',')[1]}}})().catch(e=>{recursosPromise=null;throw e});return recursosPromise}
 export async function descargarEscarapelas(personas){const r=await recursos();construirEscarapelas(r.jsPDF,personas,r.recursos).save(personas.length===1?`Escarapela-${codigoParticipante(personas[0])}.pdf`:'Escarapelas-Feria-STEAM-2026.pdf')}
 export async function descargarCertificados(certificados,{borrador=false}={}){const r=await recursos();construirCertificados(r.jsPDF,certificados,r.recursos,{borrador}).save(borrador?'Vista-previa-certificado-STEAM.pdf':certificados.length===1?`Certificado-${codigoCertificado(certificados[0])}.pdf`:'Certificados-Feria-STEAM-2026.pdf')}
