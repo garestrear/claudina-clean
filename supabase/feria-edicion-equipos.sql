@@ -6,7 +6,7 @@ begin
  if auth.uid() is null or not(docente or (public.feria_ficha_actual()).id is not null) then raise exception 'Inicia sesión con una cuenta autorizada';end if;
  select * into p from public.feria_proyectos where id=proyecto;
  if p.id is null or not coalesce((docente and p.estado<>'borrador') or p.estudiante_id=(public.feria_ficha_actual()).id or (public.feria_ficha_actual()).id=any(p.integrantes_ids),false) then raise exception 'Proyecto no disponible';end if;
- return jsonb_build_object('puede_editar',coalesce(p.estudiante_id=(public.feria_ficha_actual()).id or (public.feria_ficha_actual()).id=any(p.integrantes_ids),false),'proyecto',to_jsonb(p)-'autor'-'ultimo_guardado'-'estudiante_id','asesor_nombre',(select pf.nombre from public.perfiles pf where pf.id=p.asesor_id),'registrado_por',(select e.nombre from public.estudiantes e where e.id=p.estudiante_id),
+ return jsonb_build_object('puede_editar',(p.estado<>'rechazado') and coalesce(p.estudiante_id=(public.feria_ficha_actual()).id or (public.feria_ficha_actual()).id=any(p.integrantes_ids),false),'proyecto',to_jsonb(p)-'autor'-'ultimo_guardado'-'estudiante_id','asesor_nombre',(select pf.nombre from public.perfiles pf where pf.id=p.asesor_id),'registrado_por',(select e.nombre from public.estudiantes e where e.id=p.estudiante_id),
  'integrantes',coalesce((select jsonb_agg(jsonb_build_object('id',e.id,'nombre',e.nombre,'grado',e.grado,'activo',e.activo) order by e.nombre,e.id) from public.estudiantes e where e.id=any(p.integrantes_ids)),'[]'::jsonb),
  'revisiones',coalesce((select jsonb_agg(to_jsonb(r)-'revisor'-'solicitud' order by r.creado_en desc,r.id) from public.feria_revisiones r where r.proyecto_id=p.id),'[]'::jsonb));
 end;
@@ -25,12 +25,12 @@ begin
   execute d;
  end if;
 end $migration$;
--- Permite corregir el contenido sin que los estudiantes anulen un rechazo docente.
+-- Un rechazo bloquea toda edición del participante hasta una nueva decisión docente.
 create or replace function public.feria_proteger_rechazado()
 returns trigger language plpgsql security definer set search_path='' as $$
 begin
- if old.estado='rechazado' and new.estado<>'rechazado' and not coalesce(public.es_profesor(),false) then
-  raise exception 'Solo un docente puede volver a considerar un proyecto rechazado';
+ if old.estado='rechazado' and not coalesce(public.es_profesor(),false) then
+  raise exception 'Este proyecto fue rechazado y no admite cambios. Un docente debe cambiar su estado para habilitar la edición';
  end if;
  return new;
 end $$;
