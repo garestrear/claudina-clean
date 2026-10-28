@@ -1,3 +1,4 @@
+import escudoOriginal from './assets/escudo-original.js';
 import {categoriasPlaca} from './placaFeria.js';
 export const tiposParticipante={
  expositor:{nombre:'Expositor(a)',prefijo:'EXP',color:'#16844b',oscuro:'#10552f',claro:'#edf8f0'},
@@ -19,18 +20,24 @@ export function construirEscarapelas(jsPDF,personas,recursos={}){
  const pdf=new jsPDF({unit:'mm',format:'letter',orientation:'portrait',compress:true}),fuente=fuentes(pdf,recursos);
  personas.forEach((p,i)=>{
   if(i&&i%4===0)pdf.addPage('letter','portrait');const slot=i%4,x=11.95+(slot%2)*101,y=21.7+Math.floor(slot/2)*123,c=temaParticipante(p);
-  pdf.setFillColor(c.claro);pdf.rect(x,y,91,113,'F');pdf.setFillColor(c.color);pdf.rect(x,y,91,33,'F');
-  // Geometría discreta inspirada en conexiones STEAM, sin imágenes inventadas.
-  pdf.setDrawColor('#ffffff');pdf.setLineWidth(.25);pdf.circle(x+66,y+24,4);pdf.line(x+69,y+22,x+76,y+18);pdf.circle(x+77,y+17,2);
-  pdf.setFont(fuente,'bold');pdf.setTextColor('#ffffff');pdf.setFontSize(7);pdf.text('C.E.R. CLAUDINA MÚNERA',x+5,y+7);pdf.setFontSize(15);pdf.text('FERIA STEAM',x+5,y+15);pdf.setFontSize(15);pdf.text('2026',x+5,y+23);pdf.setFontSize(12);pdf.text(tiposParticipante[p.tipo].nombre.toUpperCase(),x+5,y+30);
-  if(recursos.escudo){pdf.setFillColor('#ffffff');pdf.roundedRect(x+73,y+3,14,17,1,1,'F');pdf.addImage(recursos.escudo,'PNG',x+75,y+4,10,15);}
-  const nombre=ajustar(pdf,p.nombre,79,24,{size:17,min:10,fuente,color:c.oscuro});pdf.text(nombre.lineas,x+45.5,y+43,{align:'center',lineHeightFactor:1.15});
-  const institucion=ajustar(pdf,p.institucion||'C.E.R. Claudina Múnera',79,9,{size:8,min:6,bold:false,fuente,color:c.oscuro});pdf.text(institucion.lineas,x+45.5,y+68,{align:'center',lineHeightFactor:1.15});
-  pdf.setFont(fuente,'bold');pdf.setFontSize(9);pdf.setTextColor(c.oscuro);if(p.grado)pdf.text('GRADO '+limpio(p.grado),x+45.5,y+79,{align:'center'});
-  if(p.proyecto_codigo){pdf.setFontSize(16);pdf.text(p.proyecto_codigo,x+45.5,y+88,{align:'center'});const proyecto=ajustar(pdf,p.proyecto_titulo,79,11,{size:8,min:6.5,fuente,color:c.oscuro});pdf.text(proyecto.lineas,x+45.5,y+95,{align:'center',lineHeightFactor:1.15})}
-  else if(p.detalle){const detalle=ajustar(pdf,p.detalle,79,22,{size:9,min:6,fuente,color:c.oscuro});pdf.text(detalle.lineas,x+45.5,y+85,{align:'center',lineHeightFactor:1.15})}
-  pdf.setFont(fuente,'normal');pdf.setFontSize(6.5);pdf.setTextColor(c.oscuro);pdf.text(codigoParticipante(p),x+5,y+106);pdf.text('6 NOVIEMBRE',x+86,y+106,{align:'right'});
-  pdf.setFillColor(c.color);pdf.rect(x,y+109,91,4,'F');pdf.setFontSize(6);pdf.setTextColor('#ffffff');pdf.text('CONVIVIMOS, CUIDAMOS Y TRANSFORMAMOS',x+45.5,y+111.7,{align:'center'});
+  pdf.setFillColor('#fbfbf2');pdf.rect(x,y,91,113,'F');
+  // Ondas vectoriales: texto nítido y colores de la categoría, sin rasterizar el nombre.
+  pdf.setFillColor(c.color);pdf.lines([[20,12,48,-15,91,-5],[0,22],[-91,0],[0,-17]],x,y+29,[1,1],'F',true);
+  pdf.setFillColor(c.oscuro);pdf.lines([[27,-14,62,15,91,-3],[0,10],[-91,0],[0,-7]],x,y+44,[1,1],'F',true);
+  pdf.setFont(fuente,'bold');pdf.setTextColor(c.oscuro);pdf.setFontSize(28);pdf.text('FERIA',x+6,y+12);pdf.text('STEAM',x+6,y+21);
+  pdf.setTextColor(c.color);pdf.setFontSize(24);pdf.text('2026',x+6,y+30);
+  pdf.setTextColor(c.oscuro);pdf.setFontSize(5.8);pdf.text(['CIENCIA','TECNOLOGÍA','INGENIERÍA','ARTE','MATEMÁTICAS'],x+62,y+7,{lineHeightFactor:1.3});
+  pdf.setDrawColor(c.color);pdf.setLineWidth(.3);pdf.circle(x+77,y+32,2.3);pdf.line(x+79,y+31,x+84,y+27);pdf.circle(x+85,y+26,1.2);
+  // Imagen original, proporción intacta; el mismo recurso que en la vista de la app.
+  pdf.addImage(escudoOriginal,'PNG',x+39.5,y+37,12,15.6);
+  const rol=tiposParticipante[p.tipo].nombre.toUpperCase();pdf.setFontSize(9);const rw=Math.max(40,pdf.getTextWidth(rol)+13);
+  pdf.setFillColor(c.oscuro);pdf.roundedRect(x+(91-rw)/2,y+55,rw,7,3.5,3.5,'F');pdf.setTextColor('#ffffff');pdf.text(rol,x+45.5,y+59.8,{align:'center'});
+  const nombre=ajustar(pdf,p.nombre.toUpperCase(),79,20,{size:18,min:7,fuente,color:c.oscuro});pdf.text(nombre.lineas,x+45.5,y+66,{align:'center',lineHeightFactor:1.15});
+  const institucion=ajustar(pdf,(p.grado?'Grado '+limpio(p.grado)+' · ':'')+(p.institucion||'C.E.R. Claudina Múnera'),79,6,{size:7,min:4.5,bold:false,fuente,color:c.oscuro});pdf.text(institucion.lineas,x+45.5,y+85,{align:'center',lineHeightFactor:1.15});
+  pdf.setDrawColor(c.color);pdf.setLineWidth(.25);pdf.line(x+7,y+92,x+84,y+92);
+  if(p.proyecto_codigo){pdf.setFont(fuente,'bold');pdf.setTextColor(c.oscuro);pdf.setFontSize(14);pdf.text(p.proyecto_codigo,x+45.5,y+98,{align:'center'});const proyecto=ajustar(pdf,limpio(p.proyecto_titulo).toUpperCase(),79,7,{size:7,min:4.5,fuente,color:c.oscuro});pdf.text(proyecto.lineas,x+45.5,y+102,{align:'center',lineHeightFactor:1.15})}
+  else if(p.detalle){const detalle=ajustar(pdf,p.detalle,79,13,{size:8,min:4.5,fuente,color:c.oscuro});pdf.text(detalle.lineas,x+45.5,y+96,{align:'center',lineHeightFactor:1.15})}
+  pdf.setDrawColor(c.color);pdf.setLineWidth(.5);pdf.line(x,y+108,x+91,y+108);pdf.setFont(fuente,'normal');pdf.setFontSize(5.7);pdf.setTextColor(c.oscuro);pdf.text(codigoParticipante(p),x+5,y+111.5);pdf.text('6 NOV 2026',x+86,y+111.5,{align:'right'});pdf.setFont(fuente,'bold');pdf.setFontSize(7);pdf.text('Claudina App',x+45.5,y+111.5,{align:'center'});
   pdf.setDrawColor('#808b84');pdf.setLineWidth(.15);pdf.setLineDashPattern([1,1],0);pdf.rect(x,y,91,113);pdf.setLineDashPattern([],0);
  });pdf.setProperties({title:'Escarapelas 9,1 × 11,3 cm - Feria STEAM 2026',author:'C.E.R. Claudina Múnera'});return pdf;
 }
