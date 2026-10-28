@@ -12,6 +12,6 @@ await identity(7);assert.equal((await rpc('feria_proyecto',[uuid(850)],['uuid'])
 p=await save(1,852,{...datos,poster_url:'https://example.com/poster.pdf'});assert.equal(p.proyecto.poster_url,'https://example.com/poster.pdf');assert.ok(p.proyecto.integrantes_ids.includes(uuid(3)));
 await assert.rejects(save(1,853));await identity(4);await assert.rejects(save(2,854));
 await identity(1);await rpc('feria_revisar',[uuid(850),2,'aprobado','Listo',uuid(855)],['uuid','integer','text','text','uuid']);await identity(7);p=await save(3,856);assert.equal(p.proyecto.estado,'enviado');
-await identity(1);await rpc('feria_revisar',[uuid(850),4,'rechazado','Repetido',uuid(857)],['uuid','integer','text','text','uuid']);await identity(7);p=await save(5,858,{...datos,propuesta:'Idea corregida'});assert.equal(p.proyecto.estado,'rechazado');assert.equal(p.proyecto.propuesta,'Idea corregida');assert.equal(p.revisiones.length,2);
-await identity(3);assert.equal((await rpc('feria_proyecto',[uuid(850)],['uuid'])).puede_editar,true);
-await db.close();console.log('PASS: integrantes editan, responsable conservado, terceros excluidos, conflicto de versión, aprobados y rechazados editables sin anular revisión');
+await identity(1);await rpc('feria_revisar',[uuid(850),4,'rechazado','Repetido',uuid(857)],['uuid','integer','text','text','uuid']);await identity(7);await assert.rejects(save(5,858,{...datos,propuesta:'Idea corregida'}));p=await rpc('feria_proyecto',[uuid(850)],['uuid']);assert.equal(p.proyecto.estado,'rechazado');assert.equal(p.puede_editar,false);assert.equal(p.revisiones.length,2);
+await identity(3);assert.equal((await rpc('feria_proyecto',[uuid(850)],['uuid'])).puede_editar,false);
+await db.close();console.log('PASS: integrantes editan, responsable conservado, terceros excluidos, conflicto de versión, aprobados editables y rechazados bloqueados');
