@@ -82,3 +82,8 @@ El encabezado incluye literalmente: “Aprobado por Resolución Departamental N�
 ### Alternativa juvenil aprobada
 
 El diseño juvenil usa el marco ilustrado de ciencia, tecnología, arte y matemáticas aprobado: robot, cohete, planeta, átomo y materiales de arte. El centro queda blanco y los datos se dibujan sobre él como texto nítido: nombre, función, resolución institucional y firmas. El escudo se inserta desde el original institucional, sin recrearlo. Se incluye “¡Tus ideas pueden cambiar el mundo!”. Se conserva carta horizontal y la distribución de uno a seis firmantes. El fondo se carga sólo al descargar certificados; las escarapelas conservan su diseño. No requiere una migración SQL adicional.
+
+
+### Encabezado ampliado
+
+Se aplica la propuesta aprobada con mayor zona blanca superior y decoración del cohete desplazada hacia la esquina. El nombre institucional aparece centrado en la página a 13 puntos (antes 9,5), con ubicación y resolución centradas debajo. El escudo se conserva desde el original. Se redistribuyen título, nombre, cuerpo y firmas para las versiones de una y dos filas; BORRADOR se sitúa bajo la resolución sobre blanco. No requiere SQL.
