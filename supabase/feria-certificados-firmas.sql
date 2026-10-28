@@ -11,7 +11,7 @@ create or replace function public.feria_firmantes_contexto()
 returns jsonb language plpgsql stable security definer set search_path='' as $$
 begin
  if not coalesce(public.es_profesor(),false) then raise exception 'Solo docentes pueden administrar las firmas';end if;
- return(select jsonb_build_object('firmantes',c.firmantes,'version',c.version) from public.feria_certificado_config c where id);
+ return(select jsonb_build_object('firmantes',c.firmantes,'version',c.version,'numero_firmantes',jsonb_array_length(c.firmantes)) from public.feria_certificado_config c where id);
 end $$;
 revoke all on function public.feria_firmantes_contexto() from public,anon;
 grant execute on function public.feria_firmantes_contexto() to authenticated;
@@ -20,8 +20,8 @@ returns jsonb language plpgsql security definer set search_path='' as $$
 declare f jsonb;firma text;
 begin
  if not coalesce(public.es_profesor(),false) then raise exception 'Solo docentes pueden administrar las firmas';end if;
- if jsonb_typeof(firmantes) is distinct from 'array' then raise exception 'Selecciona dos firmantes';end if;
- if jsonb_array_length(firmantes)<>2 then raise exception 'Selecciona dos firmantes';end if;
+ if jsonb_typeof(firmantes) is distinct from 'array' then raise exception 'Selecciona entre uno y seis firmantes';end if;
+ if jsonb_array_length(firmantes) not between 1 and 6 then raise exception 'Selecciona entre uno y seis firmantes';end if;
  for f in select value from jsonb_array_elements(firmantes) loop
   if jsonb_typeof(f) is distinct from 'object' or length(trim(coalesce(f->>'nombre',''))) not between 2 and 100 or length(trim(coalesce(f->>'cargo',''))) not between 2 and 100 then raise exception 'Revisa nombres y cargos de los firmantes';end if;
   firma:=nullif(f->>'firma','');
