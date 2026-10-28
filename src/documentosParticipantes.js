@@ -66,15 +66,17 @@ export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=
   pdf.setFontSize(10);pdf.text('El C.E.R. Claudina Múnera otorga el presente reconocimiento a',139.7,85,{align:'center'});
   const nombre=ajustar(pdf,p.nombre,228,19,{size:25,min:11,fuente,color:c.oscuro});pdf.text(nombre.lineas,139.7,97,{align:'center',lineHeightFactor:1.15});
   const institucion=ajustar(pdf,p.institucion||'',228,8,{size:9,min:6,bold:false,fuente,color:c.oscuro});pdf.text(institucion.lineas,139.7,115,{align:'center',lineHeightFactor:1.15});
-  const cuerpo=ajustar(pdf,textoCertificado(p),224,24,{size:11,min:7,bold:false,fuente,color:c.oscuro});pdf.text(cuerpo.lineas,139.7,126,{align:'center',lineHeightFactor:1.15});
-  pdf.setFont(fuente,'normal');pdf.setFontSize(8);pdf.setTextColor(c.oscuro);pdf.text(borrador?'Vista previa para revisión. Pendiente de confirmar la participación.':`Se expide en Caldas, Antioquia, el ${fecha(cert.emitido_en)}.`,139.7,153,{align:'center'});
-  const firmantes=Array.isArray(p.firmantes)&&p.firmantes.length===2?p.firmantes:firmantesPredeterminados.map((f,n)=>({...f,firma:n===1?recursos.firmaTransparente:null}));
+  const firmantes=Array.isArray(p.firmantes)&&p.firmantes.length>=1&&p.firmantes.length<=6?p.firmantes:firmantesPredeterminados.map((f,n)=>({...f,firma:n===1?recursos.firmaTransparente:null}));
+  const dosFilas=firmantes.length>3;
+  const cuerpo=ajustar(pdf,textoCertificado(p),224,dosFilas?17:24,{size:dosFilas?10:11,min:6,bold:false,fuente,color:c.oscuro});pdf.text(cuerpo.lineas,139.7,126,{align:'center',lineHeightFactor:1.15});
+  pdf.setFont(fuente,'normal');pdf.setFontSize(8);pdf.setTextColor(c.oscuro);pdf.text(borrador?'Vista previa para revisión. Pendiente de confirmar la participación.':`Se expide en Caldas, Antioquia, el ${fecha(cert.emitido_en)}.`,139.7,dosFilas?145:153,{align:'center'});
   firmantes.forEach((f,n)=>{
-   const centro=n===0?82:197.4;
-   if(f.firma){const info=pdf.getImageProperties(f.firma),ratio=info.width/info.height,w=Math.min(50,16*ratio),h=w/ratio;pdf.addImage(f.firma,'PNG',centro-w/2,177-h,w,h);}
-   pdf.setDrawColor(c.color);pdf.setLineWidth(.25);pdf.line(centro-47,179,centro+47,179);
-   const nombreFirma=ajustar(pdf,f.nombre,96,7,{size:9,min:6,fuente,color:c.oscuro});pdf.text(nombreFirma.lineas,centro,184,{align:'center',lineHeightFactor:1.15});
-   const cargo=ajustar(pdf,f.cargo,96,7,{size:7.5,min:5.5,bold:false,fuente,color:c.oscuro});pdf.text(cargo.lineas,centro,190,{align:'center',lineHeightFactor:1.15});
+   const fila=Math.floor(n/3),cantidadFila=Math.min(3,firmantes.length-fila*3),anchoCelda=230/cantidadFila,ancho=Math.min(96,anchoCelda-8);
+   const centro=24.7+anchoCelda*(n%3+.5),linea=dosFilas?161+fila*25:179,altoFirma=dosFilas?10:16;
+   if(f.firma){const info=pdf.getImageProperties(f.firma),ratio=info.width/info.height,w=Math.min(ancho-8,50,altoFirma*ratio),h=w/ratio;pdf.addImage(f.firma,'PNG',centro-w/2,linea-2-h,w,h);}
+   pdf.setDrawColor(c.color);pdf.setLineWidth(.25);pdf.line(centro-ancho/2,linea,centro+ancho/2,linea);
+   const nombreFirma=ajustar(pdf,f.nombre,ancho,dosFilas?5:7,{size:cantidadFila===3?7.5:9,min:4.5,fuente,color:c.oscuro});pdf.text(nombreFirma.lineas,centro,linea+4,{align:'center',lineHeightFactor:1.15});
+   const cargo=ajustar(pdf,f.cargo,ancho,dosFilas?5:7,{size:7,min:4.5,bold:false,fuente,color:c.oscuro});pdf.text(cargo.lineas,centro,linea+(dosFilas?9:11),{align:'center',lineHeightFactor:1.15});
   });
   pdf.setFont(fuente,'normal');pdf.setFontSize(6.5);pdf.setTextColor(c.oscuro);pdf.text(borrador?'VISTA PREVIA · SIN EMITIR':codigoCertificado(cert),25,200);
   pdf.text('CIENCIA · TECNOLOGÍA · INGENIERÍA · ARTE · MATEMÁTICAS',254,200,{align:'right'});
