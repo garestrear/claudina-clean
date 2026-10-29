@@ -1,8 +1,9 @@
 import {precacheAndRoute} from 'workbox-precaching';
 import {clientsClaim} from 'workbox-core';
 clientsClaim();
-// La nueva versión espera a que el usuario pulse «Actualizar app».
-// El receptor activo sigue atendiendo push mientras hay una actualización pendiente.
+// La app activa las nuevas versiones automáticamente cuando no hay edición pendiente.
+// No usar skipWaiting en install: protege los textos abiertos en otros clientes.
+// El receptor activo sigue atendiendo push mientras se termina de editar.
 
 precacheAndRoute(self.__WB_MANIFEST);
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});

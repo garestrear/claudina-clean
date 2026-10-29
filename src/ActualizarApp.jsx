@@ -1,26 +1,47 @@
-import React,{useEffect,useRef,useState} from 'react';
+import {useEffect} from 'react';
 import {registerSW} from 'virtual:pwa-register';
+import {crearProteccionEdicion} from './protegerEdicion.js';
 
 export default function ActualizarApp(){
- const[disponible,setDisponible]=useState(false),[actualizando,setActualizando]=useState(false),[error,setError]=useState('');
- const aplicar=useRef(null);
  useEffect(()=>{
   let vigente=true,registro=null,ultimaConsulta=0,consultando=false;
-  async function comprobar(){
-   if(!registro||!navigator.onLine||document.visibilityState==='hidden'||consultando||Date.now()-ultimaConsulta<10000)return;
-   ultimaConsulta=Date.now();consultando=true;
-   try{await registro.update()}catch{/* Se vuelve a comprobar al recuperar la conexión. */}finally{consultando=false}
+  let pendiente=false,requiereRecarga=false,recargando=false,aplicando=false,ultimoIntento=0,temporizador=null;
+  let aplicar=null;
+  function programar(){
+   if(!vigente)return;
+   if(temporizador)clearTimeout(temporizador);
+   temporizador=setTimeout(intentar,1500);
   }
-  aplicar.current=registerSW({immediate:true,
-   onNeedRefresh(){if(vigente)setDisponible(true)},
+  const edicion=crearProteccionEdicion(document,programar);
+  async function intentar(){
+   temporizador=null;
+   if(!vigente||recargando||document.visibilityState==='hidden'||edicion.hayEdicion())return;
+   if(requiereRecarga){recargando=true;window.location.reload();return}
+   if(!pendiente||aplicando||!aplicar||navigator.onLine===false||Date.now()-ultimoIntento<10000)return;
+   aplicando=true;ultimoIntento=Date.now();
+   try{await aplicar(true)}catch{/* Reintentar sin avisos al recuperar conexión o volver a la app. */}
+   finally{aplicando=false}
+  }
+  async function comprobar(){
+   if(!registro||navigator.onLine===false||document.visibilityState==='hidden'||consultando||Date.now()-ultimaConsulta<10000)return;
+   ultimaConsulta=Date.now();consultando=true;
+   try{await registro.update()}catch{/* La versión actual sigue funcionando sin conexión. */}finally{consultando=false}
+  }
+  function volver(){comprobar();programar()}
+  aplicar=registerSW({immediate:true,
+   onNeedRefresh(){pendiente=true;programar()},
+   // Sustituye la recarga incondicional de Workbox, también si otra pestaña actualiza.
+   onNeedReload(){requiereRecarga=true;programar()},
    onRegisteredSW(_url,r){registro=r;comprobar()},
-   onRegisterError(){if(vigente)setError('')}
+   onRegisterError(){/* No interrumpir el trabajo por una comprobación fallida. */}
   });
-  const intervalo=setInterval(comprobar,60000);
-  window.addEventListener('focus',comprobar);window.addEventListener('online',comprobar);document.addEventListener('visibilitychange',comprobar);
-  return()=>{vigente=false;clearInterval(intervalo);window.removeEventListener('focus',comprobar);window.removeEventListener('online',comprobar);document.removeEventListener('visibilitychange',comprobar)};
+  // Otra pestaña puede activar el worker antes de que este cliente reciba waiting.
+  let teniaControl=!!navigator.serviceWorker?.controller;
+  function controlador(){if(teniaControl){requiereRecarga=true;programar()}teniaControl=true}
+  navigator.serviceWorker?.addEventListener('controllerchange',controlador);
+  const intervalo=setInterval(()=>{comprobar();intentar()},60000);
+  window.addEventListener('focus',volver);window.addEventListener('online',volver);document.addEventListener('visibilitychange',volver);
+  return()=>{vigente=false;clearInterval(intervalo);clearTimeout(temporizador);edicion.destruir();navigator.serviceWorker?.removeEventListener('controllerchange',controlador);window.removeEventListener('focus',volver);window.removeEventListener('online',volver);document.removeEventListener('visibilitychange',volver)};
  },[]);
- async function actualizar(){if(actualizando)return;setActualizando(true);setError('');try{await aplicar.current?.(true)}catch{setError('No se pudo actualizar. Comprueba tu conexión e inténtalo de nuevo.');setActualizando(false)}}
- if(!disponible)return null;
- return <aside role="status" className="appUpdateNotice"><div><b>✨ Hay una nueva versión de Claudina App</b><p>Guarda cualquier registro pendiente y luego actualiza. Tu cuenta y tus registros guardados se conservan.</p>{error&&<p>{error}</p>}</div><button type="button" disabled={actualizando} onClick={actualizar}>{actualizando?'Actualizando…':'Actualizar app'}</button></aside>;
+ return null;
 }
