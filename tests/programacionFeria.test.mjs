@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';
+import {disponibilidadEspacio,htmlProgramacionFeria} from '../src/programacionFeria.js';
+const e={id:'a',nombre:'Salón <script>alert(1)</script>',activo:true,cupos:2},tramo={fecha:'2026-11-06',inicio:'08:00',fin:'11:00'};
+const r=(id,inicio,fin,extra={})=>({id,fecha:tramo.fecha,inicio,fin,espacio_id:'a',activo:true,titulo:'Proyecto <img src=x>',...extra});
+let d=disponibilidadEspacio(e,[r('1','08:00','09:00'),r('2','10:00','11:00')],tramo);assert.equal(d.pico,1);assert.equal(d.estado,'compartido');d=disponibilidadEspacio(e,[r('1','08:00','09:00'),r('2','08:30','11:00')],tramo);assert.equal(d.pico,2);assert.equal(d.estado,'lleno');assert.equal(disponibilidadEspacio(e,[r('1','08:00','09:00',{exclusivo:true})],tramo).estado,'exclusivo');assert.equal(disponibilidadEspacio(e,[r('1','07:00','08:00')],tramo).estado,'libre');assert.equal(disponibilidadEspacio(e,[r('1','08:00','09:00')],tramo,'1').estado,'libre');
+const html=htmlProgramacionFeria({espacios:[e],docentes:[],programacion:[r('1','08:00:00','09:00:00',{puesto:'001',responsable:'Ejemplo & Familia'}),r('2','10:00:00','11:00:00',{activo:false})]},tramo.fecha);assert(!html.includes('<script>'));assert(!html.includes('<img '));assert(html.includes('&lt;script&gt;'));assert(html.includes('001'));assert.equal((html.match(/<tbody><tr>/g)||[]).length,1);assert(html.includes('08:00 - 09:00'));assert(html.includes('Ejemplo &amp; Familia'));
+console.log('PASS: disponibilidad por concurrencia, límites exactos, edición sin autocruce e impresión con contenido escapado');

@@ -1,0 +1,18 @@
+export const fechaFeria='2026-11-06';
+export const horaCorta=h=>String(h||'').slice(0,5);
+export const nombreProyecto=p=>p?.titulo?.replace(/^\[Emprendimiento familiar\] /,'')||'';
+export function reservasDelTramo(reservas,espacio,tramo,omitir=null){return reservas.filter(r=>r.activo&&r.id!==omitir&&r.espacio_id===espacio&&r.fecha===tramo.fecha&&horaCorta(r.inicio)<horaCorta(tramo.fin)&&horaCorta(r.fin)>horaCorta(tramo.inicio))}
+export function disponibilidadEspacio(espacio,reservas,tramo,omitir=null){
+ const ocupadas=reservasDelTramo(reservas,espacio.id,tramo,omitir);
+ if(!espacio.activo)return{estado:'inactivo',texto:'No disponible',ocupadas,pico:0};
+ if(ocupadas.some(r=>r.exclusivo))return{estado:'exclusivo',texto:'Reserva exclusiva en este tramo',ocupadas,pico:1};
+ const puntos=[horaCorta(tramo.inicio),...ocupadas.map(r=>horaCorta(r.inicio)).filter(h=>h>=horaCorta(tramo.inicio))];
+ const pico=Math.max(0,...puntos.map(t=>ocupadas.filter(r=>horaCorta(r.inicio)<=t&&horaCorta(r.fin)>t).length));
+ return{estado:espacio.cupos&&pico>=espacio.cupos?'lleno':pico?'compartido':'libre',texto:espacio.cupos&&pico>=espacio.cupos?'Sin cupos en parte del tramo':pico?`Compartido · hasta ${pico} puestos ocupados`:'Libre en este tramo',ocupadas,pico};
+}
+const escapar=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export function htmlProgramacionFeria(datos,fecha){
+ const reservas=datos.programacion.filter(r=>r.activo&&r.fecha===fecha);
+ return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Programación Feria STEAM</title><style>body{font:14px/1.5 Arial,sans-serif;color:#183c2c;margin:25px}h1{font-size:25px}h2{font-size:19px;border-bottom:2px solid #23805e}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;border:1px solid #cadbd1;text-align:left;overflow-wrap:anywhere}thead{background:#edf6f0}.controls{margin-bottom:25px}button{padding:12px;background:#176d4b;color:white;border:0;border-radius:9px}@media print{@page{size:A4 landscape;margin:14mm}.controls{display:none}section{break-before:page}section:first-of-type{break-before:auto}thead{display:table-header-group}tr{break-inside:avoid}}</style></head><body><div class="controls"><button onclick="window.print()">Imprimir / Guardar como PDF</button></div><h1>C.E.R. Claudina Múnera · Feria STEAM 2026</h1><p>Programación de espacios · ${escapar(fecha)} · Hora de Colombia</p>${datos.espacios.filter(e=>reservas.some(r=>r.espacio_id===e.id)).map(e=>`<section><h2>${escapar(e.nombre)}</h2><table><thead><tr><th>Horario</th><th>Proyecto o actividad</th><th>Puesto</th><th>Responsable</th><th>Uso</th></tr></thead><tbody>${reservas.filter(r=>r.espacio_id===e.id).sort((a,b)=>a.inicio.localeCompare(b.inicio)||a.titulo.localeCompare(b.titulo,'es')).map(r=>`<tr><td>${horaCorta(r.inicio)} - ${horaCorta(r.fin)}</td><td>${escapar(nombreProyecto(r))}${r.proyecto_vigente===false?' · Revisar aprobación':''}</td><td>${escapar(r.puesto||'Por definir')}</td><td>${escapar(r.responsable||datos.docentes.find(d=>d.id===r.docente_id)?.nombre||'Por definir')}</td><td>${r.exclusivo?'Exclusivo':'Compartido'}</td></tr>`).join('')}</tbody></table></section>`).join('')||'<p>No hay reservas activas para esta fecha.</p>'}</body></html>`;
+}
+export function imprimirProgramacionFeria(datos,fecha){const ventana=window.open('','_blank');if(!ventana)throw new Error('Permite abrir la ventana de impresión e inténtalo de nuevo.');ventana.opener=null;ventana.document.open();ventana.document.write(htmlProgramacionFeria(datos,fecha));ventana.document.close();ventana.focus()}
