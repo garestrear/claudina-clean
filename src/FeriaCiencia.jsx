@@ -7,6 +7,8 @@ import {esEmprendimiento,tituloFeria,datosEmprendimiento,camposEmprendimiento} f
 import {ProyectosExternos} from './FeriaInvitados';
 import BotonImprimirFeria from './FeriaImpresion';
 import FeriaJurados from './FeriaJurados';
+import {notificarCambioFeria} from './notificacionFeria.js';
+import {idProyectoFeria} from './enlaceFeria.js';
 import React,{useEffect,useRef,useState} from 'react';
 import {supabase} from './lib/supabase';
 import {areasSteam,camposFeria,datosFeria,estadosFeria,gradoFeria,claveBorradorFeria,leerBorradorFeria,validarFeria,enlacePosterValido} from './feriaCiencia.js';
@@ -70,7 +72,7 @@ function Revision({proyecto,onGuardar}){
  const[decision,setDecision]=useState(proyecto.estado),[comentario,setComentario]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const solicitud=useRef(null);
  async function revisar(e){e.preventDefault();if(busy)return;if(decision==='rechazado'&&!window.confirm('¿Rechazar este proyecto? Saldrá de los proyectos vigentes y sus integrantes podrán consultar el motivo.'))return;setBusy(true);setError('');
-  try{solicitud.current=solicitud.current||crypto.randomUUID();const{data,error}=await supabase.rpc('feria_revisar',{proyecto:proyecto.id,version_esperada:proyecto.version,decision,comentario,solicitud:solicitud.current});if(error)throw error;setComentario('');solicitud.current=null;onGuardar(data,'Revisión guardada. El estudiante ya puede consultarla.')}catch(e){setError('No se guardó la revisión: '+e.message)}finally{setBusy(false)}
+  try{solicitud.current=solicitud.current||crypto.randomUUID();const{data,error}=await supabase.rpc('feria_revisar',{proyecto:proyecto.id,version_esperada:proyecto.version,decision,comentario,solicitud:solicitud.current});if(error)throw error;const aviso=await notificarCambioFeria({tipo:'revision',solicitud:solicitud.current});setComentario('');solicitud.current=null;onGuardar(data,'Revisión guardada. El estudiante ya puede consultarla.'+aviso)}catch(e){setError('No se guardó la revisión: '+e.message)}finally{setBusy(false)}
  }
  return <form className="fairReviewForm" onSubmit={revisar}><h3>Revisar este proyecto</h3><p>Cualquier docente puede cambiar el estado en cualquier momento, incluso si ya fue revisado. Las observaciones serán visibles para todos los integrantes y sus acudientes vinculados.</p><label>Decisión<select aria-label="Decisión de revisión" value={decision} disabled={busy} onChange={e=>{setDecision(e.target.value);solicitud.current=null}}>{Object.entries(estadosFeria).map(([id,nombre])=><option value={id} key={id}>{id==='aprobado'?'Aprobar proyecto':id==='rechazado'?'Rechazar proyecto':nombre}</option>)}</select></label><label>Observaciones<textarea value={comentario} required={decision==='ajustes'||decision==='rechazado'} maxLength={4000} rows={4} disabled={busy} onChange={e=>{setComentario(e.target.value);solicitud.current=null}} placeholder={decision==='rechazado'?'Explica el motivo: proyecto repetido, propuesta insuficientemente desarrollada…':'Destaca lo que va bien y explica cómo pueden mejorar su idea.'}/></label>{error&&<p className="error" role="alert">{error}</p>}<button className="fairPrimary" disabled={busy}>{busy?'Guardando revisión…':'Guardar revisión'}</button></form>;
 }
@@ -101,7 +103,7 @@ function FeriaInterna({perfil,familia=false}){
  const profesor=perfil.rol==='profesor',acudiente=perfil.rol==='acudiente',estudiante=perfil.rol==='estudiante';
  const[contexto,setContexto]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState(''),[mensaje,setMensaje]=useState('');
  const[editarSeleccion,setEditarSeleccion]=useState(false);
- const[seleccion,setSeleccion]=useState(null),[nuevo,setNuevo]=useState(null),[busqueda,setBusqueda]=useState(''),[grado,setGrado]=useState('todos'),[estado,setEstado]=useState(perfil.rol==='profesor'?'enviado':'todos'),[area,setArea]=useState('todas'),[asesor,setAsesor]=useState('todos'),[tipo,setTipo]=useState('todos');
+ const[seleccion,setSeleccion]=useState(()=>idProyectoFeria()),[nuevo,setNuevo]=useState(null),[busqueda,setBusqueda]=useState(''),[grado,setGrado]=useState('todos'),[estado,setEstado]=useState(perfil.rol==='profesor'?'enviado':'todos'),[area,setArea]=useState('todas'),[asesor,setAsesor]=useState('todos'),[tipo,setTipo]=useState('todos');
  const[verResumen,setVerResumen]=useState(false);
  const carga=useRef(0);
  async function cargar(){const numero=++carga.current;setError('');try{const{data,error}=await supabase.rpc('feria_contexto');if(numero!==carga.current)return;if(error)throw error;setContexto(data)}catch(e){if(numero===carga.current)setError(e.message)}finally{if(numero===carga.current)setLoading(false)}}

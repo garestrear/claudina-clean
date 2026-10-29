@@ -18,14 +18,14 @@ revoke all on function public.acudiente_registrar_intento(text) from public,anon
 grant execute on function public.acudiente_registrar_intento(text) to service_role;
 create or replace function public.preparar_acceso_estudiante(correo text,documento_ingresado text)
 returns jsonb language plpgsql security definer set search_path=public,auth as $$
-declare ficha public.estudiantes;cuenta uuid;
+declare ficha public.estudiantes;cuenta uuid;sin_password boolean;
 begin
  select * into ficha from public.estudiantes where email=lower(trim(correo)) and activo and documento=documento_ingresado for update;
  if ficha.id is null then return null;end if;
  if to_regclass('public.invitaciones_profesor') is not null then
   if exists(select 1 from public.invitaciones_profesor i where lower(i.email)=ficha.email) then return null;end if;
  end if;
- select id into cuenta from auth.users where lower(email)=ficha.email;
+ select id,coalesce(encrypted_password,'')='' into cuenta,sin_password from auth.users where lower(email)=ficha.email;
  if cuenta is null then
   if ficha.auth_user_id is not null then return null;end if;
   return jsonb_build_object('email',ficha.email,'crear',true);
@@ -38,7 +38,7 @@ begin
  if exists(select 1 from public.estudiantes where auth_user_id=cuenta and id<>ficha.id) then return null;end if;
  update public.estudiantes set auth_user_id=cuenta where id=ficha.id;
  insert into public.perfiles(id,nombre,rol) values(cuenta,ficha.nombre,'estudiante') on conflict(id) do update set nombre=excluded.nombre where perfiles.rol='estudiante';
- return jsonb_build_object('email',ficha.email,'id',cuenta,'crear',false);
+ return jsonb_build_object('email',ficha.email,'id',cuenta,'crear',false,'inicializar_password',sin_password);
 end; $$;
 revoke all on function public.preparar_acceso_estudiante(text,text) from public,anon,authenticated;
 grant execute on function public.preparar_acceso_estudiante(text,text) to service_role;

@@ -32,6 +32,9 @@
     "api/master2000.js": {
       "maxDuration": 60,
       "includeFiles": "node_modules/@sparticuz/chromium/bin/**"
+    },
+    "api/feria-notificacion.js": {
+      "maxDuration": 60
     }
   }
 }

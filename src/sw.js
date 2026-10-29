@@ -9,6 +9,11 @@ self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')sel
 
 self.addEventListener('push',event=>{
   let dato={};try{dato=event.data?.json()||{}}catch{return}
+  if(dato.type==='feria-actualizada'){
+    if(typeof dato.id!=='string'||!/^[0-9a-f-]{36}$/i.test(dato.id)||typeof dato.title!=='string'||!Number.isFinite(dato.sentAt)||Math.abs(Date.now()-dato.sentAt)>86400000)return;
+    event.waitUntil(self.registration.showNotification(dato.title,{body:dato.body||'Consulta las sugerencias de tu proyecto.',tag:'feria-'+dato.id,data:{url:'/?proyectoFeria='+encodeURIComponent(dato.id)+(dato.familia?'&familia=1':'')+(dato.acudiente?'&ingreso=acudiente':'')}}));
+    return;
+  }
   if(dato.type==='evento-evaluacion'){
     if(typeof dato.id!=='string'||typeof dato.title!=='string'||!Number.isFinite(dato.sentAt)||Date.now()-dato.sentAt>86400000)return;
     event.waitUntil(self.registration.showNotification(dato.title,{body:dato.body||'Evalúa el evento',tag:'evento-'+dato.id,data:{url:'/?evaluacion='+encodeURIComponent(dato.id)}}));
@@ -32,7 +37,7 @@ self.addEventListener('notificationclick',event=>{
     const actual=ventanas.find(v=>new URL(v.url).origin===self.location.origin);
     const destino=new URL(event.notification.data?.url||'/',self.location.origin);
     if(destino.origin!==self.location.origin)return;
-    if(actual){if(destino.searchParams.has('aviso')||destino.searchParams.has('evaluacion'))await actual.navigate(destino.href);return actual.focus()}
+    if(actual){if(destino.searchParams.has('aviso')||destino.searchParams.has('evaluacion')||destino.searchParams.has('proyectoFeria'))await actual.navigate(destino.href);return actual.focus()}
     return self.clients.openWindow(destino.href);
   })());
 });

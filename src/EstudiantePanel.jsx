@@ -6,12 +6,12 @@ export const gruposEstudiante=[
  {id:'feria',icono:'🔬',titulo:'Feria STEAM',paginas:['feria']},
  {id:'aprender',icono:'📚',titulo:'Aprender',paginas:['ingles']},
  {id:'colegio',icono:'🤝',titulo:'Mi colegio',paginas:['calificaciones','evidencias','reportes','valoraciones','convivencia']},
- {id:'mas',icono:'☰',titulo:'Más',paginas:['horario','encuestas','eventos']}
+ {id:'mas',icono:'☰',titulo:'Más',paginas:['horario','encuestas','eventos','cuenta']}
 ];
 const accesos={
  aprender:[['ingles','🎧','Aprende inglés','Canciones y actividades para practicar.']],
  colegio:[['valoraciones','⭐','Valorar aseo','Participa en el cuidado del salón.'],['evidencias','📸','Evidencias y reportes','Consulta tus actividades y registros.'],['calificaciones','📈','Calificaciones de aseo','Revisa tus valoraciones e historial.'],['convivencia','🤝','Convivencia','Acuerdos y seguimiento del grupo.']],
- mas:[['horario','🕒','Horario','Consulta tus clases.'],['encuestas','📋','Encuestas','Comparte tu opinión y participa.'],['eventos','⭐','Evaluar eventos','Cuéntanos cómo viviste cada jornada.']]
+ mas:[['horario','🕒','Horario','Consulta tus clases.'],['encuestas','📋','Encuestas','Comparte tu opinión y participa.'],['eventos','⭐','Evaluar eventos','Cuéntanos cómo viviste cada jornada.'],['cuenta','🔐','Mi cuenta','Cambia tu contraseña de acceso.']]
 };
 export function grupoEstudiante(tab){return gruposEstudiante.find(g=>g.id===tab||g.paginas.includes(tab))?.id||'inicio'}
 export function novedadesGrupo(novedades,grupo){return grupo.paginas.reduce((total,id)=>({cantidad:total.cantidad+(novedades[id]?.cantidad||0),cambio:total.cambio||!!novedades[id]?.cambio}),{cantidad:0,cambio:false})}

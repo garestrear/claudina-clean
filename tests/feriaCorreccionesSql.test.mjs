@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';import{readFile}from'node:fs/promises';import{crearFeriaDb,uid,uuid}from'./fixtures/feriaDb.mjs';
 const{db,identity,rpc}=await crearFeriaDb();
-await db.exec("create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);create schema storage;create table storage.objects(id int);alter table storage.objects enable row level security;");
+await db.exec("create role service_role;create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,encrypted_password text);create schema storage;create table storage.objects(id int);alter table storage.objects enable row level security;");
 for(const f of ['feria-invitados','feria-rechazar','feria-jurados','feria-poster','feria-edicion-equipos','feria-familias-estados','feria-rechazados-solo-lectura','feria-correcciones-docentes'])await db.exec(await readFile('supabase/'+f+'.sql','utf8'));
-await db.exec(await readFile('supabase/feria-correcciones-docentes.sql','utf8'));
+await db.exec(await readFile('supabase/mejoras-feria-accesos.sql','utf8'));
+await db.exec(await readFile('supabase/mejoras-feria-accesos.sql','utf8'));
 let peticion=1200;const guardar=(origen,proyecto,datos,version,solicitud=uuid(peticion++))=>rpc('feria_corregir_proyecto',[origen,proyecto,datos,version,solicitud],['text','uuid','jsonb','integer','uuid']);
 await identity(3);let ctx=await rpc('feria_guardar',[uuid(800),{titulo:'La lampara',propuesta:'Explorar',procedimiento:'Medir',materiales:'Agua',resultados_esperados:'Aprender',apoyo:'',bibliografia:'Libro',areas:['science'],asesor_id:uid(1),integrantes_ids:[uuid(7)]},0,true,uuid(peticion++)],['uuid','jsonb','integer','boolean','uuid']);
 const original=(await db.query('select * from feria_proyectos where id=$1',[uuid(800)])).rows[0];
-await identity(2);const request=uuid(peticion++);ctx=await guardar('claudina',uuid(800),{titulo:'La lámpara',propuesta:'Explorar la luz.'},original.version,request);assert.equal(ctx.proyecto.estado,'enviado');assert.equal(ctx.proyecto.version,original.version+1);
-await guardar('claudina',uuid(800),{titulo:'La lámpara',propuesta:'Explorar la luz.'},original.version,request);assert.equal((await db.query('select count(*)::int n from feria_correcciones_docentes')).rows[0].n,1);
+await identity(2);const request=uuid(peticion++);ctx=await guardar('claudina',uuid(800),{titulo:'La lámpara',propuesta:'Explorar la luz.',poster_url:''},original.version,request);assert.equal(ctx.proyecto.poster_url,'');assert.equal(ctx.proyecto.estado,'enviado');assert.equal(ctx.proyecto.version,original.version+1);
+await guardar('claudina',uuid(800),{titulo:'La lámpara',propuesta:'Explorar la luz.',poster_url:''},original.version,request);assert.equal((await db.query('select count(*)::int n from feria_correcciones_docentes')).rows[0].n,1);
 await assert.rejects(guardar('claudina',uuid(800),{titulo:'Cambio obsoleto'},original.version));
 await assert.rejects(guardar('claudina',uuid(800),{estado:'rechazado'},ctx.proyecto.version));
 await assert.rejects(guardar('claudina',uuid(800),{integrantes:'Otro equipo'},ctx.proyecto.version));

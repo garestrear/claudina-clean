@@ -14,7 +14,7 @@ const render=tab=>React.createElement(Panel,{tab,setTab:visitar,grado:6},React.c
 await act(async()=>{view=create(render('inicio'))});
 let nav=view.root.findByType('nav');assert.equal(nav.findAllByType('button').length,5);assert.ok(JSON.stringify(view.toJSON()).includes('Feria STEAM'));
 await act(async()=>nav.findAllByType('button')[1].props.onClick());assert.equal(actual,'feria');
-for(const [menu,paginas] of [['colegio',['valoraciones','evidencias','calificaciones','convivencia']],['mas',['horario','encuestas','eventos']],['aprender',['ingles']]]){
+for(const [menu,paginas] of [['colegio',['valoraciones','evidencias','calificaciones','convivencia']],['mas',['horario','encuestas','eventos','cuenta']],['aprender',['ingles']]]){
  await act(async()=>view.update(render(menu)));
  const botones=view.root.findByProps({className:'studentMenuGrid'}).findAllByType('button');assert.equal(botones.length,paginas.length);
  for(let i=0;i<botones.length;i++){await act(async()=>botones[i].props.onClick());assert.equal(actual,paginas[i]);}

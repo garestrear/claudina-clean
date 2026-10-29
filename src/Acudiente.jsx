@@ -5,6 +5,7 @@ import ConvivenciaClase from './ConvivenciaClase';
 import EvaluacionEventos from './EvaluacionEventos';
 import FotoTarea from './FotoTarea';
 import GeneroEstudiante,{referenciaFamiliar as referencia} from './GeneroEstudiante';
+import {idProyectoFeria} from './enlaceFeria.js';
 import React,{useEffect,useState} from 'react';
 import {supabase} from './lib/supabase';
 import {fechaBogota,nombresTareas} from './ultimaActividad';
@@ -67,14 +68,14 @@ function NavegacionAcudiente({tab,seleccionar,hijo,novedades}){
  </nav>;
 }
 function FeriaAcudientes({perfil,hijo}){
- const[opcion,setOpcion]=useState('');
+ const[opcion,setOpcion]=useState(()=>idProyectoFeria()?(new URLSearchParams(window.location.search).get('familia')==='1'?'familia':'estudiante'):'');
  return <div className="guardianFair"><header className="guardianFairHeading"><div><span>FAMILIAS QUE CREAN</span><h2>Feria STEAM</h2><p>Elige cómo quieres participar.</p></div>{opcion&&<button type="button" onClick={()=>setOpcion('')}>← Cambiar opción</button>}</header>
  {!opcion?<div className="guardianFairChoices"><button type="button" onClick={()=>setOpcion('familia')}><span aria-hidden="true">🛍️</span><div><h3>Inscribe tu emprendimiento en la Feria STEAM</h3><p>Presenta el producto, servicio o saber de tu familia.</p></div><b aria-hidden="true">→</b></button><button type="button" onClick={()=>setOpcion('estudiante')}><span aria-hidden="true">🔬</span><div><h3>Ayuda a tu {referencia(hijo)} a inscribir su proyecto</h3><p>Acompaña su idea y consulta las observaciones de los docentes.</p></div><b aria-hidden="true">→</b></button></div>:<FeriaCiencia key={opcion} perfil={perfil} familia={opcion==='familia'}/>}
  </div>;
 }
 export default function VistaAcudiente({perfil}){
  const clave=`claudina-clean:pestana:acudiente:${perfil.id}`;
- const[tab,setTab]=useState(()=>{try{const t=new URLSearchParams(window.location.search).has('evaluacion')?'eventos':localStorage.getItem(clave);return t==='calificaciones'?'aseo':tabs.some(([id])=>id===t)?t:'inicio'}catch{return'inicio'}}),[datos,setDatos]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+ const[tab,setTab]=useState(()=>{try{const t=idProyectoFeria()?'feria':new URLSearchParams(window.location.search).has('evaluacion')?'eventos':localStorage.getItem(clave);return t==='calificaciones'?'aseo':tabs.some(([id])=>id===t)?t:'inicio'}catch{return'inicio'}}),[datos,setDatos]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true);
  async function cargar(){setLoading(true);setError('');try{const{data,error}=await supabase.rpc('acudiente_contexto');if(error)throw error;setDatos(data)}catch(e){setError('No se pudo consultar la información: '+e.message)}finally{setLoading(false)}}
  useEffect(()=>{cargar()},[perfil.id]);
 

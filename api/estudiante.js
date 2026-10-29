@@ -25,8 +25,12 @@ export function crearHandlerEstudiante(factory=createClient,env=process.env){ret
    const resultado=await admin.rpc('preparar_acceso_estudiante',args);cuenta=resultado.data;
    if(resultado.error||!cuenta?.id)return res.status(503).json({error:'No fue posible preparar la cuenta. Solicita ayuda al profesor.'});
   }
-  const{error:actualizar}=await admin.auth.admin.updateUserById(cuenta.id,{password,email_confirm:true});
-  if(actualizar)return res.status(503).json({error:'No fue posible habilitar el acceso. Solicita ayuda al profesor.'});
+  // Solo habilitar contraseña en cuentas que aún no tienen una (por ejemplo Google).
+  // Nunca restablecer una contraseña existente al documento durante el ingreso.
+  if(cuenta.inicializar_password===true){
+   const{error:actualizar}=await admin.auth.admin.updateUserById(cuenta.id,{password,email_confirm:true});
+   if(actualizar)return res.status(503).json({error:'No fue posible habilitar el acceso. Solicita ayuda al profesor.'});
+  }
   const{data:sesion,error:ingresar}=await auth.auth.signInWithPassword({email:cuenta.email,password});
   if(ingresar||!sesion.session)return denegar();
   return res.status(200).json({access_token:sesion.session.access_token,refresh_token:sesion.session.refresh_token});

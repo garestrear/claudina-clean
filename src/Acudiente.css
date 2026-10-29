@@ -1,6 +1,16 @@
 .guardianIdentity{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-top:12px;padding-bottom:12px;background:#e9f8f0}.guardianRecord{display:flex;flex-wrap:wrap;width:100%;gap:10px;justify-content:space-between;align-items:center;text-align:left}.guardianSchedule{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.guardianSchedule .card{margin:0}.guardianPassword label{display:block;margin:14px 0}.guardianPassword input{display:block;width:100%;margin-top:6px}.guardianPassword small{display:block;margin-bottom:14px}
 
 
+/* Espacios de la feria familiar: tarjetas dentro de una superficie con márgenes. */
+.guardianMain .guardianFair{margin:18px clamp(14px,3vw,24px) 26px;padding:clamp(16px,3vw,26px);border:1px solid #dcebe2;border-radius:22px;background:linear-gradient(145deg,#f0f9f3,#fff 65%);box-shadow:0 8px 26px #17372b08}
+.guardianMain .guardianFairHeading{padding:0 0 20px}
+.guardianMain .guardianFairChoices>button{margin:0;min-height:148px;transition:background .15s,box-shadow .15s}
+.guardianMain .guardianFairChoices>button:focus-visible{outline:3px solid #176d4b;outline-offset:4px}
+.guardianMain .guardianFairChoices>button>div{min-width:0;overflow-wrap:anywhere}
+.guardianMain .guardianFairChoices>button:hover{box-shadow:0 6px 20px #22503912}
+.guardianMain .guardianFair .fairSection{padding:0;min-width:0}
+.guardianMain>footer{margin:0 18px;border-top:1px solid #e1ece4;line-height:1.7}
+@media(max-width:650px){.guardianMain .guardianFair{margin:14px 12px 24px;padding:16px}.guardianMain .guardianFairChoices>button{min-height:122px;gap:12px}.guardianMain .guardianFairChoices h3{font-size:1rem}}
 /* Navegación compacta de familias */
 .guardianNavCompact{display:flex;gap:6px;align-items:stretch;position:relative;margin:10px 0 14px;padding:6px;background:#edf5ef;border-radius:16px;overflow:visible}
 .guardianNavCompact>button,.guardianMore>summary{flex:1;min-width:0;padding:11px 9px;font-size:.85rem;border-radius:11px;white-space:nowrap;cursor:pointer;list-style:none;text-align:center}
