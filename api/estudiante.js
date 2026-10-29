@@ -1,3 +1,4 @@
+import {normalizarCorreoIngreso} from '../lib/correoIngreso.js';
 import {createClient} from '@supabase/supabase-js';
 import {createHmac} from 'node:crypto';
 const opciones={auth:{persistSession:false,autoRefreshToken:false}};
@@ -6,7 +7,7 @@ export function crearHandlerEstudiante(factory=createClient,env=process.env){ret
  if(req.method!=='POST')return res.status(405).json({error:'Método no permitido.'});
  const url=env.SUPABASE_URL||env.VITE_SUPABASE_URL,key=env.SUPABASE_ANON_KEY||env.VITE_SUPABASE_ANON_KEY,secret=env.SUPABASE_SERVICE_ROLE_KEY;
  if(!url||!key||!secret)return res.status(503).json({error:'El acceso estudiantil no está configurado en el servidor.'});
- const email=String(req.body?.email??'').trim().toLowerCase(),password=req.body?.password;
+ const email=normalizarCorreoIngreso(req.body?.email),password=req.body?.password;
  const denegar=()=>res.status(401).json({error:'Correo o documento incorrectos. Verifica que el profesor haya registrado ambos datos.'});
  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)||email.length>254||typeof password!=='string'||!password||password.length>128)return denegar();
  const admin=factory(url,secret,opciones),auth=factory(url,key,opciones);
