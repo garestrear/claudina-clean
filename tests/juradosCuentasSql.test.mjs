@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {crearEvaluacionDb} from './fixtures/evaluacionDb.mjs';
+const {db,actor,rpc,ctx,uid,guardarPlan}=await crearEvaluacionDb();
+await db.exec('create role service_role bypassrls');
+const sql=await readFile('supabase/feria-jurados-cuentas.sql','utf8');await db.exec(sql);await db.exec(sql);
+await guardarPlan();
+await db.query("insert into auth.users values($1,'jurado.manual@jurados.claudina.invalid',now())",[uid(800)]);
+await actor(1);await db.exec('set role authenticated');await assert.rejects(rpc('feria_jurado_cuenta_vincular',[uid(101),uid(800),'jurado.manual'],['uuid','uuid','text']),/permission denied/);await db.exec('reset role');
+await db.exec('set role service_role');await rpc('feria_jurado_cuenta_vincular',[uid(101),uid(800),'jurado.manual'],['uuid','uuid','text']);await db.exec('reset role');
+await db.query("select set_config('test.uid',$1,false)",[uid(800)]);
+let c=await ctx();assert(c.requiere_cambio_password);assert.equal(c.visitas,undefined,'no expone el recorrido mientras exige cambio');
+const visita=(await db.query('select id from feria_evaluacion_visitas where jurado_id=$1 limit 1',[uid(101)])).rows[0].id;
+await assert.rejects(rpc('feria_evaluacion_guardar',[visita,{notas:[5,5,5,5,5]},true,0,uid(801)],['uuid','jsonb','boolean','integer','uuid']),/contraseña inicial/);
+await db.exec('set role authenticated');await assert.rejects(rpc('feria_jurado_password_cambiada',[uid(800)],['uuid']),/permission denied/);await db.exec('reset role');
+await db.exec('set role service_role');await rpc('feria_jurado_password_cambiada',[uid(800)],['uuid']);await db.exec('reset role');
+c=await ctx();assert(c.visitas.length>0);assert(c.visitas.every(v=>v.jurado_id===uid(101)));
+let e=await rpc('feria_evaluacion_guardar',[visita,{notas:[5,5,5,5,5]},true,0,uid(802)],['uuid','jsonb','boolean','integer','uuid']);assert(e.enviada);assert.equal(Number(e.puntaje),100);
+await db.exec('set role service_role');for(let i=0;i<20;i++)assert.equal(await rpc('feria_jurado_intento',['a'.repeat(64)],['text']),true);assert.equal(await rpc('feria_jurado_intento',['a'.repeat(64)],['text']),false);await rpc('feria_jurado_password_requerida',[uid(800)],['uuid']);await db.exec('reset role');
+assert((await ctx()).requiere_cambio_password);assert.equal((await db.query('select count(*)::int n from feria_evaluaciones')).rows[0].n,1,'restablecer conserva notas');
+// Un autor/asesor que entre con una cuenta manual tampoco puede evaluarse.
+await db.exec('set role service_role');await rpc('feria_jurado_password_cambiada',[uid(800)],['uuid']);await db.exec('reset role');
+const otra=c.visitas.find(v=>v.id!==visita&&v.origen==='claudina');await db.query("update feria_proyectos set asesor_id=$1 where id=$2",[uid(2),otra.proyecto_id]);
+await assert.rejects(rpc('feria_evaluacion_guardar',[otra.id,{notas:[5,5,5,5,5]},true,0,uid(803)],['uuid','jsonb','boolean','integer','uuid']),/conflicto/);
+await db.query('update feria_jurados set habilitado=false where id=$1',[uid(101)]);await assert.rejects(ctx(),/no está habilitada/);
+await db.close();console.log('PASS SQL cuentas: rol de servidor, vínculo individual, cambio obligatorio, bloqueo de evaluación, límites de intentos, conflictos y notas conservadas');

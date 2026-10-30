@@ -38,3 +38,17 @@ La reasignación individual conserva la hora y solo permite visitas sin borrador
 `npm run test:jurados` ejecuta pruebas de reparto/capacidad, PostgreSQL y permisos, y navegador móvil con RPC contra PostgreSQL local. Para el navegador se admite `FERIA_TEST_CHROMIUM` apuntando a Chromium instalado. `npm run build` comprueba la compilación y la PWA.
 
 Las pruebas no envían correos reales ni modifican datos de producción. Tras aplicar la migración, el comité debe hacer una entrada de prueba con un correo externo propio y confirmar recepción del enlace en el proveedor de correo configurado.
+
+## Usuarios y contraseñas sin correo
+
+Después de la migración anterior, ejecutar completo `supabase/feria-jurados-cuentas.sql`. También es repetible. Si se vuelve a ejecutar la migración base, ejecutar esta nuevamente al final, porque amplía las mismas funciones de acceso y evaluación.
+
+En «Cuentas y conflictos de jurados», habilitar primero a la persona. Su tarjeta ofrece «Crear usuario y contraseña». El docente define un usuario único (3–40 caracteres: letras minúsculas, números, punto, guion o guion bajo) y una contraseña inicial de al menos diez caracteres; también puede generarla. La cuenta se crea inmediatamente mediante Supabase Auth, sin enviar correos ni modificar cuentas docentes existentes. La identidad de contacto y el registro de jurado se mantienen separados del usuario técnico de acceso.
+
+Los datos de entrega aparecen solo durante esa operación y se pueden copiar para entregarlos individualmente al jurado. La contraseña no se guarda en texto legible en la base de datos, ni en el almacenamiento local, ni se incluye en listados o resultados. Si se pierde, usar «Restablecer contraseña», que conserva usuario, visitas y calificaciones.
+
+El acceso principal de jurados acepta usuario y contraseña. Al primer ingreso —y después de un restablecimiento— se exige elegir una contraseña personal diferente antes de acceder a proyectos o calificar. La restricción también está en el servidor. El correo queda como alternativa; los profesores pueden seguir usando su cuenta habitual.
+
+El endpoint `api/jurado.js` reutiliza las variables de servidor `SUPABASE_URL` (o `VITE_SUPABASE_URL`), `SUPABASE_SERVICE_ROLE_KEY` y `SUPABASE_ANON_KEY` (o `VITE_SUPABASE_ANON_KEY`), igual que el acceso de acudientes. La clave de servicio nunca llega al navegador. Las funciones que vinculan cuentas, levantan el cambio obligatorio o limitan intentos solo son ejecutables por el servidor.
+
+Pruebas adicionales: `node tests/juradosCuentasApi.test.mjs` y `node tests/juradosCuentasSql.test.mjs`. El navegador comprueba creación de credenciales, ingreso manual, cambio inicial, y que se mantiene la alternativa de correo.
