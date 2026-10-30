@@ -72,3 +72,39 @@ Programación también se refleja en Agenda general. Las reservas canceladas se
 muestran como tales. Las ediciones rechazadas conservan el formulario abierto.
 No modifica la asignación automática de stands (07:00–13:00), ni publica una
 rotación automática de grupos o una agenda para las vistas de familias.
+
+## Líderes y grupos del carrusel
+
+Activar `supabase/feria-carrusel.sql` después del módulo de espacios y del módulo
+de integrantes de proyectos. La pestaña “Líderes y carrusel” consulta por defecto
+el bloque de exposiciones 08:00–10:00 del 6 de noviembre. No organiza las charlas
+cuyos ponentes y lugares aún no se han definido.
+
+Se cuentan los proyectos aprobados efectivamente programados en cada espacio,
+no su capacidad teórica. Solo los espacios con más de un proyecto simultáneo
+requieren líder fijo. Cada espacio con al menos una exposición genera un grupo
+visitante, aunque no requiera líder. Se distribuyen los estudiantes activos sin
+proyecto estudiantil aprobado en grupos cuyos tamaños difieren como máximo en
+uno. Se excluyen tanto el titular como todos los compañeros del equipo; un
+emprendimiento familiar no convierte al estudiante vinculado en expositor.
+
+Los docentes se asignan manualmente o con “Asignar docentes disponibles”,
+completando primero los líderes y luego los acompañantes con los docentes
+registrados restantes. No se permite repetir un docente entre ambos roles ni
+entre dos aulas o grupos. Si no alcanzan, se muestra la cantidad necesaria y
+se conserva un borrador explícitamente incompleto. No se inventan docentes de
+apoyo. Los grupos vacíos no requieren acompañante. Los aforos conocidos menores
+que los grupos generan una advertencia.
+
+La ruta empieza con un grupo por espacio y avanza en circuito. La duración se
+puede ajustar entre 5 y 60 minutos (propuesta inicial: 20). La última rotación
+se acorta si el bloque no es divisible exactamente. Se informa cuando el tiempo
+no permite visitar todos los espacios o cuando el circuito vuelve a comenzar.
+Cada aula recibe como máximo un grupo en cada rotación.
+
+El plan se guarda por bloque con control de versión y una firma de las aulas,
+visitantes y docentes utilizados. Cambios posteriores requieren consultar y
+regenerar antes de guardar. No se permiten dos planes que se solapen. Si las
+exposiciones cambian dentro del bloque consultado, hay que dividirlo en tramos
+con exposiciones constantes. Los planes se conservan al recargar; los borradores
+no guardados deben guardarse antes de salir de la sección.

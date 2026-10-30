@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict';
+import {PGlite} from '@electric-sql/pglite';
+import {readFile} from 'node:fs/promises';
+const db=new PGlite();
+const uid=n=>'00000000-0000-0000-0000-'+String(n).padStart(12,'0');
+await db.exec(`create role anon;create role authenticated;create schema auth;create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('test.uid',true),'')::uuid$$;create table perfiles(id uuid primary key,nombre text,rol text);create function public.es_profesor() returns boolean language sql stable security definer as $$select exists(select 1 from public.perfiles where id=auth.uid() and rol='profesor')$$;create table feria_proyectos(id uuid primary key,titulo text,grado integer,estado text);create table feria_proyectos_externos(id uuid primary key,datos jsonb,estado text);`);
+await db.query("insert into perfiles values($1,'Docente','profesor'),($2,'Estudiante','estudiante')",[uid(1),uid(2)]);
+
+
+await db.exec(`create table estudiantes(id uuid primary key,nombre text,grado integer,activo boolean);alter table feria_proyectos add column estudiante_id uuid;alter table feria_proyectos add column integrantes_ids uuid[] not null default '{}';`);
+for(let n=3;n<10;n++)await db.query("insert into perfiles values($1,$2,'profesor')",[uid(n),'Docente '+n]);
+for(let n=101;n<115;n++)await db.query("insert into estudiantes values($1,$2,6,true)",[uid(n),'Estudiante '+n]);
+await db.exec(await readFile('supabase/feria-espacios-programacion.sql','utf8'));
+const sql=await readFile('supabase/feria-carrusel.sql','utf8');await db.exec(sql);await db.exec(sql);
+await db.query("select set_config('test.uid',$1,false)",[uid(1)]);
+for(let n=20;n<23;n++)await db.query("insert into feria_proyectos(id,titulo,grado,estado,estudiante_id,integrantes_ids) values($1,$2,6,'aprobado',$3,$4)",[uid(n),'Proyecto '+n,uid(n+81),n===20?[uid(104)]:[]]);
+const aulas=(await db.query("select id from feria_espacios where codigo in('salon-1','salon-2') order by codigo")).rows;
+for(let n=20;n<23;n++)await db.query("select feria_programacion_guardar($1,$2,0)",[uid(n+300),{tipo:'proyecto',origen:'claudina',proyecto_id:uid(n),fecha:'2026-11-06',inicio:'07:00',fin:'13:00',espacio_id:aulas[n===22?1:0].id}]);
+const contexto=async()=>(await db.query("select feria_carrusel_contexto('2026-11-06','08:00','10:00') d")).rows[0].d;
+let ctx=await contexto();assert.equal(ctx.aulas.length,2);assert.deepEqual(ctx.aulas.map(a=>a.requiere_lider),[true,false]);assert.equal(ctx.visitantes.length,10);
+const {generarGruposCarrusel}=await import('../src/carruselFeria.js');let plan=generarGruposCarrusel(ctx);plan.lideres[0].docente_id=uid(1);plan.grupos[0].docente_id=uid(3);plan.grupos[1].docente_id=uid(4);
+const guardar=async(p=plan,firma=ctx.firma,version=ctx.version)=>(await db.query("select feria_carrusel_guardar('2026-11-06','08:00','10:00',$1,$2,$3) d",[p,firma,version])).rows[0].d;
+ctx=await guardar();assert.equal(ctx.version,1);
+await assert.rejects(guardar(plan,ctx.firma,0),/Otro docente/);
+let invalido=structuredClone(plan);invalido.grupos[0].docente_id=uid(1);await assert.rejects(guardar(invalido),/Un docente/);
+invalido=structuredClone(plan);invalido.grupos[0].estudiantes_ids[0]=uid(101);await assert.rejects(guardar(invalido),/exactamente una vez/);
+invalido=structuredClone(plan);invalido.lideres.push({espacio_id:aulas[1].id,docente_id:uid(5)});await assert.rejects(guardar(invalido),/Revisa líderes/);
+await db.query("update estudiantes set activo=false where id=$1",[uid(114)]);await assert.rejects(guardar(),/Cambiaron/);
+ctx=await contexto();plan=generarGruposCarrusel(ctx,plan);ctx=await guardar();assert.deepEqual(plan.grupos.map(g=>g.estudiantes_ids.length),[5,4]);
+await db.query("update feria_programacion set fin='09:00' where id=$1",[uid(320)]);await assert.rejects(contexto(),/Divide el horario/);
+await db.query("select set_config('test.uid',$1,false)",[uid(2)]);await assert.rejects(contexto(),/Solo docentes/);
+console.log('PASS SQL carrusel: aulas múltiples reales, exclusión de expositores y compañeros, equilibrio, roles sin duplicar, versiones y cambios de fuente');await db.close();
