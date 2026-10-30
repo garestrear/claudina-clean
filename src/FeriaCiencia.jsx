@@ -9,6 +9,7 @@ import {esEmprendimiento,tituloFeria,datosEmprendimiento,camposEmprendimiento} f
 import {ProyectosExternos} from './FeriaInvitados';
 import BotonImprimirFeria from './FeriaImpresion';
 import FeriaJurados from './FeriaJurados';
+import EvaluacionJurados from './EvaluacionJurados';
 import {idProyectoFeria} from './enlaceFeria.js';
 import React,{useEffect,useRef,useState} from 'react';
 import {supabase} from './lib/supabase';
@@ -125,12 +126,12 @@ function FeriaInterna({perfil,familia=false}){
 }
 
 export default function FeriaCiencia({perfil,familia=false}){
- const[origen,setOrigen]=useVistaFeria('seccion:'+perfil.id,perfil.rol==='profesor'?['claudina','invitados','espacios','participantes','placas','jurados']:['claudina','participantes'],'claudina');
+ const[origen,setOrigen]=useVistaFeria('seccion:'+perfil.id,perfil.rol==='profesor'?['claudina','invitados','espacios','participantes','placas','jurados','evaluacion-jurados']:['claudina','participantes'],'claudina');
  const profesor=perfil.rol==='profesor';
  function herramienta(id,e){setOrigen(id);e.currentTarget.closest('details').open=false}
  return <>
-  {profesor&&<><div className="fairTeacherHeader"><h2>Feria STEAM</h2><details className="fairTeacherTools"><summary>Herramientas</summary><div><BotonImprimirFeria/>{[['placas','Placas de proyectos'],['participantes','Participantes y certificados'],['jurados','Jurados inscritos']].map(([id,titulo])=><button key={id} type="button" aria-pressed={origen===id} onClick={e=>herramienta(id,e)}>{titulo}</button>)}</div></details></div><div className="fairOriginTabs fairTeacherOrigins" role="group" aria-label="Origen de los proyectos"><button type="button" aria-pressed={origen==='claudina'} onClick={()=>setOrigen('claudina')}>Proyectos Claudina</button><button type="button" aria-pressed={origen==='invitados'} onClick={()=>setOrigen('invitados')}>Instituciones invitadas</button><button type="button" aria-pressed={origen==='espacios'} onClick={()=>setOrigen('espacios')}>Aulas y programación</button></div></>}
+  {profesor&&<><div className="fairTeacherHeader"><h2>Feria STEAM</h2><details className="fairTeacherTools"><summary>Herramientas</summary><div><BotonImprimirFeria/>{[['placas','Placas de proyectos'],['participantes','Participantes y certificados'],['jurados','Jurados inscritos'],['evaluacion-jurados','Evaluación de jurados']].map(([id,titulo])=><button key={id} type="button" aria-pressed={origen===id} onClick={e=>herramienta(id,e)}>{titulo}</button>)}</div></details></div><div className="fairOriginTabs fairTeacherOrigins" role="group" aria-label="Origen de los proyectos"><button type="button" aria-pressed={origen==='claudina'} onClick={()=>setOrigen('claudina')}>Proyectos Claudina</button><button type="button" aria-pressed={origen==='invitados'} onClick={()=>setOrigen('invitados')}>Instituciones invitadas</button><button type="button" aria-pressed={origen==='espacios'} onClick={()=>setOrigen('espacios')}>Aulas y programación</button></div></>}
   {!profesor&&<div className="fairOriginTabs" role="group" aria-label="Mi participación en la feria"><button type="button" aria-pressed={origen==='claudina'} onClick={()=>setOrigen('claudina')}>Mis proyectos</button><button type="button" aria-pressed={origen==='participantes'} onClick={()=>setOrigen('participantes')}>Mis escarapelas y certificados</button></div>}
-  {origen==='espacios'&&profesor?<FeriaEspacios/>:origen==='participantes'?<FeriaParticipantes/>:origen==='placas'&&profesor?<FeriaPlacas/>:origen==='jurados'&&profesor?<FeriaJurados/>:origen==='invitados'&&profesor?<ProyectosExternos docente cuenta={perfil.id}/>:<FeriaInterna perfil={perfil} familia={familia}/>}
+  {origen==='espacios'&&profesor?<FeriaEspacios/>:origen==='participantes'?<FeriaParticipantes/>:origen==='placas'&&profesor?<FeriaPlacas/>:origen==='evaluacion-jurados'&&profesor?<EvaluacionJurados/>:origen==='jurados'&&profesor?<FeriaJurados/>:origen==='invitados'&&profesor?<ProyectosExternos docente cuenta={perfil.id}/>:<FeriaInterna perfil={perfil} familia={familia}/>}
  </>;
 }

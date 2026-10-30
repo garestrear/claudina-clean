@@ -11,7 +11,8 @@
     "test:mejoras-feria": "node tests/feriaPoster.test.mjs && node tests/feriaCorreccionesSql.test.mjs && node tests/feriaNotificacion.test.mjs && node tests/accesoEstudiantes.test.mjs && node tests/navegacionEstudiante.test.mjs",
     "test:actualizaciones": "node tests/actualizarAppBrowser.test.mjs",
     "test:espacios": "node tests/programacionFeria.test.mjs && node tests/feriaEspaciosSql.test.mjs && node tests/feriaAsignacionSql.test.mjs && node tests/feriaAgendaSql.test.mjs && node tests/carruselFeria.test.mjs && node tests/feriaCarruselSql.test.mjs && node tests/feriaEspaciosBrowser.test.mjs",
-    "test:ubicacion": "node tests/feriaAsignacionSql.test.mjs && node tests/feriaUbicacionCredencialesSql.test.mjs && node tests/feriaPlacasPdf.test.mjs && node tests/feriaParticipantesPdf.test.mjs && node tests/feriaParticipantesBrowser.test.mjs && node tests/feriaCorreccionesBrowser.test.mjs"
+    "test:ubicacion": "node tests/feriaAsignacionSql.test.mjs && node tests/feriaUbicacionCredencialesSql.test.mjs && node tests/feriaPlacasPdf.test.mjs && node tests/feriaParticipantesPdf.test.mjs && node tests/feriaParticipantesBrowser.test.mjs && node tests/feriaCorreccionesBrowser.test.mjs",
+    "test:jurados": "node tests/evaluacionJurados.test.mjs && node tests/evaluacionJuradosSql.test.mjs && node tests/evaluacionJuradosBrowser.test.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "153.0.0",
