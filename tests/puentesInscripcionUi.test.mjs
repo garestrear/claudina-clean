@@ -1,0 +1,43 @@
+import React from 'react';
+import {create,act} from 'react-test-renderer';
+import {build} from 'esbuild';
+import {mkdtemp,rm} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import 'fake-indexeddb/auto';
+const dir=await mkdtemp(new URL('../.puentes-ui-',import.meta.url).pathname);
+const memo=new Map();globalThis.localStorage={getItem:k=>memo.get(k)||null,setItem:(k,v)=>memo.set(k,v),removeItem:k=>memo.delete(k)};
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+const author={id:'a',nombre:'Ana',grado:6},comp={id:'b',nombre:'Bruno',grado:6},otro={id:'c',nombre:'Carlos',grado:8};
+let ctx={usuario:'usuario',docente:false,ficha:author,companeros:[comp],puentes:[]},calls=[],uploads=[],perderRespuesta=true;
+globalThis.__puentesSupabase={rpc:async(nombre,args)=>{calls.push({nombre,args});if(nombre==='feria_puentes_inscripcion_contexto')return {data:ctx};if(nombre==='feria_puentes_estudiantes_grado')return {data:[otro]};if(nombre==='feria_puentes_guardar'){ctx={...ctx,puentes:[{id:args.puente,...args.datos,version:1,equipo:[author,comp,otro],integrantes:'Ana, Bruno y Carlos',bloqueado:false}]};if(perderRespuesta){perderRespuesta=false;throw Error('Respuesta perdida')}return{data:ctx}}throw Error('RPC inesperada: '+nombre)},storage:{from:()=>({upload:async(path,file)=>{uploads.push({path,file});return{}},createSignedUrl:async()=>({data:{signedUrl:'https://fixture.test/foto.jpg'}})})}};
+try{
+ await build({entryPoints:['src/PuentesInscripcion.jsx'],bundle:true,platform:'node',format:'esm',outfile:dir+'/app.mjs',external:['react'],loader:{'.css':'empty'},plugins:[{name:'supabase',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:'export const supabase=globalThis.__puentesSupabase;'}))}}]});
+ const{default:Panel}=await import(dir+'/app.mjs');let tree;
+ const tick=()=>new Promise(r=>setTimeout(r,15));
+ await act(async()=>{tree=create(React.createElement(Panel));await tick()});
+ const root=()=>tree.root;
+ const btn=t=>root().findAllByType('button').find(b=>b.children.join('')===t);
+ await act(async()=>{btn('＋ Inscribir puente').props.onClick();await tick()});
+ const campo=t=>root().findAllByType('label').find(l=>l.children[0]===t).findAll(n=>n.type==='input'||n.type==='select')[0];
+ await act(async()=>{campo('Nombre del puente').props.onChange({target:{value:'Puente de mi equipo'}});campo('Categoría').props.onChange({target:{value:'puentes_juvenil'}})});
+ await act(async()=>{campo('Agregar un compañero de mi grupo').props.onChange({target:{value:'b'}})});
+ await act(async()=>{campo('Grupo').props.onChange({target:{value:'8'}});await tick()});
+ await act(async()=>{campo('Estudiante').props.onChange({target:{value:'c'}})});
+ assert(root().findAllByType('li').some(li=>JSON.stringify(li.children.map(x=>typeof x==='string'?x:x.props.children)).includes('Carlos')));
+ const files=root().findAllByType('input').filter(i=>i.props.type==='file');assert.equal(files.length,2);assert.equal(files[0].props.capture,'environment');assert.equal(files[1].props.capture,undefined);
+ await act(async()=>{files[1].props.onChange({target:{files:[new File(['photo'],'puente.jpg',{type:'image/jpeg'})],value:'foto'}});await tick()});
+ const submit=()=>root().findByType('form').props.onSubmit({preventDefault(){}});
+ await act(async()=>{await submit();await tick()});
+ assert(root().findAllByProps({role:'alert'}).some(n=>n.children.join('').includes('Respuesta perdida')));
+ await act(async()=>{await submit();await tick()});
+ const saves=calls.filter(c=>c.nombre==='feria_puentes_guardar');assert.equal(saves.length,2);assert.deepEqual(saves[0].args,saves[1].args);assert.equal(uploads.length,1);assert.equal(saves[0].args.datos.masa_g,'');assert.equal(saves[0].args.datos.categoria,'puentes_juvenil');assert.deepEqual(saves[0].args.datos.integrantes_ids,['a','b','c']);assert(!('proyecto_id' in saves[0].args.datos));assert.equal(root().findAllByType('img')[0].props.alt,'Foto de Puente de mi equipo');
+ assert(root().findAllByType('h3').some(n=>n.children.join('')==='Puente de mi equipo'));
+ await act(async()=>{tree.unmount()});
+ // El docente escoge estudiantes de cualquier grupo y no se agrega al equipo.
+ ctx={usuario:'docente',docente:true,ficha:null,companeros:[],puentes:[]};calls=[];
+ await act(async()=>{tree=create(React.createElement(Panel));await tick()});await act(async()=>{btn('＋ Inscribir puente').props.onClick();await tick()});
+ await act(async()=>{campo('Nombre del puente').props.onChange({target:{value:'Puente de primaria'}});campo('Categoría').props.onChange({target:{value:'puentes_infantil'}});campo('Grupo').props.onChange({target:{value:'8'}});await tick()});await act(async()=>{campo('Estudiante').props.onChange({target:{value:'c'}})});
+ await act(async()=>{await submit();await tick()});assert.deepEqual(calls.find(c=>c.nombre==='feria_puentes_guardar').args.datos.integrantes_ids,['c']);
+ await act(async()=>{tree.unmount()});
+ console.log('PASS interfaz: inscripción de estudiante y docente, integrantes del grupo y de otro grado, categoría, peso opcional, cámara/galería, foto en ficha y reintento sin duplicar inscripción ni subida');
+}finally{await rm(dir,{recursive:true,force:true});delete globalThis.__puentesSupabase}

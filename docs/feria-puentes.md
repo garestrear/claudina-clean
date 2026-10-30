@@ -1,13 +1,18 @@
 # Concurso de puentes
 
-El docente abre Feria STEAM → Herramientas → Concurso de puentes. El panel permite vincular proyectos aprobados, registrar masa y medidas reales, realizar cargas progresivas y proyectar la prueba y las clasificaciones.
+El concurso tiene inscripciones propias, separadas de los proyectos aprobados. Estudiantes y docentes pueden registrar puentes; los docentes controlan las cargas progresivas y proyectan la prueba y las clasificaciones.
 
-## Activación
+## Activación e inscripción independiente
 
-1. Ejecutar previamente las migraciones existentes de la feria, incluida `supabase/feria-evaluacion-jurados.sql` y sus dependencias.
-2. En el SQL Editor del proyecto Supabase de Claudina App, ejecutar completo `supabase/feria-puentes.sql`. Es repetible y conserva las inscripciones y rondas. No requiere claves adicionales ni nuevas variables de entorno.
-3. Actualizar Claudina App e ingresar como docente. Abrir el concurso y configurar ambas categorías después de comprobar físicamente el montaje. Definir carga inicial total, incremento, límite seguro y separación entre apoyos. Los valores no se presuponen.
-4. Elegir los proyectos aprobados que competirán y registrar su categoría, masa propia en gramos, largo y ancho en centímetros y predicción opcional en kg. Infantil corresponde a palillos de dientes de 20 × 5 cm; juvenil a palitos de paleta de 60 × 10 cm. Las diferencias de medidas se resuelven con la organización antes de probar; no hay descalificación automática.
+1. En el SQL Editor de Supabase de Claudina App, ejecutar completo `supabase/feria-puentes-inscripcion.sql`. Es acumulativo: crea el módulo si todavía no se activó y actualiza la versión anterior conservando inscripciones, rondas y resultados. Ya no depende de `feria-evaluacion-jurados.sql`. No volver a ejecutar el antiguo `feria-puentes.sql` después de esta actualización, pues contiene las funciones anteriores.
+2. Actualizar Claudina App. El estudiante abre Feria STEAM → Concurso de puentes. Cualquier docente abre Feria STEAM → Herramientas → Concurso de puentes y puede inscribir estudiantes de cualquier grupo.
+3. Pulsar «Inscribir puente». Solo son obligatorios el nombre, los integrantes y la categoría: juvenil (palitos de paleta, 60 × 10 cm) o infantil (palillos de dientes, 20 × 5 cm). El peso propio en gramos y la foto son opcionales. No se exige crear ni aprobar un proyecto STEAM, asesor, descripción, materiales o medidas para inscribir.
+4. El estudiante que registra queda incluido. Puede agregar compañeros del mismo grupo (7/8 unificados) o buscar estudiantes de otro grado. El docente selecciona todos los integrantes de las listas de estudiantes activos. Los nombres los obtiene el servidor; no se permiten integrantes escritos libremente ni estudiantes inactivos.
+5. El puente aparece en «Mis puentes» de todos los integrantes seleccionados y en la lista de todos los docentes. Cualquier integrante o docente puede actualizarlo hasta que tenga su primera ronda. No existe un paso de aprobación de proyectos.
+6. «Tomar foto» abre la cámara y «Elegir de la galería» permite cargar una imagen. Se admiten JPG, PNG o WebP de hasta 8 MB. Las fotos son privadas para docentes y equipo; se muestran también en la mesa y proyección con sesión docente. Los campos y la foto seleccionada se conservan como borrador en el dispositivo para retomar después de abrir la cámara. «Continuar inscripción» recupera el borrador.
+7. Antes del concurso, configurar ambas categorías tras comprobar el montaje: carga inicial total, incremento, límite seguro y separación entre apoyos. En «Pesar puente y registrar mediciones en la mesa», completar el peso antes de iniciar para resolver empates. Largo, ancho y predicción de carga son datos opcionales de la mesa.
+
+Los registros antiguos conservan su vínculo histórico de origen y sus resultados, pero ya no se comprueba la aprobación del proyecto para probarlos. Si todavía no tienen rondas, un docente puede confirmar su equipo desde las listas. Las fichas con rondas se mantienen sin cambios.
 
 ## Operación
 
@@ -31,4 +36,4 @@ Si hay error al guardar, pulsar Actualizar y revisar la ronda antes de continuar
 
 ## Validación
 
-`node tests/puentes.test.mjs`, `node tests/puentesSql.test.mjs` y `node tests/puentesIntegracion.test.mjs` verifican clasificación, categorías, reloj, permisos, cinco segundos del lado servidor, idempotencia, versiones, relevo, cancelación, fallo, correcciones, límite y vinculación con la fuente real de proyectos internos y externos. `npm run build` comprueba la app y la PWA. La pantalla fue comprobada con datos de demostración aislados; las pruebas PostgreSQL se realizan en una base local de prueba. La migración debe activarse en Supabase antes de comprobar el flujo con los datos de producción.
+`npm run test:puentes` ejecuta las pruebas del marcador anterior y de inscripción independiente. Verifican clasificación, categorías, reloj, permisos, cinco segundos del lado servidor, idempotencia, versiones, relevo, cancelación, fallo, correcciones, límite y compatibilidad con la versión anterior. La actualización se prueba en una base nueva y sobre registros con resultados previos. También se comprueban inscripciones de estudiantes y docentes, equipos de distintos grados, visibilidad por integrante, campos opcionales, fotos privadas, bloqueo de edición tras iniciar y reintentos sin duplicar registros ni subir dos veces la misma foto. `npm run build` comprueba la app y la PWA. La pantalla fue comprobada con datos de demostración aislados; las pruebas PostgreSQL se realizan en una base local de prueba. La migración debe activarse en Supabase antes de comprobar el flujo con los datos de producción.
