@@ -25,3 +25,24 @@ Cancelar conserva el registro y libera su horario. Antes de deshabilitar un espa
 El tablero muestra disponibilidad por el tramo elegido, reservas del día y proyectos aprobados todavía por ubicar. La impresión agrupa por espacio y permite guardar como PDF. Este módulo es de organización docente: todavía no genera ni publica el recorrido automático de grupos por carrusel.
 
 Pruebas: `node tests/feriaEspaciosSql.test.mjs`, `node tests/programacionFeria.test.mjs`, `node tests/feriaEspaciosBrowser.test.mjs`. FERIA_TEST_CHROMIUM permite indicar el ejecutable local del navegador.
+
+## Asignación automática al aprobar
+
+Ejecutar `supabase/feria-asignacion-automatica.sql` después del SQL de espacios.
+Se ejecuta en la misma transacción de aprobación, para proyectos internos y de
+instituciones invitadas. Reserva el 6 de noviembre de 2026, de 07:00 a 13:00.
+Solo participan salones habilitados con `cupos > 1`; las capacidades sin definir,
+los espacios de un puesto y las reservas exclusivas se excluyen. Se calcula la
+ocupación simultánea máxima de cada salón y se minimiza la fracción
+`(ocupación + 1) / cupos`, con desempate estable. El mismo bloqueo transaccional
+que usan las reservas manuales evita sobreasignaciones concurrentes.
+
+Si no hay lugar disponible, se conserva la aprobación sin crear una reserva.
+El proyecto continúa visible entre los aprobados sin ubicación. El botón
+“Asignar aulas a proyectos pendientes” reintenta todos los aprobados internos
+y externos, sin modificar ubicaciones ya existentes. Permite ubicar los
+aprobados anteriores a esta actualización tras configurar las capacidades.
+La instalación del SQL no mueve ni cancela reservas. Las ubicaciones se pueden
+cambiar con “Editar ubicación y horario”, respetando los controles existentes.
+La reprobación posterior mantiene la reserva marcada para revisión, igual que
+las reservas manuales; el docente puede cancelarla.

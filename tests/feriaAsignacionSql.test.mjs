@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import {PGlite} from '@electric-sql/pglite';
+import {readFile} from 'node:fs/promises';
+const db=new PGlite();
+const uid=n=>'00000000-0000-0000-0000-'+String(n).padStart(12,'0');
+await db.exec(`create role anon;create role authenticated;create schema auth;create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('test.uid',true),'')::uuid$$;create table perfiles(id uuid primary key,nombre text,rol text);create function public.es_profesor() returns boolean language sql stable security definer as $$select exists(select 1 from public.perfiles where id=auth.uid() and rol='profesor')$$;create table feria_proyectos(id uuid primary key,titulo text,grado integer,estado text);create table feria_proyectos_externos(id uuid primary key,datos jsonb,estado text);`);
+await db.query("insert into perfiles values($1,'Docente','profesor'),($2,'Estudiante','estudiante')",[uid(1),uid(2)]);
+
+await db.exec(await readFile('supabase/feria-espacios-programacion.sql','utf8'));
+const sql=await readFile('supabase/feria-asignacion-automatica.sql','utf8');await db.exec(sql);await db.exec(sql);
+await db.query("select set_config('test.uid',$1,false)",[uid(1)]);
+await db.exec("update feria_espacios set cupos=case codigo when 'salon-1' then 2 when 'salon-2' then 4 when 'salon-3' then 8 else 1 end");
+for(let n=10;n<24;n++){
+ await db.query("insert into feria_proyectos values($1,$2,6,'enviado')",[uid(n),'Proyecto '+n]);
+ await db.query("update feria_proyectos set estado='aprobado' where id=$1",[uid(n)]);
+}
+let rows=(await db.query("select e.codigo,count(r.id)::int cantidad from feria_espacios e join feria_programacion r on r.espacio_id=e.id where r.activo group by e.codigo order by e.codigo")).rows;
+assert.deepEqual(rows,[{codigo:'salon-1',cantidad:2},{codigo:'salon-2',cantidad:4},{codigo:'salon-3',cantidad:8}]);
+await db.query("insert into feria_proyectos_externos values($1,$2,'aprobado')",[uid(90),{titulo:'Proyecto externo'}]);
+assert.equal((await db.query('select count(*)::int n from feria_programacion')).rows[0].n,14,'Sin cupo no bloquea aprobación ni sobrecarga aulas');
+await db.exec("update feria_espacios set cupos=4 where codigo='salon-4'");
+await db.query('select feria_asignar_pendientes()');
+assert.equal((await db.query("select count(*)::int n from feria_programacion where origen='invitados'")).rows[0].n,1);
+const reserva=(await db.query("select * from feria_programacion where proyecto_id=$1",[uid(10)])).rows[0];
+const aula=(await db.query("select id from feria_espacios where codigo='salon-4'")).rows[0].id;
+await db.query("select feria_programacion_guardar($1,$2,1)",[reserva.id,{...reserva,espacio_id:aula}]);
+await db.query('select feria_asignar_pendientes()');
+assert.equal((await db.query('select espacio_id from feria_programacion where id=$1',[reserva.id])).rows[0].espacio_id,aula,'Conserva movimiento manual');
+await db.query("update feria_proyectos set estado='enviado' where id=$1",[uid(10)]);
+await db.query("update feria_proyectos set estado='aprobado' where id=$1",[uid(10)]);
+assert.equal((await db.query('select count(*)::int n from feria_programacion where proyecto_id=$1',[uid(10)])).rows[0].n,1,'Reaprobar no duplica');
+await db.exec("update feria_espacios set cupos=10 where codigo='salon-5'");
+const exclusiva=(await db.query("select id from feria_espacios where codigo='salon-5'")).rows[0].id;
+await db.query("select feria_programacion_guardar($1,$2,0)",[uid(300),{tipo:'actividad',espacio_id:exclusiva,fecha:'2026-11-06',inicio:'10:00',fin:'11:00',titulo:'Taller exclusivo',exclusivo:true}]);
+for(let n=30;n<40;n++)await db.query("insert into feria_proyectos values($1,$2,6,'aprobado')",[uid(n),'Proyecto '+n]);
+assert.equal((await db.query('select count(*)::int n from feria_programacion where espacio_id=$1',[exclusiva])).rows[0].n,1,'Respeta exclusividad parcial');
+await db.query("select set_config('test.uid',$1,false)",[uid(2)]);
+await assert.rejects(db.query('select feria_asignar_pendientes()'),/Solo docentes/);
+await db.exec('set role authenticated');
+await assert.rejects(db.query("select feria_asignar_aula('claudina',$1)",[uid(10)]),/permission denied/);
+console.log('PASS asignación: aprobación interna/externa, proporción 2:4:8, cupos, exclusividad, reintentos, movimiento manual y permisos');
+await db.close();
