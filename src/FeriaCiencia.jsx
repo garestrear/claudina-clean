@@ -1,3 +1,4 @@
+import {useVistaFeria} from './useVistaFeria.js';
 import FeriaEspacios from './FeriaEspacios';
 import FeriaControlesDocente from './FeriaControlesDocente';
 import FeriaAprobadosEstudiante from './FeriaAprobadosEstudiante';
@@ -124,7 +125,7 @@ function FeriaInterna({perfil,familia=false}){
 }
 
 export default function FeriaCiencia({perfil,familia=false}){
- const[origen,setOrigen]=useState('claudina');
+ const[origen,setOrigen]=useVistaFeria('seccion:'+perfil.id,perfil.rol==='profesor'?['claudina','invitados','espacios','participantes','placas','jurados']:['claudina','participantes'],'claudina');
  const profesor=perfil.rol==='profesor';
  function herramienta(id,e){setOrigen(id);e.currentTarget.closest('details').open=false}
  return <>
