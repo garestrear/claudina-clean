@@ -46,3 +46,29 @@ La instalación del SQL no mueve ni cancela reservas. Las ubicaciones se pueden
 cambiar con “Editar ubicación y horario”, respetando los controles existentes.
 La reprobación posterior mantiene la reserva marcada para revisión, igual que
 las reservas manuales; el docente puede cancelarla.
+
+## Agenda general del 6 de noviembre de 2026
+
+Activar `supabase/feria-agenda-general.sql` después del SQL de espacios.
+Crea una agenda con ocho actividades, visible en Aulas y programación → Agenda
+general. Incluye logística (07:00–07:30), apertura (07:30–08:00), exposiciones
+(08:00–10:00), refrigerio (10:00–10:15), charlas (10:15–11:35), final de puentes
+y teatro de AMVA simultáneos (11:35–12:15), y premiación (12:15–12:30).
+Las charlas contemplan cuatro bloques de veinte minutos; no se inventan las
+charlas, sus salones ni las rutas de los grupos.
+
+Crea Aula múltiple y Patio nuevo cuando no existen con esos nombres. Mantiene
+el Patio original como un espacio distinto. Reserva en exclusiva Aula múltiple
+para apertura, teatro y premiación, y Patio nuevo para la final de puentes.
+Los bloques generales no bloquean todos los salones ni modifican los puestos
+de exposición. Si hay una reserva previa incompatible en esos espacios, el
+SQL revierte completo e informa cuál debe reubicarse antes de reintentarlo.
+Ejecutarlo nuevamente conserva los cambios existentes.
+
+Los docentes pueden editar las ocho actividades e imprimir la agenda completa.
+Al elegir un lugar se usa una reserva exclusiva, con los mismos controles de
+cruces y versiones que la programación de espacios. Cambiar la reserva desde
+Programación también se refleja en Agenda general. Las reservas canceladas se
+muestran como tales. Las ediciones rechazadas conservan el formulario abierto.
+No modifica la asignación automática de stands (07:00–13:00), ni publica una
+rotación automática de grupos o una agenda para las vistas de familias.
