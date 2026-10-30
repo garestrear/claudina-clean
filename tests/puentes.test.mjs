@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {clasificacionPuentes,segundosPuente,siguienteCarga,csvPuentes} from '../src/puentes.js';
+const puentes=[{id:'a',categoria:'puentes_infantil',titulo:'A',masa_g:80},{id:'b',categoria:'puentes_infantil',titulo:'B',masa_g:70},{id:'c',categoria:'puentes_infantil',titulo:'C',masa_g:70},{id:'d',categoria:'puentes_juvenil',titulo:'D',masa_g:50},{id:'e',categoria:'puentes_infantil',titulo:'E',masa_g:1}];
+const rondas=[{puente_id:'a',resultado:'valida',carga_kg:5},{puente_id:'b',resultado:'valida',carga_kg:5},{puente_id:'c',resultado:'valida',carga_kg:5},{puente_id:'a',resultado:'fallo',carga_kg:10},{puente_id:'a',resultado:'anulada',carga_kg:20},{puente_id:'d',resultado:'valida',carga_kg:30}];
+let rank=clasificacionPuentes(puentes,rondas,'puentes_infantil');assert.deepEqual(rank.map(x=>[x.id,x.mejor,x.puesto]),[['b',5,1],['c',5,1],['a',5,3],['e',0,null]]);
+assert.equal(clasificacionPuentes(puentes,rondas,'puentes_juvenil')[0].mejor,30);
+assert.equal(segundosPuente('2026-11-06T13:00:05Z',Date.parse('2026-11-06T13:00:00Z')),5);assert.equal(segundosPuente('2026-11-06T13:00:05Z',Date.parse('2026-11-06T13:00:06Z')),0);
+assert.equal(siguienteCarga({inicial:1,incremento:2,limite:6},5),6);assert.equal(siguienteCarga({inicial:1,incremento:2,limite:6},0),1);
+assert(csvPuentes({puentes,rondas}).includes('"5"'));assert(csvPuentes({puentes:[{...puentes[0],titulo:'=SUM(1)'}],rondas}).includes("'=SUM(1)"));
+console.log('PASS puentes: clasificación, empate compartido, categorías, rondas anuladas, límite, cronómetro y exportación');
