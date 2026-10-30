@@ -16,9 +16,11 @@ for(let n=10;n<24;n++){
 }
 let rows=(await db.query("select e.codigo,count(r.id)::int cantidad from feria_espacios e join feria_programacion r on r.espacio_id=e.id where r.activo group by e.codigo order by e.codigo")).rows;
 assert.deepEqual(rows,[{codigo:'salon-1',cantidad:2},{codigo:'salon-2',cantidad:4},{codigo:'salon-3',cantidad:8}]);
-await db.query("insert into feria_proyectos_externos values($1,$2,'aprobado')",[uid(90),{titulo:'Proyecto externo'}]);
-assert.equal((await db.query('select count(*)::int n from feria_programacion')).rows[0].n,14,'Sin cupo no bloquea aprobación ni sobrecarga aulas');
+await assert.rejects(db.query("insert into feria_proyectos_externos values($1,$2,'aprobado')",[uid(90),{titulo:'Proyecto externo'}]),/No se pudo aprobar/);
+await db.query("insert into feria_proyectos_externos values($1,$2,'enviado')",[uid(90),{titulo:'Proyecto externo'}]);
+assert.equal((await db.query('select count(*)::int n from feria_programacion')).rows[0].n,14,'Sin cupo no se aprueba ni sobrecarga aulas');
 await db.exec("update feria_espacios set cupos=4 where codigo='salon-4'");
+await db.query("update feria_proyectos_externos set estado='aprobado' where id=$1",[uid(90)]);
 await db.query('select feria_asignar_pendientes()');
 assert.equal((await db.query("select count(*)::int n from feria_programacion where origen='invitados'")).rows[0].n,1);
 const reserva=(await db.query("select * from feria_programacion where proyecto_id=$1",[uid(10)])).rows[0];
@@ -31,8 +33,9 @@ await db.query("update feria_proyectos set estado='aprobado' where id=$1",[uid(1
 assert.equal((await db.query('select count(*)::int n from feria_programacion where proyecto_id=$1',[uid(10)])).rows[0].n,1,'Reaprobar no duplica');
 await db.exec("update feria_espacios set cupos=10 where codigo='salon-5'");
 const exclusiva=(await db.query("select id from feria_espacios where codigo='salon-5'")).rows[0].id;
-await db.query("select feria_programacion_guardar($1,$2,0)",[uid(300),{tipo:'actividad',espacio_id:exclusiva,fecha:'2026-11-06',inicio:'10:00',fin:'11:00',titulo:'Taller exclusivo',exclusivo:true}]);
-for(let n=30;n<40;n++)await db.query("insert into feria_proyectos values($1,$2,6,'aprobado')",[uid(n),'Proyecto '+n]);
+await db.query("select feria_programacion_guardar($1,$2,0)",[uid(300),{tipo:'actividad',espacio_id:exclusiva,fecha:'2026-11-06',inicio:'08:00',fin:'10:00',titulo:'Taller exclusivo',exclusivo:true}]);
+for(let n=30;n<33;n++)await db.query("insert into feria_proyectos values($1,$2,6,'aprobado')",[uid(n),'Proyecto '+n]);
+await assert.rejects(db.query("insert into feria_proyectos values($1,$2,6,'aprobado')",[uid(39),'Proyecto 39']),/No se pudo aprobar/);
 assert.equal((await db.query('select count(*)::int n from feria_programacion where espacio_id=$1',[exclusiva])).rows[0].n,1,'Respeta exclusividad parcial');
 await db.query("select set_config('test.uid',$1,false)",[uid(2)]);
 await assert.rejects(db.query('select feria_asignar_pendientes()'),/Solo docentes/);

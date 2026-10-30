@@ -1,3 +1,4 @@
+import {textoUbicacion} from './ubicacionFeria.js';
 export const categoriasPlaca={
  stem:{nombre:'S-T-E-M',detalle:'Ciencia · Tecnología · Ingeniería · Matemáticas',prefijo:'STEM',color:'#16844b',oscuro:'#10552f',claro:'#edf8f0'},
  arte:{nombre:'Arte y Creatividad',detalle:'Expresión · Imaginación · Creación',prefijo:'ART',color:'#823bb5',oscuro:'#532070',claro:'#f5eefb'},
@@ -22,7 +23,7 @@ export function construirPlacasFeria(jsPDF,placas,{escudo,fuenteRegular,fuenteNe
   const columnas=nombres.length>5?2:1,anchoCol=columnas===2?94:193;
   const size=nombres.length>16?9:nombres.length>5?10:12;
   letra(size,true);const lineas=nombres.flatMap(n=>pdf.splitTextToSize(n,anchoCol)),paso=size*.35278*1.28;
-  const porCol=Math.floor(31/paso)+1,porParte=porCol*columnas,totalPartes=Math.ceil(lineas.length/porParte);
+  const porCol=Math.floor(25/paso)+1,porParte=porCol*columnas,totalPartes=Math.ceil(lineas.length/porParte);
   for(let parte=0;parte<totalPartes;parte++){
    if(seccion>0&&seccion%2===0)pdf.addPage('letter','portrait');
    const y=seccion%2===0?0:139.7;seccion++;
@@ -43,6 +44,7 @@ export function construirPlacasFeria(jsPDF,placas,{escudo,fuenteRegular,fuenteNe
    pdf.setDrawColor(cat.color);pdf.line(11,y+82,204,y+82);
    letra(8,true,cat.oscuro);pdf.text('EXPOSITORES'+(parte?` / CONTINUACIÓN ${parte+1} DE ${totalPartes}`:''),11,y+88);
    letra(size,true,cat.oscuro);lineas.slice(parte*porParte,(parte+1)*porParte).forEach((linea,i)=>{const columna=Math.floor(i/porCol),fila=i%porCol;pdf.text(linea,11+columna*99,y+94+fila*paso)});
+   letra(10,true,cat.oscuro);const ubicacion=textoUbicacion(placa);let ubicacionSize=10;while(pdf.getTextWidth(ubicacion)>193&&ubicacionSize>5)letra(--ubicacionSize,true,cat.oscuro);pdf.text(pdf.splitTextToSize(ubicacion,193).slice(0,2),11,y+125,{lineHeightFactor:1.05});
    pdf.setFillColor(cat.color);pdf.rect(6,y+129,203.9,5,'F');letra(6.5,true,'#ffffff');pdf.text('6 NOVIEMBRE 2026 · UBICACIÓN DE PROYECTOS PARA JURADOS'+(totalPartes>1?` · PARTE ${parte+1}/${totalPartes}`:''),107.95,y+132.5,{align:'center'});
    corte();
   }

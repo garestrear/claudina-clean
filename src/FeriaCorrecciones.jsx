@@ -1,3 +1,4 @@
+import {textoUbicacion} from './ubicacionFeria.js';
 import React,{useEffect,useRef,useState} from 'react';
 import {supabase} from './lib/supabase';
 import {notificarCambioFeria} from './notificacionFeria.js';
@@ -42,7 +43,11 @@ export default function CorreccionProyecto({proyecto:p,origen='claudina',onGuard
    }
    if(!contexto.current){setError('No hay cambios por guardar. Puedes corregir los textos, agregar observaciones o elegir una decisión.');return}
    const aviso=!externo&&(revision||correccion)?await notificarCambioFeria({tipo:revision?'revision':'correccion',solicitud:revision||correccion}):'';
-   onGuardar(contexto.current,'Revisión guardada. Los textos y las observaciones están disponibles para sus participantes.'+aviso);
+   let ubicacion='';
+   if(actual.current.estado==='aprobado'){
+    try{const r=await supabase.rpc('feria_asegurar_ubicacion_proyecto',{fuente:origen,proyecto:p.id});if(r.error)throw r.error;ubicacion=' '+(r.data.asignado?textoUbicacion(r.data)+'.':r.data.mensaje)}catch(e){ubicacion=' La revisión quedó guardada, pero no se pudo confirmar el aula. '+(/function|schema cache|does not exist/i.test(e.message||'')?'Activa feria-ubicacion-credenciales.sql en Supabase.':e.message)}
+   }
+   onGuardar(contexto.current,'Revisión guardada. Los textos y las observaciones están disponibles para sus participantes.'+ubicacion+aviso);
   }catch(e){
    const parcial=actual.current.version!==p.version;
    if(!externo&&correccion)await notificarCambioFeria({tipo:'correccion',solicitud:correccion});

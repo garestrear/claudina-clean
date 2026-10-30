@@ -1,3 +1,4 @@
+import {textoUbicacion} from './ubicacionFeria.js';
 import escudoOriginal from './assets/escudo-original.js';
 import {firmantesPredeterminados,prepararFirma} from './firmasCertificados.js';
 import {categoriasPlaca} from './placaFeria.js';
@@ -36,7 +37,7 @@ export function construirEscarapelas(jsPDF,personas,recursos={}){
   const nombre=ajustar(pdf,p.nombre.toUpperCase(),79,20,{size:18,min:7,fuente,color:c.oscuro});pdf.text(nombre.lineas,x+45.5,y+66,{align:'center',lineHeightFactor:1.15});
   const institucion=ajustar(pdf,(p.grado?'Grado '+limpio(p.grado)+' · ':'')+(p.institucion||'C.E.R. Claudina Múnera'),79,6,{size:7,min:4.5,bold:false,fuente,color:c.oscuro});pdf.text(institucion.lineas,x+45.5,y+85,{align:'center',lineHeightFactor:1.15});
   pdf.setDrawColor(c.color);pdf.setLineWidth(.25);pdf.line(x+7,y+92,x+84,y+92);
-  if(p.proyecto_codigo){pdf.setFont(fuente,'bold');pdf.setTextColor(c.oscuro);pdf.setFontSize(14);pdf.text(p.proyecto_codigo,x+45.5,y+98,{align:'center'});const proyecto=ajustar(pdf,limpio(p.proyecto_titulo).toUpperCase(),79,7,{size:7,min:4.5,fuente,color:c.oscuro});pdf.text(proyecto.lineas,x+45.5,y+102,{align:'center',lineHeightFactor:1.15})}
+  if(p.proyecto_codigo){pdf.setFont(fuente,'bold');pdf.setTextColor(c.oscuro);pdf.setFontSize(11);pdf.text(p.proyecto_codigo,x+45.5,y+97,{align:'center'});const proyecto=ajustar(pdf,limpio(p.proyecto_titulo).toUpperCase(),79,4,{size:6,min:4.5,fuente,color:c.oscuro});pdf.text(proyecto.lineas,x+45.5,y+100,{align:'center',lineHeightFactor:1.15});const aula=ajustar(pdf,textoUbicacion(p),79,4,{size:8,min:4,fuente,color:c.oscuro});pdf.text(aula.lineas,x+45.5,y+105,{align:'center',lineHeightFactor:1.05})}
   else if(p.detalle){const detalle=ajustar(pdf,p.detalle,79,13,{size:8,min:4.5,fuente,color:c.oscuro});pdf.text(detalle.lineas,x+45.5,y+96,{align:'center',lineHeightFactor:1.15})}
   pdf.setDrawColor(c.color);pdf.setLineWidth(.5);pdf.line(x,y+108,x+91,y+108);pdf.setFont(fuente,'normal');pdf.setFontSize(5.7);pdf.setTextColor(c.oscuro);pdf.text(codigoParticipante(p),x+5,y+111.5);pdf.text('6 NOV 2026',x+86,y+111.5,{align:'right'});pdf.setFont(fuente,'bold');pdf.setFontSize(7);pdf.text('Claudina App',x+45.5,y+111.5,{align:'center'});
   pdf.setDrawColor('#808b84');pdf.setLineWidth(.15);pdf.setLineDashPattern([1,1],0);pdf.rect(x,y,91,113);pdf.setLineDashPattern([],0);

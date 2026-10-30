@@ -30,15 +30,17 @@ Pruebas: `node tests/feriaEspaciosSql.test.mjs`, `node tests/programacionFeria.t
 
 Ejecutar `supabase/feria-asignacion-automatica.sql` después del SQL de espacios.
 Se ejecuta en la misma transacción de aprobación, para proyectos internos y de
-instituciones invitadas. Reserva el 6 de noviembre de 2026, de 07:00 a 13:00.
-Solo participan salones habilitados con `cupos > 1`; las capacidades sin definir,
+instituciones invitadas. Usa el bloque Exposiciones de la Agenda general, con
+el 6 de noviembre de 2026 de 08:00 a 10:00 como horario predeterminado.
+Participan todos los espacios habilitados con `cupos > 1`; las capacidades sin definir,
 los espacios de un puesto y las reservas exclusivas se excluyen. Se calcula la
 ocupación simultánea máxima de cada salón y se minimiza la fracción
 `(ocupación + 1) / cupos`, con desempate estable. El mismo bloqueo transaccional
 que usan las reservas manuales evita sobreasignaciones concurrentes.
 
-Si no hay lugar disponible, se conserva la aprobación sin crear una reserva.
-El proyecto continúa visible entre los aprobados sin ubicación. El botón
+Desde la reparación de ubicación y credenciales, si no hay lugar disponible
+una aprobación nueva se revierte con un mensaje para revisar capacidades y
+reservas. Los aprobados anteriores sin ubicación siguen visibles como pendientes. El botón
 “Asignar aulas a proyectos pendientes” reintenta todos los aprobados internos
 y externos, sin modificar ubicaciones ya existentes. Permite ubicar los
 aprobados anteriores a esta actualización tras configurar las capacidades.
@@ -70,7 +72,7 @@ Al elegir un lugar se usa una reserva exclusiva, con los mismos controles de
 cruces y versiones que la programación de espacios. Cambiar la reserva desde
 Programación también se refleja en Agenda general. Las reservas canceladas se
 muestran como tales. Las ediciones rechazadas conservan el formulario abierto.
-No modifica la asignación automática de stands (07:00–13:00), ni publica una
+No reemplaza las reservas manuales de stands, ni publica una
 rotación automática de grupos o una agenda para las vistas de familias.
 
 ## Líderes y grupos del carrusel
@@ -108,3 +110,32 @@ regenerar antes de guardar. No se permiten dos planes que se solapen. Si las
 exposiciones cambian dentro del bloque consultado, hay que dividirlo en tramos
 con exposiciones constantes. Los planes se conservan al recargar; los borradores
 no guardados deben guardarse antes de salir de la sección.
+
+
+## Reparación de ubicación y credenciales
+
+Ejecutar `supabase/feria-ubicacion-credenciales.sql` después de espacios, placas
+y participantes. Incluye la actualización de asignación automática y los campos
+nuevos de ubicación de las credenciales; no requiere ejecutar por separado la
+versión actualizada de `feria-asignacion-automatica.sql`.
+
+La búsqueda anterior restringía el tipo a salón y exigía disponibilidad de
+07:00 a 13:00. Ahora admite cualquier espacio configurado con más de un puesto
+y usa el horario de Exposiciones de la Agenda general (08:00–10:00 si no está
+instalada). Una apertura que termina a las 08:00 no bloquea la exposición que
+empieza a esa hora. No se inventan capacidades para espacios sin definir.
+
+Las aprobaciones nuevas requieren asignación, con reversión atómica cuando no
+hay cupo. El script reintenta ubicar los aprobados anteriores sin mover sus
+reservas existentes. Si no hay capacidad, estos últimos continúan pendientes.
+La revisión muestra el aula confirmada o explica que falta activar el SQL o
+resolver la disponibilidad. El RPC idempotente de confirmación solo es accesible
+a docentes.
+
+Placas y escarapelas muestran las reservas activas actuales, tanto en pantalla
+como en PDF. La ubicación se añade a los contextos ya autorizados, sin permitir
+consultar proyectos ajenos ni abrir un listado público de estudiantes. El acceso
+directo al helper de ubicaciones está revocado. Cambiar de aula, renombrar un
+espacio o cancelar una reserva se refleja al actualizar las credenciales; los
+PDF ya descargados deben generarse de nuevo. Una credencial sin reserva indica
+“Aula por asignar”. Se conservan los códigos y las dimensiones de impresión.

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';import {readFile,writeFile} from 'node:fs/promises';import {jsPDF} from 'jspdf';import {codigoPlaca,nombreArchivoPlaca,construirPlacasFeria,categoriasPlaca} from '../src/placaFeria.js';
 const placas=Object.keys(categoriasPlaca).map((categoria,i)=>({origen:'claudina',proyecto_id:'proyecto-'+i,categoria,numero_general:i+1,numero_categoria:1,titulo:['Weather Scientists: el agua de nuestro territorio','Colores que cuentan historias de La Corrala','Semillas de futuro: emprendemos en familia','Sabores y saberes de mamás y papás'][i],integrantes:'María José Restrepo · 6°\nVíctor Tobón Arboleda · 7°\nÁngela Jaramillo · 8°',institucion:'C.E.R. Claudina Múnera'}));
+placas.forEach(p=>p.ubicaciones=[{espacio_nombre:'Salón 1',fecha:'2026-11-06',inicio:'08:00',fin:'10:00'}]);
 assert.equal(codigoPlaca(placas[0]),'STEM-001');assert.equal(nombreArchivoPlaca(placas[1]),'Placa-ART-001-Feria-STEAM-2026.pdf');
 assert.throws(()=>construirPlacasFeria(jsPDF,[]));assert.throws(()=>construirPlacasFeria(jsPDF,[{...placas[0],categoria:'otro'}]));
 const datos={escudo:'data:image/png;base64,'+(await readFile('src/assets/escudo-membrete.png')).toString('base64'),fuenteRegular:(await readFile('src/assets/carta-regular.ttf')).toString('base64'),fuenteNegrita:(await readFile('src/assets/carta-bold.ttf')).toString('base64')};
