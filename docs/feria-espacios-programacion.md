@@ -139,3 +139,33 @@ directo al helper de ubicaciones está revocado. Cambiar de aula, renombrar un
 espacio o cancelar una reserva se refleja al actualizar las credenciales; los
 PDF ya descargados deben generarse de nuevo. Una credencial sin reserva indica
 “Aula por asignar”. Se conservan los códigos y las dimensiones de impresión.
+
+
+## Elegir el aula al revisar y aprobar
+
+Ejecutar completo `supabase/feria-revision-aula.sql` después de
+`feria-espacios-programacion.sql` y `feria-familias-estados.sql`.
+Incluye la versión actualizada de la asignación automática. Es repetible;
+instalarlo no cambia proyectos ni reservas existentes. Para las placas y
+escarapelas se mantiene el requisito de `feria-ubicacion-credenciales.sql`.
+
+En **Revisar proyecto**, al elegir **Aprobar proyecto**, aparece **Aula o lugar
+de exposición**. Por defecto se asigna automáticamente; si ya tiene ubicación,
+se conserva. El docente puede escoger otro espacio habilitado con más de un
+puesto simultáneo, consultando su disponibilidad en el tramo de exposiciones.
+También aparece al revisar un proyecto que ya está aprobado, sin necesidad de
+cambiar su estado. Se aplica a proyectos de Claudina, familiares e invitados.
+
+La aprobación y el aula elegida se guardan en una misma transacción. Un conflicto
+de cupos, exclusividad, mesa o versión revierte ambas operaciones. La edición de
+textos conserva su guardado independiente y avisa si falta guardar la decisión.
+Las reservas existentes conservan horario, puesto y responsable al cambiar de
+aula. Si otro docente cambió la reserva, el formulario solicita actualizar las
+aulas antes de guardar. Los reintentos de una misma solicitud no duplican
+reservas ni deshacen traslados posteriores.
+
+Si no hay espacios con capacidad configurada, definir **Puestos simultáneos**
+en **Aulas y espacios**. La vista de revisión no inventa capacidades. La opción
+**Actualizar aulas** recarga disponibilidad y descarta la selección manual.
+
+Verificación: `npm run test:aula-revision` (SQL y navegador móvil).
