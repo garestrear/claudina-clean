@@ -1,0 +1,36 @@
+import {crearFeriaDb,uid,uuid} from './fixtures/feriaDb.mjs';
+import {readFile} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import {clasificacionPuentes,csvPuentes} from '../src/puentes.js';
+const {db,identity,rpc}=await crearFeriaDb();
+await db.exec(`create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text,primary key(bucket_id,name));alter table storage.objects enable row level security;`);
+await db.exec(await readFile('supabase/feria-puentes-inscripcion.sql','utf8'));
+const migration=await readFile('supabase/feria-puentes-tres-intentos.sql','utf8');await db.exec(migration);await db.exec(migration);
+await identity(1);
+for(const [id,titulo] of [[uuid(50),'Tres intentos'],[uuid(51),'Otro puente'],[uuid(52),'Rotura']])await rpc('feria_puentes_guardar',[id,{titulo,categoria:'puentes_infantil',integrantes_ids:[uuid(3)],masa_g:80},0,crypto.randomUUID()],['uuid','jsonb','integer','uuid']);
+let ctx=await rpc('feria_puentes_contexto');assert.equal(ctx.modalidad,'tres_intentos');
+const act=async(accion,datos={},version=ctx.mesa.version,req=crypto.randomUUID())=>ctx=await rpc('feria_puentes_accion',[accion,datos,version,req],['text','jsonb','integer','uuid']);
+const transcurrir=async()=>{await db.exec('reset role');await db.query("update feria_puentes_rondas set inicio=clock_timestamp()-interval '7 seconds',fin=clock_timestamp()-interval '1 second' where id=$1",[ctx.mesa.ronda_id]);await db.exec('set role authenticated')};
+await db.exec('set role authenticated');
+await act('configurar',{categoria:'puentes_infantil',inicial:1,incremento:1,limite:20,separacion:50});await act('seleccionar',{puente_id:uuid(50)});
+for(const carga_kg of [null,0,-1,'NaN','Infinity',21,1.0001])await assert.rejects(()=>act('iniciar',{carga_kg}),/carga positiva/);
+await assert.rejects(()=>act('iniciar'),/carga positiva/);
+await act('iniciar',{carga_kg:5});await assert.rejects(()=>act('validar'),/cinco segundos/);await assert.rejects(()=>act('seleccionar',{puente_id:uuid(51)}),/Resuelve/);
+await act('cancelar',{motivo:'Ajuste del recipiente'});assert.equal(ctx.rondas[0].cuenta_intento,false);
+const version=ctx.mesa.version,req=crypto.randomUUID();await act('iniciar',{carga_kg:5},version,req);await act('iniciar',{carga_kg:5},version,req);assert.equal(ctx.rondas.length,2);
+await assert.rejects(()=>act('iniciar',{carga_kg:6},version,req),/ya usado/);await assert.rejects(()=>act('fallo',{},version),/cambió/);
+await transcurrir();await act('validar');assert.equal(ctx.puentes.find(p=>p.id===uuid(50)).estado,'pendiente');
+// Los equipos pueden alternar turnos sin cerrar la participación.
+await act('seleccionar',{puente_id:uuid(51)});await act('iniciar',{carga_kg:9});await act('fallo',{roto:false});assert.equal(ctx.puentes.find(p=>p.id===uuid(51)).estado,'pendiente');
+await identity(2);await act('seleccionar',{puente_id:uuid(50)});await act('iniciar',{carga_kg:8});await transcurrir();await act('validar');
+await act('iniciar',{carga_kg:10});await act('fallo',{roto:false});const p=ctx.puentes.find(p=>p.id===uuid(50));assert.equal(p.estado,'finalizado');assert.equal(p.motivo_fin,'Tres intentos completados');
+let ranking=clasificacionPuentes(ctx.puentes,ctx.rondas,'puentes_infantil');assert.equal(ranking.find(p=>p.id===uuid(50)).total,13);assert.equal(ranking.find(p=>p.id===uuid(50)).intentos,3);assert(csvPuentes(ctx).includes('Total válido kg'));
+await assert.rejects(()=>act('iniciar',{carga_kg:1}),/Selecciona/);await assert.rejects(()=>act('seleccionar',{puente_id:uuid(50)}),/disponible/);
+const valida=ctx.rondas.find(r=>r.puente_id===uuid(50)&&r.resultado==='valida');await act('anular',{ronda_id:valida.id,motivo:'Error de validación'});assert.equal(ctx.rondas.find(r=>r.id===valida.id).cuenta_intento,true);
+ranking=clasificacionPuentes(ctx.puentes,ctx.rondas,'puentes_infantil');assert.equal(ranking.find(p=>p.id===uuid(50)).total,8);assert.equal(ranking.find(p=>p.id===uuid(50)).intentos,3);
+// Llegar al límite no elimina los intentos restantes; una rotura sí finaliza.
+await act('seleccionar',{puente_id:uuid(51)});await act('iniciar',{carga_kg:20});await transcurrir();await act('validar');assert.equal(ctx.puentes.find(p=>p.id===uuid(51)).estado,'pendiente');await act('iniciar',{carga_kg:20});await transcurrir();await act('validar');
+await act('seleccionar',{puente_id:uuid(52)});await act('iniciar',{carga_kg:4});await act('fallo',{roto:true});assert.equal(ctx.puentes.find(p=>p.id===uuid(52)).motivo_fin,'Rotura del puente');
+await identity(3);await assert.rejects(()=>act('seleccionar',{puente_id:uuid(51)}),/Solo docentes/);
+await db.exec('reset role');await db.close();
+console.log('PASS tres intentos SQL: carga libre, límite, turnos alternados, fallo recuperable, rotura, tres máximos, suma 13, cancelación, corrección, permisos, versiones e idempotencia');

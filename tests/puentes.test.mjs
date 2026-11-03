@@ -8,3 +8,6 @@ assert.equal(segundosPuente('2026-11-06T13:00:05Z',Date.parse('2026-11-06T13:00:
 assert.equal(siguienteCarga({inicial:1,incremento:2,limite:6},5),6);assert.equal(siguienteCarga({inicial:1,incremento:2,limite:6},0),1);
 assert(csvPuentes({puentes,rondas}).includes('"5"'));assert(csvPuentes({puentes:[{...puentes[0],titulo:'=SUM(1)'}],rondas}).includes("'=SUM(1)"));
 console.log('PASS puentes: clasificación, empate compartido, categorías, rondas anuladas, límite, cronómetro y exportación');
+const suma=clasificacionPuentes(puentes,[{puente_id:'a',resultado:'valida',carga_kg:5},{puente_id:'a',resultado:'valida',carga_kg:8},{puente_id:'a',resultado:'fallo',carga_kg:10},{puente_id:'b',resultado:'valida',carga_kg:12}], 'puentes_infantil');
+assert.equal(suma[0].id,'a');assert.equal(suma[0].total,13);assert.equal(suma[0].intentos,3);
+assert.equal(clasificacionPuentes(puentes,[{puente_id:'a',resultado:'valida',carga_kg:0.1},{puente_id:'a',resultado:'valida',carga_kg:0.2}], 'puentes_infantil')[0].total,0.3);

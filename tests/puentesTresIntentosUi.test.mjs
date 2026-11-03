@@ -1,0 +1,29 @@
+import React from 'react';
+import {create,act} from 'react-test-renderer';
+import {build} from 'esbuild';
+import {mkdtemp,rm} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const dir=await mkdtemp(new URL('../.puentes-ui-',import.meta.url).pathname);
+globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+const puente={id:'a',categoria:'puentes_infantil',titulo:'Puente A',masa_g:80,integrantes:'Equipo',estado:'pendiente'};
+let ctx={modalidad:'tres_intentos',usuario:'docente',ahora:new Date().toISOString(),config:[{categoria:'puentes_infantil',inicial:1,incremento:1,limite:20,separacion:50}],mesa:{version:1,puente_id:'a',operador:'docente'},puentes:[puente],rondas:[]};
+let calls=[],perder=true;
+globalThis.__puentesSupabase={rpc:async(nombre,args)=>{if(nombre==='feria_puentes_contexto')return {data:ctx};calls.push(args);if(perder){perder=false;throw Error('Respuesta perdida')}ctx={...ctx,mesa:{...ctx.mesa,version:2,ronda_id:'r'},rondas:[{id:'r',puente_id:'a',numero:1,carga_kg:args.datos.carga_kg,resultado:'pendiente',cuenta_intento:true,fin:new Date(Date.now()+5000).toISOString()}]};return {data:ctx}}};
+try{
+ await build({entryPoints:['src/FeriaPuentes.jsx'],bundle:true,platform:'node',format:'esm',outfile:dir+'/app.mjs',external:['react'],loader:{'.css':'empty'},plugins:[{name:'mocks',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:'export const supabase=globalThis.__puentesSupabase;'}));b.onLoad({filter:/PuentesInscripcion.jsx$/},()=>({contents:'export default function Inscripcion(){return null};export function FotoPuente(){return null}'}))}}]});
+ const {default:Panel}=await import(dir+'/app.mjs');let tree;const tick=()=>new Promise(r=>setTimeout(r,15));
+ await act(async()=>{tree=create(React.createElement(Panel));await tick()});
+ const btn=t=>tree.root.findAllByType('button').find(b=>b.children.join('')===t);
+ const input=()=>tree.root.findByProps({'aria-label':'Carga elegida en kg'});
+ await act(async()=>{input().props.onChange({target:{value:'8.5'}})});
+ const form=()=>input().parent.parent;
+ await act(async()=>{form().props.onSubmit({preventDefault(){}});await tick()});assert.equal(calls.length,1);assert.deepEqual(calls[0].datos,{carga_kg:8.5});
+ await act(async()=>{form().props.onSubmit({preventDefault(){}});await tick()});assert.deepEqual(calls[1],calls[0]);assert.equal(input().props.disabled,true);
+ assert.equal(btn('Falló · puede continuar').props.disabled,false);assert.equal(btn('Confirmar que resistió').props.disabled,true);
+ await act(async()=>{btn('Falló · puede continuar').props.onClick();await tick()});assert.equal(calls.at(-1).accion,'fallo');assert.deepEqual(calls.at(-1).datos,{roto:false});
+ await act(async()=>{tree.unmount()});
+ ctx={...ctx,modalidad:undefined};await act(async()=>{tree=create(React.createElement(Panel));await tick()});
+ assert(tree.root.findAllByProps({role:'alert'}).some(n=>n.children.join('').includes('feria-puentes-tres-intentos.sql')));assert.equal(btn('Falló · puede continuar').props.disabled,true);
+ await act(async()=>{tree.unmount()});
+ console.log('PASS mesa UI: carga elegida 8.5, reintento idéntico, cuenta de cinco segundos, fallo recuperable y bloqueo sin migración');
+}finally{await rm(dir,{recursive:true,force:true});delete globalThis.__puentesSupabase}
