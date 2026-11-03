@@ -15,7 +15,7 @@ function Ficha({datos,busy,onGuardar}){
 }
 function CargaIntento({intentos,limite,disabled,onIniciar}){
  const[carga,setCarga]=useState('');
- return <form className="bridgeForm" onSubmit={e=>{e.preventDefault();const n=Number(carga);if(Number.isFinite(n)&&n>0&&n<=Number(limite))onIniciar({carga_kg:n})}}><label>Carga elegida para el intento {Math.min(intentos+1,3)} de 3 (kg)<input aria-label="Carga elegida en kg" type="number" min="0.001" step="0.001" max={limite||undefined} required value={carga} disabled={disabled} onChange={e=>setCarga(e.target.value)}/></label><button className="bridgePrimary" disabled={disabled||!carga||intentos>=3}>Peso colocado · iniciar 5 s</button></form>;
+ return <form className="bridgeForm" onSubmit={e=>{e.preventDefault();const n=Number(carga);if(Number.isFinite(n)&&n>0&&n<=Number(limite))onIniciar({carga_kg:n})}}><label>Carga elegida para el intento {Math.min(intentos+1,3)} de 3 (kg)<input aria-label="Carga elegida en kg" type="number" min="0.001" step="0.001" max={limite||undefined} required placeholder="Escribe la carga del intento" inputMode="decimal" autoComplete="off" value={carga} disabled={disabled} onChange={e=>setCarga(e.target.value)}/></label><button className="bridgePrimary" disabled={disabled||!carga||intentos>=3}>Registrar carga e iniciar intento</button><p>El profesor del máster escribe la carga elegida en cada intento, incluido el primero. La prueba dura 5 segundos; ese número no es una carga en kg.</p></form>;
 }
 export default function FeriaPuentes({pantalla=false}){
  const[datos,setDatos]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[ahora,setAhora]=useState(Date.now()),[ultima,setUltima]=useState(0),[categoria,setCategoria]=useState('puentes_infantil');

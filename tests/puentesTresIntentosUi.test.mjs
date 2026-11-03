@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 const dir=await mkdtemp(new URL('../.puentes-ui-',import.meta.url).pathname);
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const puente={id:'a',categoria:'puentes_infantil',titulo:'Puente A',masa_g:80,integrantes:'Equipo',estado:'pendiente'};
-let ctx={modalidad:'tres_intentos',usuario:'docente',ahora:new Date().toISOString(),config:[{categoria:'puentes_infantil',inicial:1,incremento:1,limite:20,separacion:50}],mesa:{version:1,puente_id:'a',operador:'docente'},puentes:[puente],rondas:[]};
+let ctx={modalidad:'tres_intentos',usuario:'docente',ahora:new Date().toISOString(),config:[{categoria:'puentes_infantil',inicial:5,incremento:1,limite:20,separacion:50}],mesa:{version:1,puente_id:'a',operador:'docente'},puentes:[puente],rondas:[]};
 let calls=[],perder=true;
 globalThis.__puentesSupabase={rpc:async(nombre,args)=>{if(nombre==='feria_puentes_contexto')return {data:ctx};calls.push(args);if(perder){perder=false;throw Error('Respuesta perdida')}ctx={...ctx,mesa:{...ctx.mesa,version:2,ronda_id:'r'},rondas:[{id:'r',puente_id:'a',numero:1,carga_kg:args.datos.carga_kg,resultado:'pendiente',cuenta_intento:true,fin:new Date(Date.now()+5000).toISOString()}]};return {data:ctx}}};
 try{
@@ -15,10 +15,14 @@ try{
  await act(async()=>{tree=create(React.createElement(Panel));await tick()});
  const btn=t=>tree.root.findAllByType('button').find(b=>b.children.join('')===t);
  const input=()=>tree.root.findByProps({'aria-label':'Carga elegida en kg'});
+ assert.equal(input().props.value,'','El primer intento no toma la carga inicial antigua de 5 kg');
+ assert.equal(btn('Registrar carga e iniciar intento').props.disabled,true);
+ await act(async()=>{input().parent.parent.props.onSubmit({preventDefault(){}});await tick()});
+ assert.equal(calls.length,0,'Sin carga escrita por el profesor no se inicia el intento');
  await act(async()=>{input().props.onChange({target:{value:'8.5'}})});
  const form=()=>input().parent.parent;
  await act(async()=>{form().props.onSubmit({preventDefault(){}});await tick()});assert.equal(calls.length,1);assert.deepEqual(calls[0].datos,{carga_kg:8.5});
- await act(async()=>{form().props.onSubmit({preventDefault(){}});await tick()});assert.deepEqual(calls[1],calls[0]);assert.equal(input().props.disabled,true);
+ await act(async()=>{form().props.onSubmit({preventDefault(){}});await tick()});assert.deepEqual(calls[1],calls[0]);assert.equal(input().props.disabled,true);assert.equal(input().props.value,'','El siguiente intento empieza sin reutilizar la carga anterior');
  assert.equal(btn('Falló · puede continuar').props.disabled,false);assert.equal(btn('Confirmar que resistió').props.disabled,true);
  await act(async()=>{btn('Falló · puede continuar').props.onClick();await tick()});assert.equal(calls.at(-1).accion,'fallo');assert.deepEqual(calls.at(-1).datos,{roto:false});
  await act(async()=>{tree.unmount()});
