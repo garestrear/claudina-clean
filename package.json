@@ -16,7 +16,8 @@
     "test:jurados": "node tests/evaluacionJurados.test.mjs && node tests/evaluacionJuradosSql.test.mjs && node tests/juradosCuentasApi.test.mjs && node tests/juradosCuentasSql.test.mjs && node tests/evaluacionJuradosBrowser.test.mjs",
     "test:aula-revision": "node tests/feriaRevisionAulaSql.test.mjs && node tests/feriaCorreccionesBrowser.test.mjs",
     "test:puentes-eliminar": "node tests/puentesEliminarSql.test.mjs && node tests/puentesInscripcionUi.test.mjs",
-    "test:puentes-descalificacion": "node tests/puentesDescalificacion.test.mjs && node tests/puentesDescalificacionUi.test.mjs"
+    "test:puentes-descalificacion": "node tests/puentesDescalificacion.test.mjs && node tests/puentesDescalificacionUi.test.mjs",
+    "test:puentes-orden": "node tests/puentesOrdenTurnos.test.mjs && node tests/puentesOrdenTurnosUi.test.mjs"
   },
   "dependencies": {
     "@sparticuz/chromium": "153.0.0",
