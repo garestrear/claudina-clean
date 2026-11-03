@@ -1,3 +1,4 @@
+import PuentesProyeccion from './PuentesProyeccion';
 import PuentesInscripcion,{FotoPuente} from './PuentesInscripcion';
 import React,{useEffect,useRef,useState} from 'react';
 import {supabase} from './lib/supabase';
@@ -43,6 +44,7 @@ export default function FeriaPuentes({pantalla=false}){
  const filtrarCompetencia=soloCompetencia&&!pantalla;
  const puentesVisibles=(datos?.puentes||[]).filter(p=>(pantalla||!categoriaFiltro||p.categoria===categoriaFiltro)&&(!filtrarCompetencia||sigueEnCompetencia(p,datos?.rondas)));
  function exportar(){const u=URL.createObjectURL(new Blob([csvPuentes(datos)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='Concurso-puentes-STEAM.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+ if(pantalla)return <PuentesProyeccion datos={datos} categoria={categoria} onCategoria={setCategoria} ahora={ahora+desfase.current} error={error} fresco={fresco} onActualizar={()=>{ultimoIntento.current=null;cargar()}}/>;
  return <section className={'bridgeContest '+(pantalla?'bridgeProjection':'')} lang="es-CO">
  <div className="bridgeHeader"><div><span>FERIA STEAM · CLAUDINA MÚNERA</span><h2>El desafío de los puentes</h2><p>{pantalla?'Marcador en vivo':'Tablero en vivo · control docente'}</p></div><div className="bridgeActions">{pantalla?<button onClick={()=>{const r=document.fullscreenElement?document.exitFullscreen?.():document.documentElement.requestFullscreen?.();r?.catch(()=>setError('No se pudo activar pantalla completa.'))}}>Pantalla completa</button>:<><a className="bridgeButton" href="?vista=puentes-pantalla" target="_blank" rel="noopener noreferrer">Abrir pantalla para proyectar ↗</a><button disabled={!datos} onClick={exportar}>Descargar registros CSV</button></>}<button disabled={busy} onClick={()=>{ultimoIntento.current=null;cargar()}}>Actualizar</button></div></div>
  {datos&&!modalidad&&<p className="bridgeError" role="alert">Activa supabase/feria-puentes-tres-intentos.sql en Supabase para registrar cargas elegidas y sumar tres intentos.</p>}
@@ -62,6 +64,7 @@ export default function FeriaPuentes({pantalla=false}){
  </>}
  </section>;
 }
+
 
 
 
