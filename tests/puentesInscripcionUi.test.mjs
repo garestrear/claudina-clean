@@ -33,7 +33,7 @@ try{
  await act(async()=>{await submit();await tick()});
  const saves=calls.filter(c=>c.nombre==='feria_puentes_guardar');assert.equal(saves.length,2);assert.deepEqual(saves[0].args,saves[1].args);assert.equal(uploads.length,1);assert.equal(saves[0].args.datos.masa_g,'');assert.equal(saves[0].args.datos.categoria,'puentes_juvenil');assert.deepEqual(saves[0].args.datos.integrantes_ids,['a','b','c']);assert(!('proyecto_id' in saves[0].args.datos));assert.equal(root().findAllByType('img')[0].props.alt,'Foto de Puente de mi equipo');
  assert.equal(root().findAllByType('button').filter(b=>b.props.className==='bridgeDanger').length,0,'Los estudiantes no ven eliminar');
- assert(root().findAllByType('h3').some(n=>n.children.join('')==='Puente de mi equipo'));
+ assert(root().findAllByType('h3').some(n=>n.children.join('').startsWith('Puente de mi equipo · ')));
  await act(async()=>{tree.unmount()});
  // Un estudiante registra un puente de otro grado sin atribuírselo.
  ctx={usuario:'usuario',docente:false,registro_para_otros:true,ficha:author,companeros:[comp],puentes:[]};calls=[];
@@ -62,3 +62,4 @@ try{
  await act(async()=>{tree.unmount()});delete globalThis.window;
  console.log('PASS interfaz: inscripción de estudiante y docente, integrantes del grupo y de otro grado, categoría, peso opcional, cámara/galería, foto en ficha, eliminación docente con confirmación y reintentos sin duplicar');
 }finally{await rm(dir,{recursive:true,force:true});delete globalThis.__puentesSupabase}
+

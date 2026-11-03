@@ -23,21 +23,21 @@ try{
  const selector=()=>tree.root.findAllByType('select').find(n=>n.props.value==='p');
  const order=()=>selector().findAllByType('option').filter(n=>n.props.value).map(n=>n.props.value);
  const cards=()=>tree.root.findAllByType('article').map(n=>n.findByType('h3').children.join(''));
- assert.deepEqual(order(),['p']);assert.deepEqual(cards(),['Primaria']);
+ assert.deepEqual(order(),['p']);assert.deepEqual(cards(),['Primaria · 2°']);
  const filtro=()=>tree.root.findAllByType('input').find(n=>n.props.type==='checkbox');
  assert.equal(filtro().props.checked,true);
- await act(async()=>filtro().props.onChange({target:{checked:false}}));assert.deepEqual(order(),['p','b','z']);assert.deepEqual(cards(),['Primaria','Brisa','Zeta']);
+ await act(async()=>filtro().props.onChange({target:{checked:false}}));assert.deepEqual(order(),['p','b','z']);assert.deepEqual(cards(),['Primaria · 2°','Brisa · 6°','Zeta · 6°']);
  await act(async()=>filtro().props.onChange({target:{checked:true}}));
  const input=()=>tree.root.findByProps({'aria-label':'Carga elegida en kg'});
  await act(async()=>input().props.onChange({target:{value:'5'}}));
  await act(async()=>{input().parent.parent.props.onSubmit({preventDefault(){}});await tick()});
  const fallo=tree.root.findAllByType('button').find(n=>n.children.join('')==='Falló · puede continuar');
  await act(async()=>{fallo.props.onClick();await tick()});
- assert.equal(tree.root.findAllByType('option').filter(n=>n.props.value).length,3,'Solo el selector de mediciones conserva todos los puentes');
+ const mediciones=tree.root.findAllByType('select').find(n=>n.parent.children[0]==='Puente inscrito');assert.equal(mediciones.findAllByType('option').filter(n=>n.props.value).length,3,'El selector de mediciones conserva todos los puentes');
  assert.deepEqual(cards(),[],'La ficha del puente finalizado desaparece inmediatamente');
  const turno=tree.root.findAllByType('select')[0];assert.equal(turno.props.value,'');
  assert(tree.root.findAllByProps({role:'status'}).some(n=>n.children.join('').includes('No quedan puentes en competencia')));
- await act(async()=>filtro().props.onChange({target:{checked:false}}));assert.deepEqual(cards(),['Brisa','Zeta','Primaria']);
+ await act(async()=>filtro().props.onChange({target:{checked:false}}));assert.deepEqual(cards(),['Brisa · 6°','Zeta · 6°','Primaria · 2°']);
  await act(async()=>tree.unmount());
  console.log('PASS filtro UI: activo inicialmente, oculta finalizados y descalificados, permite mostrar todos y retira al puente al finalizar sin recargar');
 }finally{await rm(dir,{recursive:true,force:true});delete globalThis.__puentesSupabase}
