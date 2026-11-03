@@ -34,3 +34,8 @@ export function ordenarTurnosPuentes(puentes,rondas){
   (gradoTurnoPuente(a)===gradoTurnoPuente(b)?0:gradoTurnoPuente(a)<gradoTurnoPuente(b)?-1:1)||
   String(a.titulo||'').localeCompare(String(b.titulo||''),'es',{sensitivity:'base',numeric:true})||String(a.id).localeCompare(String(b.id)));
 }
+
+
+export function sigueEnCompetencia(puente,rondas){
+ return !['finalizado','descalificado'].includes(puente.estado)&&(puente.estado==='en_prueba'||intentosPuente(puente,rondas)<3);
+}
