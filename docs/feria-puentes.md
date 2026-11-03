@@ -114,3 +114,14 @@ La mesa actualiza el orden en cada respuesta de guardado y consulta del marcador
 (cada segundo). No cambia automáticamente el puente seleccionado. Cancelar un
 intento de montaje no lo consume; un fallo o una corrección mantiene el intento
 consumido. La columna Puesto y el líder conservan sus criterios de puntuación, aunque las filas del tablero se presentan en orden de turnos.
+
+
+## Filtro de puentes en competencia
+
+La mesa docente abre con **Solo puentes en competencia** activado. Filtra las
+fichas, las filas del tablero y el selector del siguiente puente; conserva el
+orden por intentos, grado y nombre. Desmarcar muestra todos los registros.
+Los finalizados, descalificados y pendientes que ya agotaron sus tres intentos
+no se ofrecen para una nueva prueba. Un intento en curso conserva su control
+hasta resolverlo. El puente actual y el líder por puntuación se mantienen visibles;
+la proyección sigue mostrando todos los resultados. No requiere SQL adicional.
