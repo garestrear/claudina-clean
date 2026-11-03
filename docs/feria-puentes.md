@@ -125,3 +125,16 @@ Los finalizados, descalificados y pendientes que ya agotaron sus tres intentos
 no se ofrecen para una nueva prueba. Un intento en curso conserva su control
 hasta resolverlo. El puente actual y el líder por puntuación se mantienen visibles;
 la proyección sigue mostrando todos los resultados. No requiere SQL adicional.
+
+
+## Grado en el nombre y filtro por categoría
+
+Los nombres mostrados en fichas, mesa, selectores y tablero terminan con el grado
+(por ejemplo, «El fuerte · 8°»). Para equipos de varios grados se usa el menor,
+como en el orden de turnos. El título guardado del puente permanece intacto.
+
+El selector **Categoría de puentes** en Control de la prueba ofrece Todas,
+Juvenil e Infantil. Filtra el selector del siguiente turno, las fichas y las
+filas del tablero docente y se combina con Solo puentes en competencia. Mantiene
+el orden de intentos, grado y nombre, sin cambiar el puente en prueba. La
+proyección conserva sus pestañas de categoría. No requiere otro SQL.

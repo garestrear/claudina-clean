@@ -39,3 +39,9 @@ export function ordenarTurnosPuentes(puentes,rondas){
 export function sigueEnCompetencia(puente,rondas){
  return !['finalizado','descalificado'].includes(puente.estado)&&(puente.estado==='en_prueba'||intentosPuente(puente,rondas)<3);
 }
+
+
+export function nombrePuenteConGrado(puente){
+ const grado=gradoTurnoPuente(puente);
+ return `${puente.titulo} · ${Number.isFinite(grado)?grado===0?'TS y JR':grado+'°':'Grado por registrar'}`;
+}

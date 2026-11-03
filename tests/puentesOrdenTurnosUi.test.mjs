@@ -23,14 +23,14 @@ try{
  const selector=()=>tree.root.findAllByType('select').find(n=>n.props.value==='p');
  const order=()=>selector().findAllByType('option').filter(n=>n.props.value).map(n=>n.props.value);
  const cards=()=>tree.root.findAllByType('article').map(n=>n.findByType('h3').children.join(''));
- assert.deepEqual(order(),['p','b','z']);assert.deepEqual(cards(),['Primaria','Brisa','Zeta']);
+ assert.deepEqual(order(),['p','b','z']);assert.deepEqual(cards(),['Primaria · 2°','Brisa · 6°','Zeta · 6°']);
  const input=()=>tree.root.findByProps({'aria-label':'Carga elegida en kg'});
  await act(async()=>input().props.onChange({target:{value:'5'}}));
  await act(async()=>{input().parent.parent.props.onSubmit({preventDefault(){}});await tick()});
  const fallo=tree.root.findAllByType('button').find(n=>n.children.join('')==='Falló · puede continuar');
  await act(async()=>{fallo.props.onClick();await tick()});
- const tabla=tree.root.findAllByType('table')[0];assert.deepEqual(tabla.findByType('tbody').findAllByType('tr').map(n=>n.findAllByType('td')[1].children[0]),['Brisa','Zeta','Primaria']);
- assert.deepEqual(order(),['b','z','p']);assert.deepEqual(cards(),['Brisa','Zeta','Primaria']);assert.equal(selector().props.value,'p','El orden no cambia automáticamente el puente de la mesa');
+ const tabla=tree.root.findAllByType('table')[0];assert.deepEqual(tabla.findByType('tbody').findAllByType('tr').map(n=>n.findAllByType('td')[1].children[0]),['Brisa · 6°','Zeta · 6°','Primaria · 2°']);
+ assert.deepEqual(order(),['b','z','p']);assert.deepEqual(cards(),['Brisa · 6°','Zeta · 6°','Primaria · 2°']);assert.equal(selector().props.value,'p','El orden no cambia automáticamente el puente de la mesa');
  await act(async()=>tree.unmount());
  console.log('PASS orden UI: selector y tarjetas se reordenan tras cada intento y conservan el puente seleccionado');
 }finally{await rm(dir,{recursive:true,force:true});delete globalThis.__puentesSupabase}
