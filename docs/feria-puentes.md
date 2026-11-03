@@ -76,3 +76,24 @@ ni modificar inscripciones ajenas. La persona que inscribe no puede cambiar el
 creador a través del formulario. La migración no cambia los integrantes de los
 registros previos; si se incluyó por error a quien registró, se puede quitar al
 editar mientras no haya comenzado la prueba. Eliminar sigue siendo solo docente.
+
+
+## Descalificado por no cumplir los requisitos
+
+Ejecutar `supabase/feria-puentes-descalificacion.sql` **después** de las migraciones
+ de inscripción, tres intentos y registro y eliminación. Repetible; instalarlo
+ no elimina ni descalifica registros. No volver a ejecutar migraciones anteriores
+ sin aplicar esta última de nuevo.
+
+En **Puentes inscritos**, cualquier docente puede pulsar **Descalificado por no
+cumplir los requisitos…**, indicar el requisito incumplido y confirmar. Primero
+hay que resolver o cancelar cualquier intento pendiente de ese puente.
+
+La inscripción, equipo, foto e intentos se conservan. El puente muestra su estado
+ y motivo a los docentes y al equipo, en la proyección y en el CSV. No recibe puesto
+ ni puede ser líder, seleccionarse para otra prueba ni editarse. Se mantiene
+ disponible la eliminación para registros creados por error. La auditoría privada
+ conserva la cuenta docente, fecha, motivo y ficha anterior. No hay rehabilitación
+ automática ni opción de deshacer en esta versión.
+
+Verificación: `node tests/puentesDescalificacion.test.mjs`.
