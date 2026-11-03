@@ -138,3 +138,21 @@ Juvenil e Infantil. Filtra el selector del siguiente turno, las fichas y las
 filas del tablero docente y se combina con Solo puentes en competencia. Mantiene
 el orden de intentos, grado y nombre, sin cambiar el puente en prueba. La
 proyección conserva sus pestañas de categoría. No requiere otro SQL.
+
+
+## Proyección sin desplazamiento
+
+La vista `?vista=puentes-pantalla` usa el área completa de la ventana. La mesa y
+sus controles siguen separados de esta vista de solo lectura. A la izquierda
+aparecen puente y grado, equipo, carga, cuenta de cinco segundos, tres intentos,
+total y líder de la categoría del tablero; a la derecha, turnos y resultados.
+
+El tablero adapta la cantidad de filas al tamaño de ventana. Si hay más puentes,
+rota páginas cada ocho segundos, sin desplazamiento vertical u horizontal.
+Incluye indicador de página, navegación y pausa. Las pestañas cambian categoría
+y un nuevo puente en turno actualiza su categoría, como antes. El puente en turno
+permanece visible mientras cambia la página del tablero. «Pantalla completa»
+permite aprovechar todo el proyector. La desconexión y errores quedan en la franja
+inferior. No requiere SQL ni cambios en los registros.
+
+Verificación: `node tests/puentesProyeccionUi.test.mjs` y compilación app/PWA.
