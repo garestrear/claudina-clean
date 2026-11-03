@@ -18,3 +18,19 @@ export function csvPuentes(datos){
 
 export function solicitudPuente(){if(globalThis.crypto?.randomUUID)return globalThis.crypto.randomUUID();const b=globalThis.crypto.getRandomValues(new Uint8Array(16));b[6]=(b[6]&15)|64;b[8]=(b[8]&63)|128;const h=[...b].map(n=>n.toString(16).padStart(2,'0')).join('');return [h.slice(0,8),h.slice(8,12),h.slice(12,16),h.slice(16,20),h.slice(20)].join('-')}
 
+
+
+// Una cancelación no consume intento; una corrección sí conserva el consumido.
+export function intentosPuente(puente,rondas){
+ return rondas===undefined?Number(puente.intentos_consumidos)||0:rondas.filter(r=>r.puente_id===puente.id&&(r.cuenta_intento??r.resultado!=='anulada')).length;
+}
+export function gradoTurnoPuente(puente){
+ if(puente.grado_turno!==null&&puente.grado_turno!==undefined&&Number.isFinite(Number(puente.grado_turno)))return Number(puente.grado_turno);
+ const grados=(puente.equipo||[]).filter(e=>e.grado!==null&&e.grado!==undefined).map(e=>Number(e.grado)).filter(Number.isFinite);
+ return grados.length?Math.min(...grados):Infinity;
+}
+export function ordenarTurnosPuentes(puentes,rondas){
+ return [...puentes].sort((a,b)=>intentosPuente(a,rondas)-intentosPuente(b,rondas)||
+  (gradoTurnoPuente(a)===gradoTurnoPuente(b)?0:gradoTurnoPuente(a)<gradoTurnoPuente(b)?-1:1)||
+  String(a.titulo||'').localeCompare(String(b.titulo||''),'es',{sensitivity:'base',numeric:true})||String(a.id).localeCompare(String(b.id)));
+}

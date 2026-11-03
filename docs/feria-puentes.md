@@ -97,3 +97,20 @@ La inscripción, equipo, foto e intentos se conservan. El puente muestra su esta
  automática ni opción de deshacer en esta versión.
 
 Verificación: `node tests/puentesDescalificacion.test.mjs`.
+
+
+## Orden automático de turnos
+
+Ejecutar `supabase/feria-puentes-orden-turnos.sql` después de las migraciones
+anteriores (incluida descalificación). Solo amplía lecturas; no cambia resultados.
+
+La lista de inscripciones, el tablero, el selector de turnos y el selector de mediciones se
+ordenan por intentos consumidos de menor a mayor; a igual número de intentos,
+por grado ascendente; a igual grado, por nombre del puente en español. Los equipos
+con varios grados usan el menor. Grado 0 (TS y JR) va antes de primero; un equipo
+sin grado registrado va al final de los que llevan igual número de intentos.
+
+La mesa actualiza el orden en cada respuesta de guardado y consulta del marcador
+(cada segundo). No cambia automáticamente el puente seleccionado. Cancelar un
+intento de montaje no lo consume; un fallo o una corrección mantiene el intento
+consumido. La columna Puesto y el líder conservan sus criterios de puntuación, aunque las filas del tablero se presentan en orden de turnos.
