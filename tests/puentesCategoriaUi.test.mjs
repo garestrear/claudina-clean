@@ -8,7 +8,7 @@ const dir=await mkdtemp(new URL('../.puentes-ui-',import.meta.url).pathname);
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const memo=new Map();globalThis.localStorage={getItem:k=>memo.get(k)||null,setItem:(k,v)=>memo.set(k,v),removeItem:k=>memo.delete(k)};
 const puentes=[{id:'z',titulo:'Zeta',grado_turno:6},{id:'b',titulo:'Brisa',grado_turno:6},{id:'p',titulo:'Primaria',grado_turno:2}].map(p=>({...p,version:1,integrantes:'Equipo',estado:'pendiente',categoria:p.id==='z'?'puentes_juvenil':'puentes_infantil'}));
-let ctx={modalidad:'tres_intentos',orden_turnos:true,usuario:'docente',ahora:new Date().toISOString(),config:[{categoria:'puentes_infantil',inicial:1,incremento:1,limite:20,separacion:50}],mesa:{version:1,puente_id:'p',operador:'docente'},puentes,rondas:[]};
+let ctx={modalidad:'tres_intentos',orden_turnos:true,usuario:'docente',ahora:new Date().toISOString(),config:[{categoria:'puentes_infantil',inicial:1,incremento:1,limite:20,separacion:50,duracion_segundos:10}],mesa:{version:1,puente_id:'p',operador:'docente'},puentes,rondas:[]};
 const ins={docente:true,usuario:'docente',ficha:null,companeros:[],puentes};
 globalThis.__puentesSupabase={rpc:async(nombre,args)=>{
  if(nombre==='feria_puentes_contexto')return {data:ctx};if(nombre==='feria_puentes_inscripcion_contexto')return {data:ins};

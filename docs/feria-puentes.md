@@ -24,7 +24,7 @@ La clasificación se calcula por la **suma de las cargas válidas** y, en empate
 
 ## Pantalla y sincronización
 
-«Abrir pantalla para proyectar» abre `?vista=puentes-pantalla` en otra pestaña. Requiere una sesión docente; si se usa otro computador, iniciar sesión allí. El operador y el proyector consultan el estado guardado cada segundo. La cuenta de cinco segundos se calcula usando la hora del servidor y el instante final persistido, por lo que sobrevive a recargas. La proyección sigue la categoría del nuevo puente y permite consultar el tablero de la otra categoría.
+«Abrir pantalla para proyectar» abre `?vista=puentes-pantalla` en otra pestaña. Requiere una sesión docente; si se usa otro computador, iniciar sesión allí. El operador y el proyector consultan el estado guardado cada segundo. La cuenta del tiempo configurado (10 segundos por defecto) se calcula usando la hora del servidor y el instante final persistido, por lo que sobrevive a recargas. La proyección sigue la categoría del nuevo puente y permite consultar el tablero de la otra categoría.
 
 La pantalla muestra equipo, carga actual, los tres intentos en columnas, suma acumulada, cuenta regresiva y líder provisional. La vista de proyección no tiene botones de escritura. La autorización de las operaciones se comprueba además en el servidor. Solo docentes pueden consultar el módulo; no se publica un enlace anónimo.
 
@@ -36,7 +36,7 @@ Si hay error al guardar, pulsar Actualizar y revisar la ronda antes de continuar
 
 ## Validación
 
-`npm run test:puentes` ejecuta las pruebas del marcador, inscripción independiente y modalidad de tres intentos (SQL e interfaz). Se verifica carga libre, turnos alternados, suma 13, fallo recuperable, rotura, límite de tres, cancelación y corrección, recuperación de guardado y bloqueo sin migración. Verifican clasificación, categorías, reloj, permisos, cinco segundos del lado servidor, idempotencia, versiones, relevo, cancelación, fallo, correcciones, límite y compatibilidad con la versión anterior. La actualización se prueba en una base nueva y sobre registros con resultados previos. También se comprueban inscripciones de estudiantes y docentes, equipos de distintos grados, visibilidad por integrante, campos opcionales, fotos privadas, bloqueo de edición tras iniciar y reintentos sin duplicar registros ni subir dos veces la misma foto. `npm run build` comprueba la app y la PWA. La pantalla fue comprobada con datos de demostración aislados; las pruebas PostgreSQL se realizan en una base local de prueba. La migración debe activarse en Supabase antes de comprobar el flujo con los datos de producción.
+`npm run test:puentes` ejecuta las pruebas del marcador, inscripción independiente y modalidad de tres intentos (SQL e interfaz). Se verifica carga libre, turnos alternados, suma 13, fallo recuperable, rotura, límite de tres, cancelación y corrección, recuperación de guardado y bloqueo sin migración. Verifican clasificación, categorías, reloj, permisos y validación del tiempo del lado servidor, idempotencia, versiones, relevo, cancelación, fallo, correcciones, límite y compatibilidad con la versión anterior. La actualización se prueba en una base nueva y sobre registros con resultados previos. También se comprueban inscripciones de estudiantes y docentes, equipos de distintos grados, visibilidad por integrante, campos opcionales, fotos privadas, bloqueo de edición tras iniciar y reintentos sin duplicar registros ni subir dos veces la misma foto. `npm run build` comprueba la app y la PWA. La pantalla fue comprobada con datos de demostración aislados; las pruebas PostgreSQL se realizan en una base local de prueba. La migración debe activarse en Supabase antes de comprobar el flujo con los datos de producción.
 
 
 ## Eliminar inscripciones incorrectas
@@ -104,7 +104,7 @@ Verificación: `node tests/puentesDescalificacion.test.mjs`.
 Ejecutar `supabase/feria-puentes-orden-turnos.sql` después de las migraciones
 anteriores (incluida descalificación). Solo amplía lecturas; no cambia resultados.
 
-La lista de inscripciones, el tablero, el selector de turnos y el selector de mediciones se
+La lista de inscripciones, el selector de turnos y el selector de mediciones se
 ordenan por intentos consumidos de menor a mayor; a igual número de intentos,
 por grado ascendente; a igual grado, por nombre del puente en español. Los equipos
 con varios grados usan el menor. Grado 0 (TS y JR) va antes de primero; un equipo
@@ -113,7 +113,7 @@ sin grado registrado va al final de los que llevan igual número de intentos.
 La mesa actualiza el orden en cada respuesta de guardado y consulta del marcador
 (cada segundo). No cambia automáticamente el puente seleccionado. Cancelar un
 intento de montaje no lo consume; un fallo o una corrección mantiene el intento
-consumido. La columna Puesto y el líder conservan sus criterios de puntuación, aunque las filas del tablero se presentan en orden de turnos.
+consumido. La columna Puesto y el líder conservan sus criterios de puntuación, y las filas de clasificación se presentan por mayor total válido.
 
 
 ## Filtro de puentes en competencia
@@ -144,7 +144,7 @@ proyección conserva sus pestañas de categoría. No requiere otro SQL.
 
 La vista `?vista=puentes-pantalla` usa el área completa de la ventana. La mesa y
 sus controles siguen separados de esta vista de solo lectura. A la izquierda
-aparecen puente y grado, equipo, carga, cuenta de cinco segundos, tres intentos,
+aparecen puente y grado, equipo, carga, cuenta del tiempo configurado, tres intentos,
 total y líder de la categoría del tablero; a la derecha, turnos y resultados.
 
 El tablero adapta la cantidad de filas al tamaño de ventana. Si hay más puentes,
@@ -156,3 +156,25 @@ permite aprovechar todo el proyector. La desconexión y errores quedan en la fra
 inferior. No requiere SQL ni cambios en los registros.
 
 Verificación: `node tests/puentesProyeccionUi.test.mjs` y compilación app/PWA.
+
+
+## Duración configurable y clasificación por total
+
+Ejecutar `supabase/feria-puentes-duracion.sql` después de todas las migraciones
+anteriores. Instala **10 segundos por defecto** en ambas categorías. Es repetible:
+no borra rondas, no modifica sus tiempos guardados ni restablece una duración
+personalizada cuando se ejecuta otra vez.
+
+En Control de la prueba, **Duración del intento** permite guardar de 1 a 120
+segundos para la categoría indicada, incluso si el concurso ya comenzó. Primero
+resolver o cancelar cualquier intento pendiente de esa categoría. La nueva
+duración solo se aplica a intentos futuros. La validación exige que transcurra
+el tiempo guardado por el servidor; los intentos que ya estaban en curso conservan
+su duración. La cuenta y los textos muestran la duración real.
+
+La **tabla de clasificación** docente y de proyección se ordena por total válido
+descendente; en empate, conserva el desempate por masa y nombre. Los descalificados
+siempre aparecen al final y sin puesto. El orden de turnos por intentos, grado y
+nombre se mantiene en las listas de selección. Solo puentes en competencia oculta
+también los descalificados de la clasificación. La proyección incorpora ese mismo
+filtro, inicialmente desactivado para mostrar todos los resultados.

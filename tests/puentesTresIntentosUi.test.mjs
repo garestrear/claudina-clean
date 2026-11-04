@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 const dir=await mkdtemp(new URL('../.puentes-ui-',import.meta.url).pathname);
 globalThis.IS_REACT_ACT_ENVIRONMENT=true;
 const puente={id:'a',categoria:'puentes_infantil',titulo:'Puente A',masa_g:80,integrantes:'Equipo',estado:'pendiente'};
-let ctx={modalidad:'tres_intentos',usuario:'docente',ahora:new Date().toISOString(),config:[{categoria:'puentes_infantil',inicial:5,incremento:1,limite:20,separacion:50}],mesa:{version:1,puente_id:'a',operador:'docente'},puentes:[puente],rondas:[]};
+let ctx={modalidad:'tres_intentos',usuario:'docente',ahora:new Date().toISOString(),config:[{categoria:'puentes_infantil',inicial:5,incremento:1,limite:20,separacion:50,duracion_segundos:10}],mesa:{version:1,puente_id:'a',operador:'docente'},puentes:[puente],rondas:[]};
 let calls=[],perder=true;
 globalThis.__puentesSupabase={rpc:async(nombre,args)=>{if(nombre==='feria_puentes_contexto')return {data:ctx};calls.push(args);if(perder){perder=false;throw Error('Respuesta perdida')}ctx={...ctx,mesa:{...ctx.mesa,version:2,ronda_id:'r'},rondas:[{id:'r',puente_id:'a',numero:1,carga_kg:args.datos.carga_kg,resultado:'pendiente',cuenta_intento:true,fin:new Date(Date.now()+5000).toISOString()}]};return {data:ctx}}};
 try{
@@ -31,3 +31,4 @@ try{
  await act(async()=>{tree.unmount()});
  console.log('PASS mesa UI: carga elegida 8.5, reintento idéntico, cuenta de cinco segundos, fallo recuperable y bloqueo sin migración');
 }finally{await rm(dir,{recursive:true,force:true});delete globalThis.__puentesSupabase}
+
