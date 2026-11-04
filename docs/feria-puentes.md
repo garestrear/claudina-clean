@@ -178,3 +178,23 @@ siempre aparecen al final y sin puesto. El orden de turnos por intentos, grado y
 nombre se mantiene en las listas de selección. Solo puentes en competencia oculta
 también los descalificados de la clasificación. La proyección incorpora ese mismo
 filtro, inicialmente desactivado para mostrar todos los resultados.
+
+
+## Informe para las familias por WhatsApp
+
+En la mesa docente, **Generar informe para WhatsApp** consulta los datos más
+recientes y abre una vista previa. El corte incluye fecha y hora de Colombia,
+inscritos y puentes en competencia, clasificación por categoría, puente y grado,
+equipo, intentos y total válido. Se aclara que son resultados provisionales;
+los descalificados van al final sin puesto y los intentos pendientes no se suman.
+No incluye datos de cuentas, correos ni auditoría privada.
+
+El informe incluye todas las inscripciones aunque los filtros de la mesa oculten
+algunas. Permite elegir ambas categorías o solo Infantil/Juvenil. El texto queda
+fijo al corte mientras se revisa; para otro corte hay que cerrar y generar de nuevo.
+**Compartir por WhatsApp** abre el menú del dispositivo cuando está disponible;
+en otros navegadores prepara el mensaje en WhatsApp. Para textos extensos se usa
+**Copiar informe** y pegar en el chat. También permite descargar texto plano.
+La persona docente elige destinatario y confirma el envío; no hay envío automático.
+Si no se puede consultar información reciente, se muestra error en lugar de
+compartir resultados anteriores. No requiere SQL adicional.

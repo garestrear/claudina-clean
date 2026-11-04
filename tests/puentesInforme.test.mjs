@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';import {informePuentes} from '../src/informePuentes.js';
+const datos={ahora:'2026-11-04T00:30:00Z',puentes:[{id:'a',titulo:'Aurora',grado_turno:8,categoria:'puentes_juvenil',integrantes:'Ana\nBruno',estado:'pendiente',masa_g:100},{id:'b',titulo:'Descartado',grado_turno:6,categoria:'puentes_juvenil',integrantes:'Equipo B',estado:'descalificado',masa_g:90},{id:'c',titulo:'Pequeños',grado_turno:0,categoria:'puentes_infantil',integrantes:'Equipo C',estado:'en_prueba',masa_g:50}],rondas:[{puente_id:'a',carga_kg:8.5,resultado:'valida',cuenta_intento:true},{puente_id:'a',carga_kg:10,resultado:'fallo',cuenta_intento:true},{puente_id:'a',carga_kg:20,resultado:'anulada',cuenta_intento:false},{puente_id:'b',carga_kg:100,resultado:'valida',cuenta_intento:true},{puente_id:'c',carga_kg:7,resultado:'pendiente',cuenta_intento:true}],privado:{correo:'privado@colegio.edu.co'}};
+const texto=informePuentes(datos);
+assert(texto.includes('3 de noviembre de 2026'));assert(texto.includes('3 puentes inscritos · 2 siguen en competencia'));
+assert(texto.includes('Aurora · 8°'));assert(texto.includes('Total válido: *8,5 kg* · 2/3 intentos'));assert(texto.includes('Ana Bruno'));assert(!texto.includes('20 kg'));
+assert(texto.indexOf('Aurora')<texto.indexOf('Descartado'));assert(!texto.includes('1. Descartado'));
+assert(texto.includes('⏳ (sin confirmar)'));assert(texto.includes('Total válido: *0 kg*'));assert(texto.includes('Resultados provisionales'));
+assert(!texto.includes('privado@'));assert(!texto.includes('usuario'));assert(!texto.includes('auth'));
+const juvenil=informePuentes(datos,{categoria:'puentes_juvenil'});assert(!juvenil.includes('Pequeños'));assert(juvenil.includes('2 puentes inscritos · 1 sigue en competencia'));
+const vacio=informePuentes({ahora:datos.ahora,puentes:[],rondas:[]});assert(vacio.includes('0 puentes inscritos'));assert(vacio.includes('Aún no hay puentes inscritos'));
+console.log('PASS informe: fecha Colombia, categorías, clasificación, equipos, descalificados sin puesto, pendientes sin sumar, cancelaciones y datos privados excluidos');
