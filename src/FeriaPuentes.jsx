@@ -1,3 +1,4 @@
+import InformePuentes from './InformePuentes';
 import PuentesProyeccion from './PuentesProyeccion';
 import PuentesInscripcion,{FotoPuente} from './PuentesInscripcion';
 import React,{useEffect,useRef,useState} from 'react';
@@ -23,7 +24,7 @@ function CargaIntento({intentos,limite,duracion,disabled,onIniciar}){
  return <form className="bridgeForm" onSubmit={e=>{e.preventDefault();const n=Number(carga);if(Number.isFinite(n)&&n>0&&n<=Number(limite))onIniciar({carga_kg:n})}}><label>Carga elegida para el intento {Math.min(intentos+1,3)} de 3 (kg)<input aria-label="Carga elegida en kg" type="number" min="0.001" step="0.001" max={limite||undefined} required placeholder="Escribe la carga del intento" inputMode="decimal" autoComplete="off" value={carga} disabled={disabled} onChange={e=>setCarga(e.target.value)}/></label><button className="bridgePrimary" disabled={disabled||!carga||intentos>=3}>Registrar carga e iniciar intento</button><p>El profesor del máster escribe la carga elegida en cada intento, incluido el primero. La prueba dura {duracion} segundos; ese número no es una carga en kg.</p></form>;
 }
 export default function FeriaPuentes({pantalla=false}){
- const[datos,setDatos]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[ahora,setAhora]=useState(Date.now()),[ultima,setUltima]=useState(0),[categoria,setCategoria]=useState('puentes_infantil'),[soloCompetencia,setSoloCompetencia]=useState(true),[categoriaFiltro,setCategoriaFiltro]=useState('');
+ const[datos,setDatos]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[ahora,setAhora]=useState(Date.now()),[ultima,setUltima]=useState(0),[categoria,setCategoria]=useState('puentes_infantil'),[soloCompetencia,setSoloCompetencia]=useState(true),[categoriaFiltro,setCategoriaFiltro]=useState(''),[informe,setInforme]=useState(null),[generandoInforme,setGenerandoInforme]=useState(false);
  const vivo=useRef(false),ocupado=useRef(false),leyendo=useRef(false),desfase=useRef(0),ultimoIntento=useRef(null),versionVista=useRef(-1);
  function recibir(data){if(!vivo.current||data.mesa.version<versionVista.current)return;versionVista.current=data.mesa.version;desfase.current=Date.parse(data.ahora)-Date.now();setDatos(data);setUltima(Date.now());setError('')}
  async function cargar(){if(leyendo.current||ocupado.current)return;leyendo.current=true;try{const{data,error:e}=await supabase.rpc('feria_puentes_contexto');if(e)throw e;if(!ocupado.current)recibir(data)}catch(e){if(vivo.current)setError(/function|schema cache|does not exist/i.test(e.message||'')?'Activa supabase/feria-puentes-inscripcion.sql en Supabase para habilitar el concurso.':e.message||'No se pudo consultar el concurso.')}finally{leyendo.current=false}}
@@ -48,10 +49,17 @@ export default function FeriaPuentes({pantalla=false}){
  const duracion=duracionPrueba(config,ronda),duracionActiva=Number.isInteger(config?.duracion_segundos);
  const filtrarCompetencia=soloCompetencia&&!pantalla;
  const puentesVisibles=(datos?.puentes||[]).filter(p=>(pantalla||!categoriaFiltro||p.categoria===categoriaFiltro)&&(!filtrarCompetencia||sigueEnCompetencia(p,datos?.rondas)));
+ async function generarInforme(){
+  if(generandoInforme||ocupado.current)return;setGenerandoInforme(true);setError('');
+  try{const{data,error:e}=await supabase.rpc('feria_puentes_contexto');if(e)throw e;if(vivo.current){recibir(data);setInforme(data)}}
+  catch(e){if(vivo.current)setError('No se pudo generar un informe actualizado: '+(e.message||'Comprueba la conexión.'))}
+  finally{if(vivo.current)setGenerandoInforme(false)}
+ }
  function exportar(){const u=URL.createObjectURL(new Blob([csvPuentes(datos)],{type:'text/csv;charset=utf-8'}));const a=document.createElement('a');a.href=u;a.download='Concurso-puentes-STEAM.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
  if(pantalla)return <PuentesProyeccion datos={datos} categoria={categoria} onCategoria={setCategoria} ahora={ahora+desfase.current} error={error} fresco={fresco} onActualizar={()=>{ultimoIntento.current=null;cargar()}}/>;
  return <section className={'bridgeContest '+(pantalla?'bridgeProjection':'')} lang="es-CO">
- <div className="bridgeHeader"><div><span>FERIA STEAM · CLAUDINA MÚNERA</span><h2>El desafío de los puentes</h2><p>{pantalla?'Marcador en vivo':'Tablero en vivo · control docente'}</p></div><div className="bridgeActions">{pantalla?<button onClick={()=>{const r=document.fullscreenElement?document.exitFullscreen?.():document.documentElement.requestFullscreen?.();r?.catch(()=>setError('No se pudo activar pantalla completa.'))}}>Pantalla completa</button>:<><a className="bridgeButton" href="?vista=puentes-pantalla" target="_blank" rel="noopener noreferrer">Abrir pantalla para proyectar ↗</a><button disabled={!datos} onClick={exportar}>Descargar registros CSV</button></>}<button disabled={busy} onClick={()=>{ultimoIntento.current=null;cargar()}}>Actualizar</button></div></div>
+ {informe&&<InformePuentes datos={informe} onCerrar={()=>setInforme(null)}/>}
+ <div className="bridgeHeader"><div><span>FERIA STEAM · CLAUDINA MÚNERA</span><h2>El desafío de los puentes</h2><p>{pantalla?'Marcador en vivo':'Tablero en vivo · control docente'}</p></div><div className="bridgeActions">{pantalla?<button onClick={()=>{const r=document.fullscreenElement?document.exitFullscreen?.():document.documentElement.requestFullscreen?.();r?.catch(()=>setError('No se pudo activar pantalla completa.'))}}>Pantalla completa</button>:<><a className="bridgeButton" href="?vista=puentes-pantalla" target="_blank" rel="noopener noreferrer">Abrir pantalla para proyectar ↗</a><button disabled={!datos||busy||generandoInforme} onClick={generarInforme}>{generandoInforme?'Generando informe…':'Generar informe para WhatsApp'}</button><button disabled={!datos} onClick={exportar}>Descargar registros CSV</button></>}<button disabled={busy} onClick={()=>{ultimoIntento.current=null;cargar()}}>Actualizar</button></div></div>
  {datos&&!modalidad&&<p className="bridgeError" role="alert">Activa supabase/feria-puentes-tres-intentos.sql en Supabase para registrar cargas elegidas y sumar tres intentos.</p>}
  {datos&&!datos.config.every(c=>Number.isInteger(c.duracion_segundos))&&<p className="bridgeError" role="alert">Activa supabase/feria-puentes-duracion.sql en Supabase para usar 10 segundos por defecto y configurar la duración de las pruebas.</p>}{datos&&!datos.orden_turnos&&!pantalla&&<p className="bridgeError" role="alert">Activa supabase/feria-puentes-orden-turnos.sql en Supabase para ordenar los turnos por intentos, grado y nombre.</p>}{error&&<p className="bridgeError" role="alert">{error}</p>}{!fresco&&datos&&<p className="bridgeError" role="status">Sin actualización reciente. El marcador puede estar desactualizado; comprueba la conexión.</p>}
  {!pantalla&&<><label className="bridgeCompetitionFilter"><input type="checkbox" checked={soloCompetencia} onChange={e=>setSoloCompetencia(e.target.checked)}/> Solo puentes en competencia</label><p>Desmarca para mostrar también los finalizados y descalificados.</p><PuentesInscripcion onGuardar={cargar} rondas={datos?.rondas} puentesConcurso={datos?.puentes} soloCompetencia={soloCompetencia} categoriaFiltro={categoriaFiltro}/></>}
@@ -69,6 +77,7 @@ export default function FeriaPuentes({pantalla=false}){
  </>}
  </section>;
 }
+
 
 
 
