@@ -23,6 +23,10 @@ try{
  await act(async()=>tree.root.findByProps({'aria-label':'Página siguiente'}).props.onClick());assert(rows().length<=10);
  window.innerWidth=390;window.innerHeight=844;await act(async()=>listeners.get('resize')());assert(rows().length<=filasProyeccion(390,844));
  await act(async()=>btn('Infantil').props.onClick());await act(async()=>tree.update(React.createElement(Panel,props())));assert.equal(rows().length,0);assert(tree.root.findAllByProps({className:'bridgeShowEmpty'}).length);
+ const especial={...datos,puentes:puentes.slice(0,4).map((p,i)=>({...p,estado:i===1?'descalificado':i===3?'finalizado':'pendiente'})),rondas:[8,100,10,15].map((carga_kg,i)=>({id:'v'+i,puente_id:String(i),carga_kg,resultado:'valida',cuenta_intento:true})),config:[{categoria:'puentes_juvenil',duracion_segundos:10}]};
+ cat='puentes_juvenil';window.innerWidth=1280;window.innerHeight=720;await act(async()=>{listeners.get('resize')();tree.update(React.createElement(Panel,{...props(),datos:especial}))});
+ assert.deepEqual(ids(),['Puente 3 · 6°','Puente 2 · 6°','Puente 0 · 6°','Puente 1 · 6°'],'Clasificación por total con descalificado al final aunque soportó más');
+ const filtro=tree.root.findByType('input');await act(async()=>filtro.props.onChange({target:{checked:true}}));assert.deepEqual(ids(),['Puente 2 · 6°','Puente 0 · 6°'],'Solo en competencia excluye finalizados y descalificados');
  await act(async()=>tree.update(React.createElement(Panel,{...props(),datos:null,error:'Error de conexión',fresco:false})));assert(tree.root.findAllByProps({role:'alert'}).length);
  await act(async()=>tree.unmount());assert(!clases.has('bridgeProjectionActive'));assert.equal(listeners.size,0);
  console.log('PASS proyección UI: cuenta regresiva, páginas adaptables, rotación automática, pausa, navegación, cambio de categoría, estado vacío y limpieza');
