@@ -1,3 +1,4 @@
+import {textoFeria,nombreFeria} from './estiloTextoFeria.js';
 import {textoUbicacionEscarapela} from './ubicacionFeria.js';
 import escudoOriginal from './assets/escudo-original.js';
 import {firmantesPredeterminados,prepararFirma} from './firmasCertificados.js';
@@ -12,9 +13,9 @@ export const tiposParticipante={
 };
 export const tiposEscarapelaEnBlanco={
  expositor:{...tiposParticipante.expositor,nombre:'Expositor'},
- lider_aula:{nombre:'Líder de Aula',color:'#1e527d',oscuro:'#153a58',claro:'#edf3f9'},
- lider_rotacion:{nombre:'Líder de Rotación',color:'#c45832',oscuro:'#74351e',claro:'#fff3ed'},
- invitado_especial:{nombre:'Invitado Especial',color:'#793eab',oscuro:'#512776',claro:'#f5effb'}
+ lider_aula:{nombre:'Líder de aula',color:'#1e527d',oscuro:'#153a58',claro:'#edf3f9'},
+ lider_rotacion:{nombre:'Líder de rotación',color:'#c45832',oscuro:'#74351e',claro:'#fff3ed'},
+ invitado_especial:{nombre:'Invitado especial',color:'#793eab',oscuro:'#512776',claro:'#f5effb'}
 };
 export function prepararEscarapelasEnBlanco(tipo,cantidad){
  if(!Object.hasOwn(tiposEscarapelaEnBlanco,tipo)||!Number.isInteger(cantidad)||cantidad<1||cantidad>100)throw new Error('Selecciona un tipo y una cantidad entre 1 y 100.');
@@ -37,33 +38,33 @@ export function construirEscarapelas(jsPDF,personas,recursos={}){
   // Ondas vectoriales: texto nítido y colores de la categoría, sin rasterizar el nombre.
   pdf.setFillColor(c.color);pdf.lines([[20,12,48,-15,91,-5],[0,22],[-91,0],[0,-17]],x,y+29,[1,1],'F',true);
   pdf.setFillColor(c.oscuro);pdf.lines([[27,-14,62,15,91,-3],[0,10],[-91,0],[0,-7]],x,y+44,[1,1],'F',true);
-  pdf.setFont(fuente,'bold');pdf.setTextColor(c.oscuro);pdf.setFontSize(28);pdf.text('FERIA',x+6,y+12);pdf.text('STEAM',x+6,y+21);
+  pdf.setFont(fuente,'bold');pdf.setTextColor(c.oscuro);pdf.setFontSize(28);pdf.text('Feria',x+6,y+12);pdf.text('STEAM',x+6,y+21);
   pdf.setTextColor(c.color);pdf.setFontSize(24);pdf.text('2026',x+6,y+30);
-  pdf.setTextColor(c.oscuro);pdf.setFontSize(5.8);pdf.text(['CIENCIA','TECNOLOGÍA','INGENIERÍA','ARTE','MATEMÁTICAS'],x+62,y+7,{lineHeightFactor:1.3});
+  pdf.setTextColor(c.oscuro);pdf.setFontSize(5.8);pdf.text(['Ciencia','Tecnología','Ingeniería','Arte','Matemáticas'],x+62,y+7,{lineHeightFactor:1.3});
   pdf.setDrawColor(c.color);pdf.setLineWidth(.3);pdf.circle(x+77,y+32,2.3);pdf.line(x+79,y+31,x+84,y+27);pdf.circle(x+85,y+26,1.2);
   // Imagen original, proporción intacta; el mismo recurso que en la vista de la app.
   pdf.addImage(escudoOriginal,'PNG',x+39.5,y+37,12,15.6);
-  const rol=(p.enBlanco?tiposEscarapelaEnBlanco[p.tipo]:tiposParticipante[p.tipo]).nombre.toUpperCase();pdf.setFontSize(9);const rw=Math.max(40,pdf.getTextWidth(rol)+13);
+  const rol=(p.enBlanco?tiposEscarapelaEnBlanco[p.tipo]:tiposParticipante[p.tipo]).nombre;pdf.setFontSize(9);const rw=Math.max(40,pdf.getTextWidth(rol)+13);
   pdf.setFillColor(c.oscuro);pdf.roundedRect(x+(91-rw)/2,y+55,rw,7,3.5,3.5,'F');pdf.setTextColor('#ffffff');pdf.text(rol,x+45.5,y+59.8,{align:'center'});
   if(p.enBlanco){
    pdf.setDrawColor('#7b837f');pdf.setLineWidth(.2);
    const campos=p.tipo==='expositor'?[[68,'Nombre'],[78,'Grado / institución'],[88,'Proyecto'],[99,'Aula y puesto']]:p.tipo==='lider_aula'?[[72,'Nombre'],[87,'Institución'],[99,'Aula']]:p.tipo==='lider_rotacion'?[[72,'Nombre'],[87,'Institución'],[99,'Grupo de rotación']]:[[72,'Nombre'],[87,'Institución'],[99,'Cargo / entidad']];
    campos.forEach(([alto,etiqueta])=>{pdf.setFont(fuente,'normal');pdf.setFontSize(6);pdf.setTextColor(c.oscuro);pdf.text(etiqueta,x+7,y+alto);pdf.line(x+7,y+alto+7,x+84,y+alto+7)});
   }else{
-  const nombre=ajustar(pdf,p.nombre.toUpperCase(),79,12,{size:18,min:7,fuente,color:c.oscuro});pdf.text(nombre.lineas,x+45.5,y+72,{align:'center',lineHeightFactor:1.15});
-  const institucion=ajustar(pdf,(p.grado?'Grado '+limpio(p.grado)+' · ':'')+(p.institucion||'C.E.R. Claudina Múnera'),79,6,{size:7,min:4.5,bold:false,fuente,color:c.oscuro});pdf.text(institucion.lineas,x+45.5,y+85,{align:'center',lineHeightFactor:1.15});
+  const nombre=ajustar(pdf,nombreFeria(p.nombre),79,12,{size:18,min:7,fuente,color:c.oscuro});pdf.text(nombre.lineas,x+45.5,y+72,{align:'center',lineHeightFactor:1.15});
+  const institucion=ajustar(pdf,(p.grado?'Grado '+limpio(p.grado)+' · ':'')+nombreFeria(p.institucion||'C.E.R. Claudina Múnera'),79,6,{size:7,min:4.5,bold:false,fuente,color:c.oscuro});pdf.text(institucion.lineas,x+45.5,y+85,{align:'center',lineHeightFactor:1.15});
   pdf.setDrawColor(c.color);pdf.setLineWidth(.25);pdf.line(x+7,y+92,x+84,y+92);
-  if(p.proyecto_codigo){pdf.setFont(fuente,'bold');pdf.setTextColor(c.oscuro);pdf.setFontSize(11);pdf.text(p.proyecto_codigo,x+45.5,y+97,{align:'center'});const proyecto=ajustar(pdf,limpio(p.proyecto_titulo).toUpperCase(),79,4,{size:6,min:4.5,fuente,color:c.oscuro});pdf.text(proyecto.lineas,x+45.5,y+100,{align:'center',lineHeightFactor:1.15});const aula=ajustar(pdf,textoUbicacionEscarapela(p),79,6,{size:8,min:4,fuente,color:c.oscuro});pdf.text(aula.lineas,x+45.5,y+104,{align:'center',lineHeightFactor:1.05})}
-  else if(p.detalle){const detalle=ajustar(pdf,p.detalle,79,13,{size:8,min:4.5,fuente,color:c.oscuro});pdf.text(detalle.lineas,x+45.5,y+96,{align:'center',lineHeightFactor:1.15})}
+  if(p.proyecto_codigo){pdf.setFont(fuente,'bold');pdf.setTextColor(c.oscuro);pdf.setFontSize(11);pdf.text(p.proyecto_codigo,x+45.5,y+97,{align:'center'});const proyecto=ajustar(pdf,textoFeria(p.proyecto_titulo),79,4,{size:6,min:4.5,fuente,color:c.oscuro});pdf.text(proyecto.lineas,x+45.5,y+100,{align:'center',lineHeightFactor:1.15});const aula=ajustar(pdf,textoUbicacionEscarapela(p),79,6,{size:8,min:4,fuente,color:c.oscuro});pdf.text(aula.lineas,x+45.5,y+104,{align:'center',lineHeightFactor:1.05})}
+  else if(p.detalle){const detalle=ajustar(pdf,textoFeria(p.detalle),79,13,{size:8,min:4.5,fuente,color:c.oscuro});pdf.text(detalle.lineas,x+45.5,y+96,{align:'center',lineHeightFactor:1.15})}
   }
-  pdf.setDrawColor(c.color);pdf.setLineWidth(.5);pdf.line(x,y+108,x+91,y+108);pdf.setFont(fuente,'normal');pdf.setFontSize(5.7);pdf.setTextColor(c.oscuro);pdf.text(p.enBlanco?'':codigoParticipante(p),x+5,y+111.5);pdf.text('6 NOV 2026',x+86,y+111.5,{align:'right'});pdf.setFont(fuente,'bold');pdf.setFontSize(7);pdf.text('Claudina App',x+45.5,y+111.5,{align:'center'});
+  pdf.setDrawColor(c.color);pdf.setLineWidth(.5);pdf.line(x,y+108,x+91,y+108);pdf.setFont(fuente,'normal');pdf.setFontSize(5.7);pdf.setTextColor(c.oscuro);pdf.text(p.enBlanco?'':codigoParticipante(p),x+5,y+111.5);pdf.text('6 nov 2026',x+86,y+111.5,{align:'right'});pdf.setFont(fuente,'bold');pdf.setFontSize(7);pdf.text('Claudina App',x+45.5,y+111.5,{align:'center'});
   pdf.setDrawColor('#808b84');pdf.setLineWidth(.15);pdf.setLineDashPattern([1,1],0);pdf.rect(x,y,91,113);pdf.setLineDashPattern([],0);
  });pdf.setProperties({title:'Escarapelas 9,1 × 11,3 cm - Feria STEAM 2026',author:'C.E.R. Claudina Múnera'});return pdf;
 }
 export function textoCertificado(p){
  const evento=limpio(p.evento)||'Feria STEAM 2026',dia=limpio(p.fecha_evento)||'6 de noviembre de 2026';
- const accion={expositor:`participó como expositor(a)${p.proyecto_titulo?' con el proyecto «'+limpio(p.proyecto_titulo)+'»':''}`,evaluador:'participó como jurado de los proyectos',profesor:'participó como docente',logistica:'integró el equipo de logística y apoyó la organización',ponente:`participó como ponente${p.detalle?' con la actividad «'+limpio(p.detalle)+'»':''}`,asistente:'participó como asistente'}[p.tipo];
- if(!accion)throw new Error('Tipo de participante no válido.');return `${accion} en la ${evento}, realizada el ${dia} en el C.E.R. Claudina Múnera, vereda La Corrala, Caldas, Antioquia.`;
+ const accion={expositor:`participó como expositor(a)${p.proyecto_titulo?' con el proyecto «'+textoFeria(p.proyecto_titulo)+'»':''}`,evaluador:'participó como jurado de los proyectos',profesor:'participó como docente',logistica:'integró el equipo de logística y apoyó la organización',ponente:`participó como ponente${p.detalle?' con la actividad «'+textoFeria(p.detalle)+'»':''}`,asistente:'participó como asistente'}[p.tipo];
+ if(!accion)throw new Error('Tipo de participante no válido.');return `${accion.charAt(0).toLocaleUpperCase('es')+accion.slice(1)} en la ${evento}, realizada el ${dia} en el C.E.R. Claudina Múnera, vereda La Corrala, Caldas, Antioquia.`;
 }
 export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=false}={}){
  if(!certificados.length||certificados.some(c=>!c.contenido?.nombre||!tiposParticipante[c.contenido.tipo]||(!borrador&&(!c.folio||!c.emitido_en||c.anulado_en))))throw new Error('El certificado debe estar emitido y vigente.');
@@ -75,16 +76,16 @@ export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=
   pdf.addImage(recursos.fondoCertificado,'PNG',0,0,279.4,215.9);
   // Fondo ilustrado aprobado; escudo, textos y firmas se añaden como datos independientes.
   pdf.addImage(escudoOriginal,'PNG',37,21,18,23.4);
-  pdf.setTextColor(tinta);pdf.setFont(fuente,'bold');pdf.setFontSize(13);pdf.text('CENTRO EDUCATIVO RURAL CLAUDINA MÚNERA',139.7,30,{align:'center'});
-  pdf.setFont(fuente,'normal');pdf.setFontSize(8);pdf.text('VEREDA LA CORRALA · CALDAS, ANTIOQUIA',139.7,38,{align:'center'});
+  pdf.setTextColor(tinta);pdf.setFont(fuente,'bold');pdf.setFontSize(13);pdf.text('Centro Educativo Rural Claudina Múnera',139.7,30,{align:'center'});
+  pdf.setFont(fuente,'normal');pdf.setFontSize(8);pdf.text('Vereda La Corrala · Caldas, Antioquia',139.7,38,{align:'center'});
   const resolucion=ajustar(pdf,'Aprobado por Resolución Departamental n.º S201500094400 del 12 de marzo de 2015',184,7,{size:7.5,min:6.5,bold:false,fuente,color:tinta});pdf.text(resolucion.lineas,139.7,44,{align:'center',lineHeightFactor:1.15});
-  pdf.setFillColor(azul);pdf.roundedRect(99.7,55,80,10,5,5,'F');pdf.setFont(fuente,'bold');pdf.setFontSize(12);pdf.setTextColor('#ffffff');pdf.text('FERIA STEAM 2026',139.7,61.8,{align:'center'});
-  pdf.setTextColor(azul);pdf.setFontSize(34);pdf.text('CERTIFICADO',139.7,81,{align:'center'});
-  pdf.setTextColor(tinta);pdf.setFont(fuente,'bold');pdf.setFontSize(10);pdf.text('D E  P A R T I C I P A C I Ó N',139.7,90,{align:'center'});
+  pdf.setFillColor(azul);pdf.roundedRect(99.7,55,80,10,5,5,'F');pdf.setFont(fuente,'bold');pdf.setFontSize(12);pdf.setTextColor('#ffffff');pdf.text('Feria STEAM 2026',139.7,61.8,{align:'center'});
+  pdf.setTextColor(azul);pdf.setFontSize(34);pdf.text('Certificado',139.7,81,{align:'center'});
+  pdf.setTextColor(tinta);pdf.setFont(fuente,'bold');pdf.setFontSize(10);pdf.text('De participación',139.7,90,{align:'center'});
   pdf.setDrawColor('#ffc31a');pdf.setLineWidth(1);pdf.line(103,101,176.4,101);
   pdf.setFont(fuente,'bold');pdf.setFontSize(11);pdf.text('¡Tus ideas pueden cambiar el mundo!',139.7,98,{align:'center'});
-  const nombre=ajustar(pdf,p.nombre,184,16,{size:25,min:10,fuente,color:tinta});pdf.text(nombre.lineas,139.7,112,{align:'center',lineHeightFactor:1.15});
-  const institucion=ajustar(pdf,p.institucion||'',184,6,{size:9,min:6,bold:false,fuente,color:tinta});pdf.text(institucion.lineas,139.7,128,{align:'center',lineHeightFactor:1.15});
+  const nombre=ajustar(pdf,nombreFeria(p.nombre),184,16,{size:25,min:10,fuente,color:tinta});pdf.text(nombre.lineas,139.7,112,{align:'center',lineHeightFactor:1.15});
+  const institucion=ajustar(pdf,nombreFeria(p.institucion),184,6,{size:9,min:6,bold:false,fuente,color:tinta});pdf.text(institucion.lineas,139.7,128,{align:'center',lineHeightFactor:1.15});
   const firmantes=Array.isArray(p.firmantes)&&p.firmantes.length>=1&&p.firmantes.length<=6?p.firmantes:firmantesPredeterminados.map((f,n)=>({...f,firma:n===1?recursos.firmaTransparente:null}));
   const dosFilas=firmantes.length>3;
   const cuerpo=ajustar(pdf,textoCertificado(p),184,dosFilas?12:17,{size:dosFilas?10:11,min:6,bold:false,fuente,color:tinta});pdf.text(cuerpo.lineas,139.7,138,{align:'center',lineHeightFactor:1.15});
@@ -95,13 +96,13 @@ export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=
    const centro=47.7+anchoCelda*(n%3+.5),linea=dosFilas?167+fila*23:184,altoFirma=dosFilas?10:16;
    if(f.firma){const info=pdf.getImageProperties(f.firma),ratio=info.width/info.height,w=Math.min(ancho-8,50,altoFirma*ratio),h=w/ratio;pdf.addImage(f.firma,'PNG',centro-w/2,linea-2-h,w,h);}
    pdf.setDrawColor(c.color);pdf.setLineWidth(.25);pdf.line(centro-ancho/2,linea,centro+ancho/2,linea);
-   const nombreFirma=ajustar(pdf,f.nombre,ancho,dosFilas?5:7,{size:cantidadFila===3?7.5:9,min:4.5,fuente,color:tinta});pdf.text(nombreFirma.lineas,centro,linea+4,{align:'center',lineHeightFactor:1.15});
-   const cargo=ajustar(pdf,f.cargo,ancho,dosFilas?5:7,{size:7,min:4.5,bold:false,fuente,color:tinta});pdf.text(cargo.lineas,centro,linea+(dosFilas?9:11),{align:'center',lineHeightFactor:1.15});
+   const nombreFirma=ajustar(pdf,nombreFeria(f.nombre),ancho,dosFilas?5:7,{size:cantidadFila===3?7.5:9,min:4.5,fuente,color:tinta});pdf.text(nombreFirma.lineas,centro,linea+4,{align:'center',lineHeightFactor:1.15});
+   const cargo=ajustar(pdf,textoFeria(f.cargo),ancho,dosFilas?5:7,{size:7,min:4.5,bold:false,fuente,color:tinta});pdf.text(cargo.lineas,centro,linea+(dosFilas?9:11),{align:'center',lineHeightFactor:1.15});
   });
   pdf.setFillColor('#ffffff');pdf.roundedRect(47.7,203,184,5,1,1,'F');
-  pdf.setFont(fuente,'normal');pdf.setFontSize(5.3);pdf.setTextColor(tinta);pdf.text(borrador?'VISTA PREVIA · SIN EMITIR':codigoCertificado(cert),47.7,206);
-  pdf.text('CIENCIA · TECNOLOGÍA · INGENIERÍA · ARTE · MATEMÁTICAS',231.7,206,{align:'right'});
-  if(borrador){pdf.setTextColor('#aa4555');pdf.setFont(fuente,'bold');pdf.setFontSize(9);pdf.text('BORRADOR',229,50,{align:'right'});}
+  pdf.setFont(fuente,'normal');pdf.setFontSize(5.3);pdf.setTextColor(tinta);pdf.text(borrador?'Vista previa · Sin emitir':codigoCertificado(cert),47.7,206);
+  pdf.text('Ciencia · Tecnología · Ingeniería · Arte · Matemáticas',231.7,206,{align:'right'});
+  if(borrador){pdf.setTextColor('#aa4555');pdf.setFont(fuente,'bold');pdf.setFontSize(9);pdf.text('Borrador',229,50,{align:'right'});}
  });pdf.setProperties({title:'Certificados - Feria STEAM 2026',author:'C.E.R. Claudina Múnera'});return pdf;
 }
 
