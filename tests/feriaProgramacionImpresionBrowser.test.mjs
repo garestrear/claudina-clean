@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {chromium} from 'playwright-core';
+import chromiumConfig from '@sparticuz/chromium';
+import {htmlProgramacionFeria,ordenarEspaciosImpresion} from '../src/programacionFeria.js';
+const espacios=[10,2,1].map(n=>({id:'s'+n,nombre:'Salón '+n,activo:true}));espacios.push({id:'p',nombre:'Patio',activo:true});
+assert.deepEqual([...espacios].sort(ordenarEspaciosImpresion).map(e=>e.nombre),['Salón 1','Salón 2','Salón 10','Patio']);
+const fecha='2026-11-06',docentes=[{id:'d',nombre:'Gustavo Restrepo'}];
+const plan={minutos:20,lideres:[{espacio_id:'s1',docente_id:'d'}],grupos:[{numero:1,docente_id:'d',estudiantes_ids:['e']}]};
+const datos={espacios,docentes,agenda:[{fecha,inicio:'07:30',fin:'08:00',titulo:'Apertura de la feria',detalle:'Himno y palabras de bienvenida',espacio_nombre:'Aula múltiple'}],programacion:espacios.map(e=>({id:e.id,espacio_id:e.id,fecha,activo:true,inicio:'08:00',fin:'10:00',titulo:'Proyecto de ciencia '+e.nombre,puesto:'Mesa 1',docente_id:'d',notas:'Preparar materiales'})),carruseles:[{inicio:'08:00',fin:'10:00',contexto:{plan,aulas:[...espacios].sort(ordenarEspaciosImpresion),visitantes:[{id:'e',nombre:'Estudiante de prueba',grado:6}],firma:'ok',firma_guardada:'ok'}},{inicio:'10:15',fin:'11:40',contexto:{plan,aulas:[espacios[0]],visitantes:[],firma:'nueva',firma_guardada:'vieja'}}]};
+const logo='data:image/png;base64,'+(await readFile('src/assets/escudo-membrete.png')).toString('base64');
+const html=htmlProgramacionFeria(datos,fecha,logo);
+assert(html.includes('Recorrido desactualizado'));assert(html.includes('10:15 - 11:40'));assert(html.includes('Estudiante de prueba (6°)'));
+const browser=await chromium.launch({executablePath:await chromiumConfig.executablePath(),args:chromiumConfig.args,headless:true});
+try{const page=await browser.newPage({viewport:{width:1100,height:850}});await page.setContent(html);await page.emulateMedia({media:'print'});await page.evaluate(()=>Promise.all([...document.images].map(i=>i.decode())));
+ assert.equal(await page.locator('img').first().evaluate(i=>i.naturalWidth>0),true);
+ assert.deepEqual(await page.locator('section.room>h2').allTextContents(),['Salón 1','Salón 2','Salón 10','Patio']);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.screenshot({path:'/tmp/programacion-completa.png',fullPage:true});
+ console.log('PASS impresión: escudo, secciones, franjas, grupos, alertas y orden numérico de salones');
+}finally{await browser.close()}
