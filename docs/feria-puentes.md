@@ -198,3 +198,16 @@ en otros navegadores prepara el mensaje en WhatsApp. Para textos extensos se usa
 La persona docente elige destinatario y confirma el envío; no hay envío automático.
 Si no se puede consultar información reciente, se muestra error en lugar de
 compartir resultados anteriores. No requiere SQL adicional.
+
+## Corregir masa después de las pruebas
+
+Ejecutar `supabase/feria-puentes-corregir-masa.sql` después de las migraciones
+anteriores (incluida `feria-puentes-importar.sql`). Es repetible y conserva las
+mejoras de la función instalada.
+
+En **Pesar puente, corregir masa y registrar mediciones**, seleccionar cualquier
+puente, incluidos los finalizados. Si ya tiene intentos, solo se habilita la masa
+y aparece **Guardar masa**. No se modifican resultados, dimensiones, predicción,
+estado ni integrantes. Se recalculan los desempates y se registra la acción en la
+auditoría del concurso. Dejar la masa vacía permite marcarla como pendiente de
+verificar. Durante un intento en curso no se permite corregirla.
