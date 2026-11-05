@@ -27,6 +27,11 @@ export function solicitudPuente(){if(globalThis.crypto?.randomUUID)return global
 export function intentosPuente(puente,rondas){
  return rondas===undefined?Number(puente.intentos_consumidos)||0:rondas.filter(r=>r.puente_id===puente.id&&(r.cuenta_intento??r.resultado!=='anulada')).length;
 }
+export function coincideGradoPuente(puente,grado=''){
+ if(grado==='')return true;
+ const valor=gradoTurnoPuente(puente);
+ return grado==='sin_grado'?!Number.isFinite(valor):valor===Number(grado);
+}
 export function gradoTurnoPuente(puente){
  if(puente.grado_turno!==null&&puente.grado_turno!==undefined&&Number.isFinite(Number(puente.grado_turno)))return Number(puente.grado_turno);
  const grados=(puente.equipo||[]).filter(e=>e.grado!==null&&e.grado!==undefined).map(e=>Number(e.grado)).filter(Number.isFinite);

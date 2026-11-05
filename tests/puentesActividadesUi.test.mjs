@@ -19,9 +19,30 @@ globalThis.__puentesSupabase={rpc:async(nombre,args)=>{
  throw Error('RPC inesperada');
 }};
 try{
- await build({entryPoints:['src/FeriaPuentes.jsx'],bundle:true,platform:'node',format:'esm',outfile:dir+'/app.mjs',external:['react'],loader:{'.css':'empty'},plugins:[{name:'mocks',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:'export const supabase=globalThis.__puentesSupabase;'}))}}]});
+ await build({entryPoints:['src/FeriaPuentes.jsx'],bundle:true,platform:'node',format:'esm',outfile:dir+'/app.mjs',external:['react'],loader:{'.css':'empty','.ttf':'text'},plugins:[{name:'mocks',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:'export const supabase=globalThis.__puentesSupabase;'}))}}]});
  const {default:Panel}=await import(dir+'/app.mjs');let tree;const tick=()=>new Promise(r=>setTimeout(r,15));
  await act(async()=>{tree=create(React.createElement(Panel));await tick()});
+ const grado=()=>tree.root.findByProps({'aria-label':'Filtrar grado de puentes'});
+ const turno=()=>tree.root.findAllByType('select').find(n=>n.parent.children[0]==='Puente en turno');
+ const opciones=()=>turno().findAllByType('option').filter(n=>n.props.value).map(n=>n.props.value);
+ const tarjetas=()=>tree.root.findAllByType('article').map(n=>n.findByType('h3').children.join(''));
+ const filas=()=>tree.root.findAllByProps({className:'bridgeRankings'})[0].findAllByType('tbody').flatMap(n=>n.findAllByType('tr')).map(n=>n.findAllByType('td')[1].children[0]);
+ await act(async()=>grado().props.onChange({target:{value:'6'}}));
+ assert.deepEqual(opciones(),['b','z']);assert.deepEqual(tarjetas(),['Brisa · 6°','Zeta · 6°']);assert.deepEqual(filas(),['Brisa · 6°','Zeta · 6°']);
+ assert.equal(ctx.mesa.puente_id,'p','El filtro conserva el turno hasta seleccionar otro puente');
+ const categoria=()=>tree.root.findByProps({'aria-label':'Filtrar categoría de puentes'});
+ await act(async()=>categoria().props.onChange({target:{value:'puentes_juvenil'}}));
+ assert.deepEqual(opciones(),[]);assert.deepEqual(tarjetas(),[]);assert.deepEqual(filas(),[]);
+ await act(async()=>categoria().props.onChange({target:{value:''}}));
+ await act(async()=>grado().props.onChange({target:{value:'2'}}));assert.deepEqual(opciones(),['p']);
+ await act(async()=>grado().props.onChange({target:{value:'8'}}));assert.deepEqual(opciones(),[]);
+ await act(async()=>grado().props.onChange({target:{value:''}}));assert.deepEqual(opciones(),['p','b','z']);
+ const {coincideGradoPuente}=await import('../src/puentes.js');
+ assert(coincideGradoPuente({grado_turno:0},'0'));
+ assert(!coincideGradoPuente({grado_turno:6},'0'));
+ assert(coincideGradoPuente({},'sin_grado'));
+ assert(!coincideGradoPuente({},'0'));
+ assert(coincideGradoPuente({equipo:[{grado:6},{grado:2}]},'2'));
  const select=()=>tree.root.findByProps({'aria-label':'Seleccionar Brisa · 6° para la siguiente prueba'});
  assert.equal(select().props.disabled,false);
  const content=JSON.stringify(tree.toJSON());
@@ -38,5 +59,5 @@ try{
  await act(async()=>{input().parent.parent.props.onSubmit({preventDefault(){}});await tick()});
  assert.equal(select().props.disabled,true,'No permite cambiar la mesa durante un intento pendiente');
  await act(async()=>tree.unmount());
- console.log('PASS Actividades, orden del panel, inscripción desplegable, selección desde clasificación y bloqueo durante intento');
+ console.log('PASS filtro por grado combinado con categoría en turno, clasificación y fichas; selección y bloqueo durante intento');
 }finally{await rm(dir,{recursive:true,force:true});delete globalThis.__puentesSupabase}
