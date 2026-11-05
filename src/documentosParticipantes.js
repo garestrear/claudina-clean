@@ -9,7 +9,17 @@ export const tiposParticipante={
  ponente:{nombre:'Ponente',prefijo:'PON',color:'#793eab',oscuro:'#512776',claro:'#f5effb'},
  asistente:{nombre:'Asistente',prefijo:'ASI',color:'#117d7b',oscuro:'#0b514f',claro:'#eaf7f6'}
 };
-export const temaParticipante=p=>p.tipo==='expositor'&&categoriasPlaca[p.categoria]?{...tiposParticipante.expositor,...categoriasPlaca[p.categoria],nombre:tiposParticipante.expositor.nombre}:tiposParticipante[p.tipo];
+export const tiposEscarapelaEnBlanco={
+ expositor:{...tiposParticipante.expositor,nombre:'Expositor'},
+ lider_aula:{nombre:'Líder de Aula',color:'#1e527d',oscuro:'#153a58',claro:'#edf3f9'},
+ lider_rotacion:{nombre:'Líder de Rotación',color:'#c45832',oscuro:'#74351e',claro:'#fff3ed'},
+ invitado_especial:{nombre:'Invitado Especial',color:'#793eab',oscuro:'#512776',claro:'#f5effb'}
+};
+export function prepararEscarapelasEnBlanco(tipo,cantidad){
+ if(!Object.hasOwn(tiposEscarapelaEnBlanco,tipo)||!Number.isInteger(cantidad)||cantidad<1||cantidad>100)throw new Error('Selecciona un tipo y una cantidad entre 1 y 100.');
+ return Array.from({length:cantidad},()=>({tipo,enBlanco:true}));
+}
+export const temaParticipante=p=>p.enBlanco?tiposEscarapelaEnBlanco[p.tipo]:p.tipo==='expositor'&&categoriasPlaca[p.categoria]?{...tiposParticipante.expositor,...categoriasPlaca[p.categoria],nombre:tiposParticipante.expositor.nombre}:tiposParticipante[p.tipo];
 export const codigoParticipante=p=>`${tiposParticipante[p.tipo].prefijo}-${String(p.folio).padStart(4,'0')}`;
 export const codigoCertificado=c=>`CM-STEAM-2026-${String(c.folio).padStart(6,'0')}`;
 const limpio=v=>String(v??'').replace(/[\r\n\t]+/g,' ').replace(/\s+/g,' ').trim();
@@ -18,7 +28,7 @@ function fuentes(pdf,recursos){if(recursos.fuenteRegular&&recursos.fuenteNegrita
 function ajustar(pdf,texto,ancho,alto,{size=16,min=6,bold=true,fuente,color='#17372b'}={}){let lineas;pdf.setFont(fuente,bold?'bold':'normal');pdf.setTextColor(color);do{pdf.setFontSize(size);lineas=pdf.splitTextToSize(limpio(texto),ancho);if(lineas.length*size*.35278*1.15<=alto)break;size-=.5}while(size>min);return{lineas,size}}
 // Cada rectángulo de corte mide exactamente 91 × 113 mm; cuatro en carta vertical.
 export function construirEscarapelas(jsPDF,personas,recursos={}){
- if(!personas.length||personas.some(p=>!tiposParticipante[p.tipo]||!limpio(p.nombre)||!p.folio))throw new Error('Selecciona participantes con nombre y tipo válidos.');
+ if(!personas.length||personas.some(p=>p.enBlanco?!Object.hasOwn(tiposEscarapelaEnBlanco,p.tipo):!tiposParticipante[p.tipo]||!limpio(p.nombre)||!p.folio))throw new Error('Selecciona participantes con nombre y tipo válidos.');
  const pdf=new jsPDF({unit:'mm',format:'letter',orientation:'portrait',compress:true}),fuente=fuentes(pdf,recursos);
  personas.forEach((p,i)=>{
   if(i&&i%4===0)pdf.addPage('letter','portrait');const slot=i%4,x=11.95+(slot%2)*101,y=21.7+Math.floor(slot/2)*123,c=temaParticipante(p);
@@ -32,14 +42,20 @@ export function construirEscarapelas(jsPDF,personas,recursos={}){
   pdf.setDrawColor(c.color);pdf.setLineWidth(.3);pdf.circle(x+77,y+32,2.3);pdf.line(x+79,y+31,x+84,y+27);pdf.circle(x+85,y+26,1.2);
   // Imagen original, proporción intacta; el mismo recurso que en la vista de la app.
   pdf.addImage(escudoOriginal,'PNG',x+39.5,y+37,12,15.6);
-  const rol=tiposParticipante[p.tipo].nombre.toUpperCase();pdf.setFontSize(9);const rw=Math.max(40,pdf.getTextWidth(rol)+13);
+  const rol=(p.enBlanco?tiposEscarapelaEnBlanco[p.tipo]:tiposParticipante[p.tipo]).nombre.toUpperCase();pdf.setFontSize(9);const rw=Math.max(40,pdf.getTextWidth(rol)+13);
   pdf.setFillColor(c.oscuro);pdf.roundedRect(x+(91-rw)/2,y+55,rw,7,3.5,3.5,'F');pdf.setTextColor('#ffffff');pdf.text(rol,x+45.5,y+59.8,{align:'center'});
+  if(p.enBlanco){
+   pdf.setDrawColor('#7b837f');pdf.setLineWidth(.2);
+   const campos=p.tipo==='expositor'?[[68,'Nombre'],[78,'Grado / institución'],[88,'Proyecto'],[99,'Aula y puesto']]:p.tipo==='lider_aula'?[[72,'Nombre'],[87,'Institución'],[99,'Aula']]:p.tipo==='lider_rotacion'?[[72,'Nombre'],[87,'Institución'],[99,'Grupo de rotación']]:[[72,'Nombre'],[87,'Institución'],[99,'Cargo / entidad']];
+   campos.forEach(([alto,etiqueta])=>{pdf.setFont(fuente,'normal');pdf.setFontSize(6);pdf.setTextColor(c.oscuro);pdf.text(etiqueta,x+7,y+alto);pdf.line(x+7,y+alto+7,x+84,y+alto+7)});
+  }else{
   const nombre=ajustar(pdf,p.nombre.toUpperCase(),79,12,{size:18,min:7,fuente,color:c.oscuro});pdf.text(nombre.lineas,x+45.5,y+72,{align:'center',lineHeightFactor:1.15});
   const institucion=ajustar(pdf,(p.grado?'Grado '+limpio(p.grado)+' · ':'')+(p.institucion||'C.E.R. Claudina Múnera'),79,6,{size:7,min:4.5,bold:false,fuente,color:c.oscuro});pdf.text(institucion.lineas,x+45.5,y+85,{align:'center',lineHeightFactor:1.15});
   pdf.setDrawColor(c.color);pdf.setLineWidth(.25);pdf.line(x+7,y+92,x+84,y+92);
   if(p.proyecto_codigo){pdf.setFont(fuente,'bold');pdf.setTextColor(c.oscuro);pdf.setFontSize(11);pdf.text(p.proyecto_codigo,x+45.5,y+97,{align:'center'});const proyecto=ajustar(pdf,limpio(p.proyecto_titulo).toUpperCase(),79,4,{size:6,min:4.5,fuente,color:c.oscuro});pdf.text(proyecto.lineas,x+45.5,y+100,{align:'center',lineHeightFactor:1.15});const aula=ajustar(pdf,textoUbicacionEscarapela(p),79,6,{size:8,min:4,fuente,color:c.oscuro});pdf.text(aula.lineas,x+45.5,y+104,{align:'center',lineHeightFactor:1.05})}
   else if(p.detalle){const detalle=ajustar(pdf,p.detalle,79,13,{size:8,min:4.5,fuente,color:c.oscuro});pdf.text(detalle.lineas,x+45.5,y+96,{align:'center',lineHeightFactor:1.15})}
-  pdf.setDrawColor(c.color);pdf.setLineWidth(.5);pdf.line(x,y+108,x+91,y+108);pdf.setFont(fuente,'normal');pdf.setFontSize(5.7);pdf.setTextColor(c.oscuro);pdf.text(codigoParticipante(p),x+5,y+111.5);pdf.text('6 NOV 2026',x+86,y+111.5,{align:'right'});pdf.setFont(fuente,'bold');pdf.setFontSize(7);pdf.text('Claudina App',x+45.5,y+111.5,{align:'center'});
+  }
+  pdf.setDrawColor(c.color);pdf.setLineWidth(.5);pdf.line(x,y+108,x+91,y+108);pdf.setFont(fuente,'normal');pdf.setFontSize(5.7);pdf.setTextColor(c.oscuro);pdf.text(p.enBlanco?'':codigoParticipante(p),x+5,y+111.5);pdf.text('6 NOV 2026',x+86,y+111.5,{align:'right'});pdf.setFont(fuente,'bold');pdf.setFontSize(7);pdf.text('Claudina App',x+45.5,y+111.5,{align:'center'});
   pdf.setDrawColor('#808b84');pdf.setLineWidth(.15);pdf.setLineDashPattern([1,1],0);pdf.rect(x,y,91,113);pdf.setLineDashPattern([],0);
  });pdf.setProperties({title:'Escarapelas 9,1 × 11,3 cm - Feria STEAM 2026',author:'C.E.R. Claudina Múnera'});return pdf;
 }
@@ -95,3 +111,5 @@ export async function descargarEscarapelas(personas){const r=await recursos();co
 let fondoCertificadoPromise;
 async function cargarFondoCertificado(){if(!fondoCertificadoPromise)fondoCertificadoPromise=import('./assets/certificado-steam-juvenil.png').then(m=>recurso(m.default)).catch(e=>{fondoCertificadoPromise=null;throw e});return fondoCertificadoPromise}
 export async function descargarCertificados(certificados,{borrador=false}={}){const[r,fondoCertificado]=await Promise.all([recursos(),cargarFondoCertificado()]);construirCertificados(r.jsPDF,certificados,{...r.recursos,fondoCertificado},{borrador}).save(borrador?'Vista-previa-certificado-STEAM.pdf':certificados.length===1?`Certificado-${codigoCertificado(certificados[0])}.pdf`:'Certificados-Feria-STEAM-2026.pdf')}
+
+export async function descargarEscarapelasEnBlanco(tipo,cantidad){const personas=prepararEscarapelasEnBlanco(tipo,cantidad),r=await recursos();construirEscarapelas(r.jsPDF,personas,r.recursos).save(`Escarapelas-en-blanco-${tipo}.pdf`)}
