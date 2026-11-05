@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {textoUbicacionEscarapela} from '../src/ubicacionFeria.js';
+import {temaParticipante} from '../src/documentosParticipantes.js';
+assert.equal(textoUbicacionEscarapela({ubicaciones:[{espacio_nombre:'Salón 6',puesto:'Puesto 2'}]}),'Salón 6 · Puesto 2');
+assert.equal(textoUbicacionEscarapela({ubicaciones:[{espacio_nombre:'Restaurante',puesto:'Mesa 1A'}]}),'Restaurante · Mesa 1A');
+assert.equal(textoUbicacionEscarapela({}),'Salón y puesto por asignar');
+assert.equal(temaParticipante({tipo:'expositor',categoria:'stem'}).color,'#16844b');
+assert.notEqual(temaParticipante({tipo:'expositor',categoria:'stem'}).color,temaParticipante({tipo:'expositor',categoria:'emprendimiento'}).color);
+const multiples=textoUbicacionEscarapela({ubicaciones:[{espacio_nombre:'Salón 1',puesto:'Puesto 3',inicio:'08:00',fin:'10:00'},{espacio_nombre:'Patio',puesto:'Puesto 1',inicio:'10:15',fin:'11:40'}]});
+assert(multiples.includes('Puesto 3 (08:00–10:00)'));assert(multiples.includes('Puesto 1 (10:15–11:40)'));
+console.log('PASS ubicación de escarapela: salón, puesto, varias franjas y color STEM');
