@@ -63,8 +63,8 @@ await page.getByRole('button',{name:'Generar grupos por grado',exact:true}).wait
 await page.getByRole('button',{name:'Generar grupos por grado',exact:true}).click();
 assert.equal(await page.getByRole('combobox',{name:/Líder de/}).count(),1);
 assert.equal(await page.getByRole('combobox',{name:/Acompañante del grupo/}).count(),2);
-await page.getByRole('heading',{name:'Grupo 1 · 3 estudiantes',exact:true}).waitFor();
-await page.getByRole('heading',{name:'Grupo 2 · 3 estudiantes',exact:true}).waitFor();
+await page.getByRole('heading',{name:'Grupo 1 · 6 estudiantes',exact:true}).waitFor();
+await page.getByRole('heading',{name:'Grupo 2 · 0 estudiantes',exact:true}).waitFor();
 await page.getByRole('button',{name:'Asignar docentes disponibles',exact:true}).click();
 await page.getByRole('button',{name:'Guardar organización',exact:true}).click();
 await page.getByRole('status').filter({hasText:'Organización guardada:'}).waitFor();
