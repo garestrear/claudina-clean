@@ -8,3 +8,10 @@ console.log('PASS: disponibilidad por concurrencia, límites exactos, edición s
 
 assert.equal(disponibilidadEspacio(e,[r('rechazado','08:00','10:00',{proyecto_vigente:false})],tramo).estado,'libre');
 const sinRechazado=htmlProgramacionFeria({espacios:[e],docentes:[],programacion:[r('rechazado','08:00','10:00',{titulo:'Rechazado fantasma',proyecto_vigente:false})]},tramo.fecha);assert(!sinRechazado.includes('Rechazado fantasma'));
+
+const proyecto=r('alumnos','08:00:00','10:00:00',{tipo:'proyecto',origen:'claudina',proyecto_id:'p1',docente_id:'d1',responsable:'Profesor asesor',titulo:'Cohete de agua'});
+const alumno=(id,nombre,grado)=>({estudiante_id:id,nombre,grado,proyecto_id:'p1',fecha:tramo.fecha,inicio:'08:00',fin:'10:00'});
+const impreso=htmlProgramacionFeria({espacios:[e],docentes:[{id:'d1',nombre:'Profesor asesor'}],programacion:[proyecto],expositores:[alumno('a1','ANA RESTREPO',4),alumno('a2','LUIS ROJAS',4),alumno('a1','ANA RESTREPO',4),{...alumno('otro','Otro horario',5),inicio:'10:15',fin:'11:40'}]},tramo.fecha);
+assert(impreso.includes('Ana Restrepo (4°) · Luis Rojas (4°)'));assert(!impreso.includes('Profesor asesor'));assert(!impreso.includes('Otro horario'));assert.equal(impreso.split('Ana Restrepo (4°)').length,2);
+const pendiente=htmlProgramacionFeria({espacios:[e],programacion:[proyecto],docentes:[{id:'d1',nombre:'Profesor asesor'}]},tramo.fecha);assert(pendiente.includes('Expositores por confirmar'));assert(!pendiente.includes('Profesor asesor'));
+console.log('PASS responsables: integrantes actuales por proyecto y horario, sin duplicados ni asesor en la columna');
