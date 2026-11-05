@@ -173,3 +173,18 @@ en **Aulas y espacios**. La vista de revisión no inventa capacidades. La opció
 **Actualizar aulas** recarga disponibilidad y descarta la selección manual.
 
 Verificación: `npm run test:aula-revision` (SQL y navegador móvil).
+
+## Numeración automática de mesas
+
+Ejecutar `supabase/feria-puestos-automaticos.sql` después de los módulos de espacios
+y asignación automática. Completa al instalar los proyectos activos ya ubicados
+que no tengan puesto; conserva las etiquetas existentes como asignaciones manuales.
+Cada nuevo proyecto recibe la primera «Mesa N» libre en su aula y horario, tanto
+para Claudina como para invitados. Los horarios sin cruce pueden reutilizar mesa.
+Al mover una asignación automática se busca mesa libre en el destino; los puestos
+manuales se conservan y se validan los conflictos. Dejar vacío el campo permite
+volver a la numeración automática. No modifica el aula ni crea nuevas reservas.
+
+La migración es repetible y aumenta la versión de las reservas que completa:
+recargar Programación después de ejecutarla. `npm run test:puestos` verifica
+la migración, sus reintentos, numeración, traslados y conservación de manuales.
