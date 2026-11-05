@@ -17,7 +17,7 @@ export default function FeriaEspacios(){
  async function imprimirCompleto(){
   const ventana=window.open('','_blank');if(!ventana){setError('Permite abrir la ventana de impresión e inténtalo de nuevo.');return}
   ventana.opener=null;ventana.document.write('<p>Preparando programación completa…</p>');setImprimiendo(true);setError('');
-  try{const{data,error}=await supabase.rpc('feria_programacion_impresion',{dia:tramo.fecha});if(error)throw error;
+  try{const[programa,expositores]=await Promise.all([supabase.rpc('feria_programacion_impresion',{dia:tramo.fecha}),supabase.rpc('feria_lista_expositores')]);if(programa.error)throw programa.error;if(expositores.error)throw expositores.error;const data={...programa.data,expositores:expositores.data||[]};
    if(ventana.closed)return;ventana.document.open();ventana.document.write(htmlProgramacionFeria(data,tramo.fecha,new URL(escudo,window.location.href).href));ventana.document.close();ventana.focus();
   }catch(e){ventana.close();setError(/function|schema cache|does not exist/i.test(e.message||'')?'Activa supabase/feria-programacion-imprimir.sql en Supabase para imprimir la programación completa.':e.message)}finally{setImprimiendo(false)}
  }
