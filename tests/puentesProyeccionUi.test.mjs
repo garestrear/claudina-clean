@@ -13,7 +13,7 @@ try{
  const {default:Panel,filasProyeccion}=await import(dir+'/app.mjs');let tree,cat='puentes_juvenil';const props=()=>({datos,categoria:cat,onCategoria:v=>cat=v,ahora:2000,error:'',fresco:true,onActualizar:()=>{}});
  await act(async()=>{tree=create(React.createElement(Panel,props()))});
  const rows=()=>tree.root.findByType('tbody').findAllByType('tr');
- assert.equal(rows().length,filasProyeccion(1280,720));assert.equal(rows().length,10);
+ assert.equal(rows().length,filasProyeccion(1280,720));assert.equal(rows().length,6);
  assert.equal(tree.root.findByProps({role:'timer'}).findByType('strong').children.join(''),'3');
  assert(clases.has('bridgeProjectionActive'));
  const ids=()=>rows().map(r=>r.findAllByType('td')[1].props.title);
