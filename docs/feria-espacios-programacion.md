@@ -188,3 +188,29 @@ volver a la numeración automática. No modifica el aula ni crea nuevas reservas
 La migración es repetible y aumenta la versión de las reservas que completa:
 recargar Programación después de ejecutarla. `npm run test:puestos` verifica
 la migración, sus reintentos, numeración, traslados y conservación de manuales.
+
+## Dos franjas y lista de expositores
+
+Activar `supabase/feria-dos-franjas.sql` después de agenda, carrusel y mesas
+automáticas. La primera franja es 08:00–10:00; la segunda, 10:15–11:40.
+Los proyectos nuevos de Claudina se asignan a la primera franja y los invitados
+a la segunda; las reservas existentes se conservan. Para mover un proyecto,
+abrir Programación → Editar ubicación y horario, elegir la segunda franja,
+revisar el aula y guardar. La mesa automática se recalcula si hace falta.
+
+En Líderes y carrusel se consulta y guarda un plan independiente para cada franja.
+Solo se excluyen de visitantes los estudiantes con proyecto estudiantil aprobado
+y reserva activa que se cruce con el horario consultado, incluidos todos sus
+integrantes. Exponer en la primera franja no impide visitar la segunda.
+Se mantienen las reglas de grados completos y los controles de versiones.
+
+Estudiantes expositores muestra nombre, grado real del estudiante, proyecto,
+salón, mesa y horario, con filtros de fecha, franja y grado y una lista imprimible
+que puede guardarse en PDF. Solo incluye proyectos estudiantiles de Claudina
+aprobados con reserva activa; no convierte emprendimientos familiares en
+expositores estudiantiles. Actualizar la lista después de editar las reservas.
+
+La migración actualiza el bloque general de charlas a 10:15–11:40 cuando no
+tiene un espacio reservado. No desplaza las reservas de proyectos ni las
+actividades posteriores: revisar teatro y puentes si siguen comenzando a 11:35.
+Validación: `npm run test:franjas`.
