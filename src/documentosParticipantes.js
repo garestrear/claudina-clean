@@ -4,7 +4,8 @@ import {firmantesPredeterminados,prepararFirma} from './firmasCertificados.js';
 import {categoriasPlaca} from './placaFeria.js';
 export const tiposParticipante={
  expositor:{nombre:'Expositor(a)',prefijo:'EXP',color:'#16844b',oscuro:'#10552f',claro:'#edf8f0'},
- evaluador:{nombre:'Evaluador(a)',prefijo:'EVA',color:'#1e527d',oscuro:'#153a58',claro:'#edf3f9'},
+ evaluador:{nombre:'Jurado',prefijo:'EVA',color:'#1e527d',oscuro:'#153a58',claro:'#edf3f9'},
+ profesor:{nombre:'Profesor(a)',prefijo:'PRO',color:'#146b82',oscuro:'#104759',claro:'#edf7fa'},
  logistica:{nombre:'Logística',prefijo:'LOG',color:'#c45832',oscuro:'#74351e',claro:'#fff3ed'},
  ponente:{nombre:'Ponente',prefijo:'PON',color:'#793eab',oscuro:'#512776',claro:'#f5effb'},
  asistente:{nombre:'Asistente',prefijo:'ASI',color:'#117d7b',oscuro:'#0b514f',claro:'#eaf7f6'}
@@ -61,7 +62,7 @@ export function construirEscarapelas(jsPDF,personas,recursos={}){
 }
 export function textoCertificado(p){
  const evento=limpio(p.evento)||'Feria STEAM 2026',dia=limpio(p.fecha_evento)||'6 de noviembre de 2026';
- const accion={expositor:`participó como expositor(a)${p.proyecto_titulo?' con el proyecto «'+limpio(p.proyecto_titulo)+'»':''}`,evaluador:'participó como evaluador(a) de los proyectos',logistica:'integró el equipo de logística y apoyó la organización',ponente:`participó como ponente${p.detalle?' con la actividad «'+limpio(p.detalle)+'»':''}`,asistente:'participó como asistente'}[p.tipo];
+ const accion={expositor:`participó como expositor(a)${p.proyecto_titulo?' con el proyecto «'+limpio(p.proyecto_titulo)+'»':''}`,evaluador:'participó como jurado de los proyectos',profesor:'participó como docente',logistica:'integró el equipo de logística y apoyó la organización',ponente:`participó como ponente${p.detalle?' con la actividad «'+limpio(p.detalle)+'»':''}`,asistente:'participó como asistente'}[p.tipo];
  if(!accion)throw new Error('Tipo de participante no válido.');return `${accion} en la ${evento}, realizada el ${dia} en el C.E.R. Claudina Múnera, vereda La Corrala, Caldas, Antioquia.`;
 }
 export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=false}={}){
