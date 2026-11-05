@@ -86,8 +86,12 @@ Se cuentan los proyectos aprobados efectivamente programados en cada espacio,
 no su capacidad teórica. Solo los espacios con más de un proyecto simultáneo
 requieren líder fijo. Cada espacio con al menos una exposición genera un grupo
 visitante, aunque no requiera líder. Se distribuyen los estudiantes activos sin
-proyecto estudiantil aprobado en grupos cuyos tamaños difieren como máximo en
-uno. Se excluyen tanto el titular como todos los compañeros del equipo; un
+proyecto estudiantil aprobado por grados completos. TS y preescolar (grado 0)
+son un bloque indivisible, al igual que primero. Los demás grados solo se dividen
+si superan el menor aforo conocido del circuito. Se asignan los bloques a los
+grupos menos numerosos; pueden quedar grupos vacíos y tamaños diferentes.
+Volver a ejecutar `supabase/feria-carrusel.sql` y regenerar los planes existentes
+para aplicar estas reglas. Se excluyen tanto el titular como todos los compañeros del equipo; un
 emprendimiento familiar no convierte al estudiante vinculado en expositor.
 
 Los docentes se asignan manualmente o con “Asignar docentes disponibles”,

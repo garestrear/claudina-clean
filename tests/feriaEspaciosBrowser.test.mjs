@@ -59,8 +59,8 @@ for(let n=101;n<=108;n++)await db.query("insert into estudiantes values($1,$2,6,
 await db.query("update feria_programacion set espacio_id=$1,version=version+1 where proyecto_id=$2",[segundo,u(11)]);
 await db.query("insert into feria_proyectos(id,titulo,grado,estado,estudiante_id,integrantes_ids) values($1,'Tercer proyecto',6,'aprobado',$2,$3)",[u(12),u(101),[u(102)]]);
 await page.getByRole('button',{name:'Líderes y carrusel',exact:true}).click();
-await page.getByRole('button',{name:'Generar grupos equilibrados',exact:true}).waitFor();
-await page.getByRole('button',{name:'Generar grupos equilibrados',exact:true}).click();
+await page.getByRole('button',{name:'Generar grupos por grado',exact:true}).waitFor();
+await page.getByRole('button',{name:'Generar grupos por grado',exact:true}).click();
 assert.equal(await page.getByRole('combobox',{name:/Líder de/}).count(),1);
 assert.equal(await page.getByRole('combobox',{name:/Acompañante del grupo/}).count(),2);
 await page.getByRole('heading',{name:'Grupo 1 · 3 estudiantes',exact:true}).waitFor();
@@ -69,7 +69,7 @@ await page.getByRole('button',{name:'Asignar docentes disponibles',exact:true}).
 await page.getByRole('button',{name:'Guardar organización',exact:true}).click();
 await page.getByRole('status').filter({hasText:'Organización guardada:'}).waitFor();
 await page.screenshot({path:'/tmp/feria-carrusel-mobile.png',fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
-await page.reload();await page.getByRole('button',{name:'Regenerar grupos equilibrados',exact:true}).waitFor();
+await page.reload();await page.getByRole('button',{name:'Regenerar grupos por grado',exact:true}).waitFor();
 assert.equal(await page.getByRole('combobox',{name:/Líder de/}).count(),1);
 assert.deepEqual(errors,[]);console.log('PASS navegador: 13 espacios, reservas, ocho actividades generales, edición sincronizada, cruces, impresión, recarga y vista móvil');
 }finally{await browser.close();await db.close();await rm(dir,{recursive:true,force:true})}

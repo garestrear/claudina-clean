@@ -46,7 +46,13 @@ begin
  or (select count(distinct l->>'espacio_id') from jsonb_array_elements(datos->'lideres') l)<>lideres then raise exception 'Solo las aulas con más de un proyecto simultáneo requieren líder fijo';end if;
  if exists(select 1 from jsonb_array_elements(datos->'grupos') g where (g->>'numero') is null or (g->>'numero')::integer not between 1 and n or jsonb_typeof(g->'estudiantes_ids') is distinct from 'array')
  or (select count(distinct (g->>'numero')::integer) from jsonb_array_elements(datos->'grupos') g)<>n then raise exception 'Revisa la numeración y los integrantes de los grupos';end if;
- if (select coalesce(max(jsonb_array_length(g->'estudiantes_ids'))-min(jsonb_array_length(g->'estudiantes_ids')),0) from jsonb_array_elements(datos->'grupos') g)>1 then raise exception 'Los grupos deben tener tamaños equilibrados (diferencia máxima de un estudiante)';end if;
+ -- La unidad de TS/preescolar (grado 0) y primero prevalece sobre el equilibrio.
+ if exists(select 1 from jsonb_array_elements(datos->'grupos') g
+ cross join lateral jsonb_array_elements_text(g->'estudiantes_ids') s
+ join jsonb_array_elements(ctx->'visitantes') e on e->>'id'=s
+ where (e->>'grado')::integer in(0,1)
+ group by e->>'grado' having count(distinct g->>'numero')>1)
+ then raise exception 'TS y preescolar deben permanecer juntos; primero también debe conservarse completo. Regenera los grupos por grado';end if;
  if (select count(*) from jsonb_array_elements(datos->'grupos') g cross join lateral jsonb_array_elements_text(g->'estudiantes_ids') s)<>jsonb_array_length(ctx->'visitantes')
  or (select count(distinct s) from jsonb_array_elements(datos->'grupos') g cross join lateral jsonb_array_elements_text(g->'estudiantes_ids') s)<>jsonb_array_length(ctx->'visitantes')
  or exists(select 1 from jsonb_array_elements(datos->'grupos') g cross join lateral jsonb_array_elements_text(g->'estudiantes_ids') s where not exists(select 1 from jsonb_array_elements(ctx->'visitantes') e where e->>'id'=s)) then raise exception 'Cada estudiante sin exposición debe aparecer exactamente una vez; los expositores permanecen en sus stands';end if;

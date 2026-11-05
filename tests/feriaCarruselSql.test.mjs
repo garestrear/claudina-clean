@@ -26,7 +26,18 @@ let invalido=structuredClone(plan);invalido.grupos[0].docente_id=uid(1);await as
 invalido=structuredClone(plan);invalido.grupos[0].estudiantes_ids[0]=uid(101);await assert.rejects(guardar(invalido),/exactamente una vez/);
 invalido=structuredClone(plan);invalido.lideres.push({espacio_id:aulas[1].id,docente_id:uid(5)});await assert.rejects(guardar(invalido),/Revisa líderes/);
 await db.query("update estudiantes set activo=false where id=$1",[uid(114)]);await assert.rejects(guardar(),/Cambiaron/);
-ctx=await contexto();plan=generarGruposCarrusel(ctx,plan);ctx=await guardar();assert.deepEqual(plan.grupos.map(g=>g.estudiantes_ids.length),[5,4]);
+ctx=await contexto();plan=generarGruposCarrusel(ctx,plan);ctx=await guardar();assert.deepEqual(plan.grupos.map(g=>g.estudiantes_ids.length),[9,0]);
+await db.query("update estudiantes set grado=0 where id in($1,$2)",[uid(105),uid(106)]);
+await db.query("update estudiantes set grado=1 where id in($1,$2)",[uid(107),uid(108)]);
+ctx=await contexto();plan=generarGruposCarrusel(ctx,plan);ctx=await guardar();
+for(const grado of [0,1]){
+ const miembros=ctx.visitantes.filter(e=>e.grado===grado).map(e=>e.id);
+ invalido=structuredClone(plan);
+ const origen=invalido.grupos.find(g=>g.estudiantes_ids.includes(miembros[0]));
+ const destino=invalido.grupos.find(g=>g!==origen);
+ origen.estudiantes_ids=origen.estudiantes_ids.filter(id=>id!==miembros[0]);destino.estudiantes_ids.push(miembros[0]);
+ await assert.rejects(guardar(invalido),/deben permanecer juntos/);
+}
 await db.query("update feria_programacion set fin='09:00' where id=$1",[uid(320)]);await assert.rejects(contexto(),/Divide el horario/);
 await db.query("select set_config('test.uid',$1,false)",[uid(2)]);await assert.rejects(contexto(),/Solo docentes/);
 console.log('PASS SQL carrusel: aulas múltiples reales, exclusión de expositores y compañeros, equilibrio, roles sin duplicar, versiones y cambios de fuente');await db.close();
