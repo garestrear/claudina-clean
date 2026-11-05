@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';import{build}from'esbuild';import{mkdtemp,rm}from'node:fs/promises';import{tmpdir}from'node:os';import{pathToFileURL}from'node:url';import path from'node:path';
+const dir=await mkdtemp(path.join(process.cwd(),'.tipo-test-'));
+try{
+const entry=`import React from 'react';import TestRenderer,{act} from 'react-test-renderer';import Review from './src/FeriaCorrecciones.jsx';export{React,TestRenderer,act,Review};`;
+await build({stdin:{contents:entry,resolveDir:process.cwd(),loader:'jsx'},bundle:true,platform:'node',format:'esm',outfile:dir+'/test.mjs',packages:'external',plugins:[{name:'mocks',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:'export const supabase={rpc:(...args)=>globalThis.__tipoRpc(...args)};'}));b.onLoad({filter:/notificacionFeria.js$/},()=>({contents:"export const notificarCambioFeria=async()=>'';"}));b.onLoad({filter:/FeriaAulaRevision.jsx$/},()=>({contents:'export default function Aula(){return null}'}));}}]});
+const{React,TestRenderer,act,Review}=await import(pathToFileURL(dir+'/test.mjs'));globalThis.IS_REACT_ACT_ENVIRONMENT=true;globalThis.window={confirm:()=>true};
+const p={id:'proyecto',titulo:'[Emprendimiento familiar] Riego escolar',areas:['emprendimiento'],version:1,estado:'enviado',propuesta:'Regar',procedimiento:'Construir',materiales:'Mangueras',resultados_esperados:'Aprender',bibliografia:'Libro',apoyo:'',poster_url:''};let current={...p},saved,calls=[];
+globalThis.__tipoRpc=async(name,args)=>{calls.push({name,args});if(name==='feria_cambiar_tipo'){current={...current,titulo:'Riego escolar',areas:args.areas,version:2};return {data:{proyecto:current}}}if(name==='feria_corregir_proyecto'){assert.equal(args.version_esperada,2);current={...current,...args.datos,version:3};return {data:{proyecto:current}}}throw Error(name)};
+let view;await act(async()=>{view=TestRenderer.create(React.createElement(Review,{proyecto:p,onGuardar:d=>saved=d,onVolver(){}}))});
+await act(async()=>view.root.findByProps({'aria-label':'Tipo de participación'}).props.onChange({target:{value:'estudiantil'}}));
+const findArea=text=>view.root.findAllByType('button').find(b=>JSON.stringify(b.props.children).includes(text));
+await act(async()=>findArea('Emprendimiento').props.onClick());await act(async()=>findArea('Science').props.onClick());
+await act(async()=>view.root.findByProps({'aria-label':'¿Qué queremos hacer?'}).props.onChange({target:{value:'Regar nuestra huerta'}}));
+await act(async()=>view.root.findByType('form').props.onSubmit({preventDefault(){}}));
+assert.equal(calls[0].name,'feria_cambiar_tipo');assert.equal(calls[0].args.tipo,'estudiantil');assert.deepEqual(calls[0].args.areas,['science']);assert.equal(calls[1].name,'feria_corregir_proyecto');assert.equal(saved.proyecto.titulo,'Riego escolar');assert.equal(saved.proyecto.materiales,'Mangueras');assert.equal(saved.proyecto.bibliografia,'Libro');assert.equal(saved.proyecto.propuesta,'Regar nuestra huerta');await act(async()=>view.unmount());console.log('OK: conversión familiar a estudiantil, áreas y textos en una revisión; versión actualizada y textos ocultos conservados.');
+}finally{delete globalThis.__tipoRpc;await rm(dir,{recursive:true,force:true})}
