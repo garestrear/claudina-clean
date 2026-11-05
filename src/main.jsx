@@ -1,1 +1,2 @@
-import React from 'react';import{createRoot}from'react-dom/client';import App from'./App';import ActualizarApp from './ActualizarApp';import InstalarApp from './InstalarApp';import'./styles.css';createRoot(document.getElementById('root')).render(<><App/><InstalarApp/><ActualizarApp/></>);
+import RecuperarPagina from './RecuperarPagina.jsx';
+import React from 'react';import{createRoot}from'react-dom/client';import App from'./App';import ActualizarApp from './ActualizarApp';import InstalarApp from './InstalarApp';import'./styles.css';createRoot(document.getElementById('root')).render(<RecuperarPagina><App/><InstalarApp/><ActualizarApp/></RecuperarPagina>);
