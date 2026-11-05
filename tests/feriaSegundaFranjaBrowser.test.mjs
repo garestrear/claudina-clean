@@ -6,12 +6,12 @@ const result=await build({stdin:{contents:`import React from 'react';import{crea
 const browser=await chromium.launch({executablePath:await chromiumConfig.executablePath(),args:chromiumConfig.args,headless:true});
 try{const page=await browser.newPage({viewport:{width:1000,height:850}});await page.setContent('<div id="root"></div>');await page.addScriptTag({content:result.outputFiles[0].text});
  await page.getByRole('button',{name:/Segunda franja/}).click();await page.getByRole('button',{name:'Generar grupos por grado',exact:true}).click();
- assert.equal(await page.getByLabel('Minutos por rotación').inputValue(),'5');assert(await page.getByLabel('Minutos por rotación').isDisabled());
+ assert.equal(await page.getByLabel('Minutos por rotación').inputValue(),'20');assert(await page.getByLabel('Minutos por rotación').isDisabled());
  assert.equal(await page.getByRole('heading',{name:/^Grupo \d ·/}).count(),5);
  await page.getByText('Bachillerato (6°, 7° y 8°)',{exact:true}).waitFor();
  assert.equal(await page.locator('.spaceAgenda .spaceCard').count(),4);
  await page.getByRole('button',{name:'Asignar docentes disponibles',exact:true}).click();await page.getByRole('button',{name:'Guardar organización',exact:true}).click();
  await page.getByText('Organización guardada: líderes de aula y acompañantes asignados.',{exact:true}).waitFor();
  assert.equal(await page.locator('.spaceAgenda .spaceCard').count(),4);
- console.log('PASS UI segunda franja: cinco grupos, bachillerato, cuatro rotaciones de cinco minutos y guardado');
+ console.log('PASS UI segunda franja: cinco grupos, bachillerato, cuatro rotaciones de veinte minutos y guardado');
 }finally{await browser.close()}

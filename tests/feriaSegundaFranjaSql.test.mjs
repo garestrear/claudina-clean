@@ -34,9 +34,18 @@ const primera=await contexto('08:00','10:00');assert(primera.visitantes.some(e=>
 let c=await contexto('10:15','11:40');assert(c.segunda_franja);assert.equal(c.aulas.length,5);assert(!c.visitantes.some(e=>e.grado===0));assert(!c.visitantes.some(e=>e.id===uid(101)||e.id===uid(104)));assert(c.visitantes.some(e=>e.id===uid(102)));
 const plan=generarGruposCarrusel(c);const guardar=p=>db.query("select feria_carrusel_guardar('2026-11-06','10:15','11:40',$1,$2,$3)",[p,c.firma,c.version]);
 await assert.rejects(guardar({...plan,max_rotaciones:5}),/cuatro rotaciones/);
-await assert.rejects(guardar({...plan,minutos:20}),/cuatro rotaciones/);
+await assert.rejects(guardar({...plan,minutos:5}),/cuatro rotaciones/);
 await guardar(plan);c=await contexto('10:15','11:40');assert.equal(c.plan.max_rotaciones,4);assert.equal(c.plan.grupos.length,5);
 const alterado=structuredClone(c.plan),bach=alterado.grupos.find(g=>g.descripcion.startsWith('Bachillerato'));
 alterado.grupos.find(g=>g!==bach).estudiantes_ids.push(bach.estudiantes_ids.pop());await assert.rejects(guardar(alterado),/Bachillerato/);
+// Simular la actualización desde la versión anterior de cinco minutos.
+const anterior=(await db.query("select pg_get_functiondef('public.feria_carrusel_guardar(date,time,time,jsonb,text,integer)'::regprocedure) d")).rows[0].d.replaceAll('veinte minutos','cinco minutos').replace("(datos->>'minutos')::integer is distinct from 20","(datos->>'minutos')::integer is distinct from 5").replace("interval '80 minutes'","interval '20 minutes'");
+await db.exec(anterior);
+await db.exec("update feria_planes_carrusel set datos=jsonb_set(datos,'{minutos}','5'::jsonb)");
+const antes=await contexto('10:15','11:40');
+const actualizacion=await readFile('supabase/feria-carrusel-segunda-franja.sql','utf8');await db.exec(actualizacion);await db.exec(actualizacion);
+c=await contexto('10:15','11:40');assert.equal(c.plan.minutos,20);assert.deepEqual(c.plan.grupos,antes.plan.grupos);assert.equal(c.version,antes.version+1);
+await assert.rejects(guardar({...c.plan,minutos:5}),/cuatro rotaciones/);
+await guardar(c.plan);
 console.log('PASS segunda franja SQL: preescolar, expositores de segundo, primera franja libre, cinco grupos, guardado y límites');
 }finally{await db.close()}

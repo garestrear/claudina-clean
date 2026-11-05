@@ -43,5 +43,5 @@ export function generarSegundaFranja(ctx,anterior=null){
  const grupos=bloques.map((b,i)=>({numero:i+1,docente_id:'',estudiantes_ids:b.ids,descripcion:b.grados.includes(6)?'Bachillerato (6°, 7° y 8°)':b.grados.map(g=>g+'°').join(' + ')}));
  const lideres=ctx.aulas.filter(a=>a.requiere_lider).map(a=>({espacio_id:a.id,docente_id:anterior?.lideres?.find(l=>l.espacio_id===a.id)?.docente_id||''}));
  const usados=new Set();for(const rol of [...lideres,...grupos]){const previo=rol.espacio_id?rol.docente_id:anterior?.grupos?.find(g=>g.numero===rol.numero)?.docente_id;rol.docente_id=previo&&!usados.has(previo)&&ctx.docentes.some(d=>d.id===previo)?previo:'';if(rol.docente_id)usados.add(rol.docente_id)}
- return{minutos:5,max_rotaciones:4,segunda_franja:true,lideres,grupos};
+ return{minutos:20,max_rotaciones:4,segunda_franja:true,lideres,grupos};
 }

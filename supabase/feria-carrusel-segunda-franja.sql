@@ -22,18 +22,23 @@ begin
  return jsonb_build_object('segunda_franja',desde>=time '10:15' and hasta<=time '11:40','aulas',aulas,'visitantes',visitantes,'docentes',docentes,'plan',guardado.datos,'firma_guardada',guardado.firma,'version',coalesce(guardado.version,0),'firma',md5(jsonb_build_array(aulas,visitantes,docentes)::text));
 end $$;
 do $migration$
-declare definicion text;marca text:='-- Segunda franja: cinco grupos y cuatro visitas de cinco minutos.';
+declare definicion text;marca text:='-- Segunda franja: cinco grupos y cuatro visitas de veinte minutos.';
 begin
  select pg_get_functiondef('public.feria_carrusel_guardar(date,time,time,jsonb,text,integer)'::regprocedure) into definicion;
+ -- Actualizar también la versión anterior ya instalada, sin duplicar sus controles.
+ definicion:=replace(definicion,'cinco minutos','veinte minutos');
+ definicion:=replace(definicion,$old$(datos->>'minutos')::integer is distinct from 5$old$,$new$(datos->>'minutos')::integer is distinct from 20$new$);
+ definicion:=replace(definicion,$old$interval '20 minutes'$old$,$new$interval '80 minutes'$new$);
+ definicion:=replace(definicion,'al menos veinte minutos','al menos ochenta minutos');
  if position(marca in definicion)=0 then
   if position('insert into public.feria_planes_carrusel' in definicion)=0 then raise exception 'Activa feria-carrusel.sql antes de esta actualización';end if;
   definicion:=replace(definicion,'insert into public.feria_planes_carrusel', $checks$
- -- Segunda franja: cinco grupos y cuatro visitas de cinco minutos.
+ -- Segunda franja: cinco grupos y cuatro visitas de veinte minutos.
  if desde>=time '10:15' and hasta<=time '11:40' then
   if jsonb_array_length(ctx->'aulas')<>5 or jsonb_array_length(datos->'grupos')<>5
-   or (datos->>'minutos')::integer is distinct from 5 or (datos->>'max_rotaciones')::integer is distinct from 4
-   or (datos->>'segunda_franja')::boolean is distinct from true then raise exception 'La segunda franja requiere cinco espacios, cinco grupos y cuatro rotaciones de cinco minutos. Regenera los grupos';end if;
-  if hasta-desde<interval '20 minutes' then raise exception 'Se requieren al menos veinte minutos para las cuatro rotaciones';end if;
+   or (datos->>'minutos')::integer is distinct from 20 or (datos->>'max_rotaciones')::integer is distinct from 4
+   or (datos->>'segunda_franja')::boolean is distinct from true then raise exception 'La segunda franja requiere cinco espacios, cinco grupos y cuatro rotaciones de veinte minutos. Regenera los grupos';end if;
+  if hasta-desde<interval '80 minutes' then raise exception 'Se requieren al menos ochenta minutos para las cuatro rotaciones';end if;
   if exists(select 1 from jsonb_array_elements(datos->'grupos') g where jsonb_array_length(g->'estudiantes_ids')=0) then raise exception 'Los cinco grupos deben tener estudiantes';end if;
   if exists(select 1 from jsonb_array_elements(datos->'grupos') g cross join lateral jsonb_array_elements_text(g->'estudiantes_ids') s
    join jsonb_array_elements(ctx->'visitantes') e on e->>'id'=s where (e->>'grado')::integer>=6
@@ -43,8 +48,12 @@ begin
    group by e->>'grado' having count(distinct g->>'numero')>1) then raise exception 'Conserva juntos los estudiantes de cada grado de primaria; solo segundo puede repartirse';end if;
  end if;
 $checks$ || 'insert into public.feria_planes_carrusel');
-  execute definicion;
  end if;
+ execute definicion;
 end $migration$;
+-- Corregir los planes guardados con la configuración anterior, sin cambiar grupos ni docentes.
+update public.feria_planes_carrusel set datos=jsonb_set(datos,'{minutos}','20'::jsonb),version=version+1,actualizado_en=now()
+where inicio>=time '10:15' and fin<=time '11:40' and fin-inicio>=interval '80 minutes'
+and datos->>'segunda_franja'='true' and datos->>'max_rotaciones'='4' and datos->>'minutos'='5';
 notify pgrst,'reload schema';
 commit;
