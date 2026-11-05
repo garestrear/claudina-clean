@@ -63,7 +63,7 @@ begin
   descalificado:=coalesce((f->>'descalificado')::boolean,false);razon:=trim(coalesce(f->>'motivo_descalificacion',''));
   if descalificado and length(razon)<5 then raise exception 'Indica el motivo de descalificación de %',p.titulo;end if;
   if p.estado='descalificado' and not descalificado then raise exception 'El puente % ya está descalificado. No se revierte automáticamente su descalificación',p.titulo;end if;
-  update public.feria_puentes set estado=case when descalificado then 'descalificado' else 'finalizado' end,motivo_fin=case when descalificado then razon else 'Resultados históricos importados de Excel' end,version=version+1,actualizado_en=now() where id=p.id;
+  update public.feria_puentes set estado=case when descalificado then 'descalificado' else 'finalizado' end,motivo_fin=case when descalificado then razon else coalesce(nullif(trim(f->>'motivo_finalizacion'),''),'Resultados históricos importados de Excel') end,version=version+1,actualizado_en=now() where id=p.id;
  end loop;
  update public.feria_puentes_mesa set version=version+1 where id;
  return public.feria_puentes_contexto();
