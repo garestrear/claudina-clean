@@ -1,4 +1,4 @@
-import {categoriasPuentes,clasificacionPuentes,nombrePuenteConGrado} from './puentes.js';
+import {categoriasPuentes,clasificacionPuentes,nombrePuenteConGrado,gradoTurnoPuente} from './puentes.js';
 const n=v=>Number(v).toLocaleString('es-CO',{maximumFractionDigits:3});
 const texto=v=>String(v??'').replace(/[\u0000-\u001f]/g,' ').trim();
 const estados={pendiente:'En competencia',en_prueba:'Intento en curso',finalizado:'Participación finalizada',descalificado:'Descalificado'};
@@ -15,12 +15,33 @@ export function construirInformePuentesPdf(jsPDF,datos,{categoria='',fotos={},fu
  function titulo(t){if(y+16>limite)pagina();y+=3;linea(t,{bold:true,size:13})}
  cabecera();linea('Resultados provisionales',{bold:true,size:17});linea('Corte: '+fecha+' (Colombia)');
  const categorias=Object.entries(categoriasPuentes).filter(([id])=>!categoria||categoria===id);
- const filas=categorias.flatMap(([id])=>clasificacionPuentes(datos.puentes,datos.rondas,id));
+ const filas=categorias.flatMap(([id])=>clasificacionPuentes(datos.puentes,datos.rondas,id)).sort((a,b)=>{const ga=gradoTurnoPuente(a),gb=gradoTurnoPuente(b);return (ga===gb?0:ga<gb?-1:1)||a.categoria.localeCompare(b.categoria)||(a.puesto??Infinity)-(b.puesto??Infinity)||a.titulo.localeCompare(b.titulo,'es')});
  linea(`${filas.length} puentes inscritos · ${filas.filter(p=>p.estado==='descalificado').length} descalificados`);
  linea('Se suman las cargas válidas de los tres intentos. Los fallos y anulaciones aportan cero. En empate se usa la menor masa; si falta registrarla, el desempate queda pendiente. Los descalificados no reciben puesto.');
- for(const[id,nombre]of categorias){titulo('Clasificación · '+nombre);const lista=filas.filter(p=>p.categoria===id);if(!lista.length)linea('Sin puentes inscritos.');
- for(const p of lista){linea(`${p.puesto?`${p.puesto}.`:'—'} ${nombrePuenteConGrado(p)} · ${n(p.total)} kg`,{bold:true});linea(`${p.codigo||'Sin código'} · ${p.intentos}/3 intentos · ${p.estado==='descalificado'?'Descalificado':!p.probado?'Sin prueba confirmada':estados[p.estado]||p.estado}${p.empate_masa_pendiente?' · Desempate pendiente de masa':''}`,{size:9})}}
- for(const p of filas){pagina();linea(nombrePuenteConGrado(p),{bold:true,size:16});linea(`${categoriasPuentes[p.categoria]} · ${p.codigo||'Sin código'} · ${p.puesto?'Puesto provisional '+p.puesto:'Sin puesto'}`,{bold:true});
+ // Compact tables keep the official category positions while grouping by grade.
+ const columnas=[{titulo:'Grado',ancho:14},{titulo:'Cat.',ancho:17},{titulo:'Puesto*',ancho:15},{titulo:'Puente',ancho:48},{titulo:'I1',ancho:14},{titulo:'I2',ancho:14},{titulo:'I3',ancho:14},{titulo:'Total kg',ancho:22},{titulo:'Estado',ancho:27.9}];
+ const letras={valida:'V',fallo:'F',anulada:'A',pendiente:'E'};
+ function encabezadoTabla(){pdf.setFillColor('#e8eff3');pdf.rect(15,y,ancho,8,'F');pdf.setFont(font,'bold');pdf.setFontSize(8);let x=15;for(const c of columnas){pdf.text(c.titulo,x+2,y+5);x+=c.ancho}y+=8}
+ linea('Clasificaciones por grado',{bold:true,size:13});
+ linea('* Puesto en la categoría, no por grado. Intentos en kg: V válido, F falló, A anulado, E en curso. Inf.: Infantil; Juv.: Juvenil. Equipos mixtos: menor grado.',{size:8});
+ if(!filas.length)linea('Sin puentes inscritos.');
+ if(filas.length)encabezadoTabla();
+ let indice=0,gradoAnterior;
+ for(const p of filas){
+  const grado=gradoTurnoPuente(p);
+  const intentos=datos.rondas.filter(r=>r.puente_id===p.id&&(r.cuenta_intento??r.resultado!=='anulada')).sort((a,b)=>Number(a.numero)-Number(b.numero));
+  const estado=p.estado==='descalificado'?'Descalificado':!p.probado?'Sin prueba':p.estado==='finalizado'?'Finalizado':p.estado==='en_prueba'?'En prueba':'En competencia';
+  const celdas=[Number.isFinite(grado)?grado===0?'TS y JR':grado+'°':'Por registrar',p.categoria==='puentes_infantil'?'Inf.':'Juv.',p.puesto?String(p.puesto):'—',texto(p.titulo),...[0,1,2].map(i=>intentos[i]?n(intentos[i].carga_kg)+' '+(letras[intentos[i].resultado]||''):'—'),n(p.total),estado+(p.empate_masa_pendiente?' · Empate por masa':'')];
+  pdf.setFont(font,'normal');pdf.setFontSize(8.5);
+  const lineas=celdas.map((c,i)=>pdf.splitTextToSize(c,columnas[i].ancho-4));
+  const alto=Math.max(8,Math.max(...lineas.map(l=>l.length))*4+4);
+  if(y+alto>limite){pagina();titulo('Clasificaciones por grado (continuación)');encabezadoTabla()}
+  pdf.setFillColor(p.estado==='descalificado'?'#fff0ee':indice%2?'#f2f6f8':'#ffffff');pdf.rect(15,y,ancho,alto,'F');
+  if(indice&&grado!==gradoAnterior){pdf.setDrawColor('#b6cbd7');pdf.setLineWidth(.3);pdf.line(15,y,15+ancho,y)}
+  let x=15;for(let i=0;i<columnas.length;i++){pdf.setFont(font,i===7?'bold':'normal');pdf.setFontSize(8.5);pdf.setTextColor(i===7?'#123f5b':'#183449');pdf.text(lineas[i],x+2,y+5,{lineHeightFactor:1.33});x+=columnas[i].ancho}
+  y+=alto;indice++;gradoAnterior=grado;
+ }
+ for(const p of filas){pagina();linea(nombrePuenteConGrado(p),{bold:true,size:16});linea(`${categoriasPuentes[p.categoria]} · ${p.puesto?'Puesto provisional en categoría: '+p.puesto:'Sin puesto'}`,{bold:true});
  const foto=fotos[p.id];if(foto){try{const info=pdf.getImageProperties(foto);const w=Math.min(ancho,80*info.width/info.height),h=w*info.height/info.width;pdf.addImage(foto,'JPEG',15+(ancho-w)/2,y,w,h,undefined,'FAST');y+=h+6}catch{linea('Foto registrada no disponible en este informe.')}}else linea(p.foto_path?'Foto registrada no disponible en este informe.':'Sin foto registrada.',{size:9});
  linea('Integrantes: '+(p.integrantes||'Por registrar'));
  linea('Estado: '+(!p.probado&&p.estado==='pendiente'?'Pendiente de primera prueba':estados[p.estado]||p.estado));
