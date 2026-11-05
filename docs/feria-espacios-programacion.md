@@ -214,3 +214,15 @@ La migración actualiza el bloque general de charlas a 10:15–11:40 cuando no
 tiene un espacio reservado. No desplaza las reservas de proyectos ni las
 actividades posteriores: revisar teatro y puentes si siguen comenzando a 11:35.
 Validación: `npm run test:franjas`.
+
+## Docente responsable predeterminado
+
+Ejecutar `supabase/feria-responsable-asesor.sql` después de espacios y del módulo
+de asesores de proyectos. Las nuevas reservas de proyectos de Claudina toman
+como docente responsable su asesor, tanto al aprobar como al programar a mano.
+La migración completa las reservas activas sin docente y conserva las que ya
+tienen uno. El selector permite cambiar el docente. Se conserva el texto libre
+del responsable; si era el nombre del docente anterior, se actualiza al nuevo.
+Sin asesor válido no se inventa una asignación. Invitados y actividades conservan
+su comportamiento. Repetir la migración no modifica reservas ya completadas.
+Validación: `npm run test:responsable`.
