@@ -2,7 +2,7 @@ export const seccionesDocente=[
  {id:'inicio',nombre:'Inicio',icono:'🏠',paginas:['horario']},
  {id:'aseo',nombre:'Aseo',icono:'🧹',paginas:['hoy','consolidado','historial']},
  {id:'comunidad',nombre:'Comunidad',icono:'📣',paginas:['tareas','avisos','convivencia']},
- {id:'actividades',nombre:'Actividades',icono:'🎯',paginas:['feria','eventos','encuestas','ingles']},
+ {id:'actividades',nombre:'Actividades',icono:'🎯',paginas:['feria','puentes','eventos','encuestas','ingles']},
  {id:'mas',nombre:'Más',icono:'☰',paginas:['reportes','misgrupos','administracion','estudiantes','profesores','asignacion']}
 ];
 export const herramientasDocente={
@@ -13,6 +13,7 @@ export const herramientasDocente={
  tareas:['📚','Tareas','Revisa propuestas y consulta las tareas publicadas.'],
  avisos:['📣','Avisos','Publica comunicaciones para la comunidad.'],
  convivencia:['🤝','Convivencia','Acompaña reportes, explicaciones y compromisos.'],
+ puentes:['🌉','Concurso de puentes','Controla las pruebas, consulta la clasificación e inscribe puentes.'],
  feria:['🔬','Feria STEAM','Acompaña y revisa los proyectos de tus estudiantes.'],
  eventos:['⭐','Evaluar eventos','Responde evaluaciones y consulta resultados.'],
  encuestas:['📋','Encuestas','Participa y consulta las encuestas institucionales.'],
