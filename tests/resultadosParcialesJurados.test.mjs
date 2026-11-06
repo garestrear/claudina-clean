@@ -4,8 +4,8 @@ const p={id:'p',origen:'claudina',titulo:'Cohete',categoria:'stem'},js=[{id:'j1'
 const visita=(jurado_id,puntaje,enviada=true,registro_manual=false)=>({origen:'claudina',proyecto_id:'p',jurado_id,evaluacion:{enviada,puntaje,registro_manual}});
 assert.equal(resultadosProyecto(p,[],js).promedio,null);
 assert.equal(resultadosProyecto(p,[visita('j1',80)],js).promedio,80);
-const r=resultadosProyecto(p,[visita('j1',80),visita('j2',95,true,true),visita('j3',20,false)],js);
+const r=resultadosProyecto(p,[visita('j1',80),visita('j2',95,true,true),visita('j3',null,false)],js);
 assert.equal(r.promedio,87.5);assert.equal(r.evaluadas,2);assert.equal(r.calificaciones[1].jurado,'Luis');assert.equal(r.calificaciones[1].manual,true);
 assert.equal(resultadosProyecto(p,[visita('j1',80),visita('j2',95),visita('j3',90)],js).promedio,88.33);
 const csv=csvResultados([r]);assert(csv.includes('87.5'));assert(csv.includes('Parcial'));assert(csv.includes('Ana: 80/100'));assert(csv.includes('Luis: 95/100 (papel)'));assert(!csv.includes('20/100'));
-console.log('PASS promedios con 0, 1, 2 y 3 notas, borradores excluidos, notas en papel y detalle por jurado en CSV');
+console.log('PASS promedios con 0, 1, 2 y 3 notas, borradores sin nota excluidos, notas en papel y detalle por jurado en CSV');

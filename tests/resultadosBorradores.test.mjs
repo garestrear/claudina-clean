@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {resultadosProyecto,csvResultados} from '../src/evaluacionJurados.js';
+const p={id:'p',origen:'claudina',categoria:'stem'},jurados=[{id:'j',nombre:'Ana'}];
+const v=(id,e)=>({id,jurado_id:'j',origen:'claudina',proyecto_id:'p',evaluacion:e});
+const r=resultadosProyecto(p,[v('a',{enviada:true,puntaje:80}),v('b',{enviada:false,puntaje:90}),v('c',{enviada:false,puntaje:null,notas:[null,3,3,3,3]})],jurados);
+assert.equal(r.promedio,85);assert.equal(r.enviadas,1);assert.equal(r.borradores,1);assert.equal(r.evaluadas,2);assert.equal(r.calificaciones[1].visitaId,'b');
+const calculado=resultadosProyecto(p,[v('d',{enviada:false,puntaje:null,notas:[4,4,4,4,4],rubrica_version:2})],jurados);assert.equal(calculado.promedio,80);
+const tres=resultadosProyecto(p,[v('a',{enviada:true,puntaje:80}),v('b',{enviada:false,puntaje:90}),v('c',{enviada:true,puntaje:100})],jurados);const csv=csvResultados([tres]);assert(csv.includes('Parcial'));assert(csv.includes('90/100 (borrador)'));
+assert.equal(resultadosProyecto(p,[v('n',{puntaje:null,notas:[]}),v('x',{puntaje:'NaN'})],jurados).promedio,null);
+console.log('PASS borradores con nota, incompletos excluidos, cálculo de rúbrica, conteos, estado parcial y CSV');
