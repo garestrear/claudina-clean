@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {crearEvaluacionDb} from './fixtures/evaluacionDb.mjs';
+const {db,actor,rpc,uid}=await crearEvaluacionDb();
+await db.exec('alter table public.feria_jurados add column eliminado_en timestamptz');
+const sql=await readFile('supabase/feria-jurados-genero.sql','utf8');await db.exec(sql);await db.exec(sql);
+const guardar=(id,genero)=>rpc('feria_jurado_genero_guardar',[id,genero],['uuid','text']);
+await actor(null);await assert.rejects(guardar(uid(101),'F'),/Solo docentes/);
+await actor(2);await assert.rejects(guardar(uid(101),'F'),/Solo docentes/);
+await actor(1);await db.exec('set role authenticated');await guardar(uid(101),'F');await db.exec('reset role');
+assert.equal((await db.query('select genero from feria_jurados where id=$1',[uid(101)])).rows[0].genero,'F');
+await db.exec(sql);assert.equal((await db.query('select genero from feria_jurados where id=$1',[uid(101)])).rows[0].genero,'F');
+await guardar(uid(101),'M');await guardar(uid(101),'');await assert.rejects(guardar(uid(101),'inventado'),/Selecciona/);await assert.rejects(guardar(uid(101),null),/Selecciona/);
+await db.query('update feria_jurados set eliminado_en=now() where id=$1',[uid(101)]);await assert.rejects(guardar(uid(101),'F'),/no está disponible/);
+await db.exec('set role anon');await assert.rejects(guardar(uid(102),'F'),/permission denied/);await db.exec('reset role');
+console.log('PASS género: solo docentes, femenino/masculino/neutral, validación, repetición sin pérdida y retiro');await db.close();

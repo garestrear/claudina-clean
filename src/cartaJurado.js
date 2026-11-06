@@ -6,6 +6,10 @@ export function nombreArchivoJurado(nombre){
  const parte=limpio(nombre).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,90)||'Jurado';
  return `Invitacion-Jurado-${parte}-Feria-STEAM-2026.pdf`;
 }
+export function saludoJurado(jurado){
+ const nombre=nombreFeria(limpio(jurado?.nombre)).split(' ')[0];
+ return jurado?.genero==='F'?`Apreciada ${nombre}:`:jurado?.genero==='M'?`Apreciado ${nombre}:`:`Recibe un cordial saludo, ${nombre}:`;
+}
 // Texto nativo en PDF, sin depender de imprimir ni de una captura de pantalla.
 export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fuenteNegrita,fecha=new Date(),recorrido}={}){
  if(!limpio(jurado?.nombre)||(!recorrido&&!limpio(jurado?.institucion)))throw new Error('Falta el nombre o la institución de la persona inscrita.');
@@ -14,25 +18,26 @@ export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fu
  const fuente=fuenteRegular&&fuenteNegrita?'Carta':'helvetica';
  const ancho=215.9,alto=279.4,margen=19,util=ancho-2*margen;let y;
  function cabecera(){
-  pdf.setDrawColor(112,48,160);pdf.setLineWidth(.45);pdf.rect(8,7,ancho-16,alto-16);
-  if(escudo)pdf.addImage(escudo,'PNG',101,9,14,15);
-  pdf.setTextColor(0);pdf.setFont(fuente,'bold');pdf.setFontSize(10.5);
-  pdf.text('CENTRO EDUCATIVO RURAL CLAUDINA MÚNERA',ancho/2,28,{align:'center'});
-  pdf.text('CALDAS - ANTIOQUIA',ancho/2,33,{align:'center'});
-  pdf.text('RESOLUCIÓN 201500094400 12/03/2015',ancho/2,38,{align:'center'});
-  pdf.setFont(fuente,'normal');pdf.text('CÓDIGO DANE: 205129000156',ancho/2,43,{align:'center'});
-  pdf.text('NIT: 811011120-5',ancho/2,48,{align:'center'});
-  pdf.setDrawColor(65,110,190);pdf.setLineWidth(.45);pdf.line(52,51,170,51);
-  pdf.line(35,258,186,258);pdf.setFontSize(9.5);
-  pdf.text('Vereda La Corrala - Caldas, Antioquia.',ancho/2,263,{align:'center'});
-  pdf.text('e-mail: direccioncm2024@claudinamunera.edu.co',ancho/2,268,{align:'center'});
-  y=58;
+  pdf.setTextColor(0);pdf.setDrawColor(90,120,100);pdf.setLineWidth(.35);
+  if(escudo)pdf.addImage(escudo,'PNG',margen,12,16,17);
+  pdf.setFont(fuente,'bold');pdf.setFontSize(10.2);
+  pdf.text('CENTRO EDUCATIVO RURAL CLAUDINA MÚNERA',118,18,{align:'center'});
+  pdf.setFont(fuente,'normal');pdf.setFontSize(9);
+  pdf.text('Caldas - Antioquia · Vereda La Corrala',118,23,{align:'center'});
+  pdf.setFontSize(7.3);
+  pdf.text('Resolución 201500094400 (12/03/2015) · DANE: 205129000156 · NIT: 811011120-5',118,28,{align:'center'});
+  pdf.setFontSize(8);pdf.text('direccioncm2024@claudinamunera.edu.co',118,33,{align:'center'});
+  pdf.line(margen,38,ancho-margen,38);
+  pdf.line(margen,258,ancho-margen,258);pdf.setFontSize(8);
+  pdf.text('C.E.R. Claudina Múnera · Feria STEAM 2026',margen,263);
+  pdf.text('Vereda La Corrala · Caldas, Antioquia',ancho-margen,263,{align:'right'});
+  y=46;
  }
  function espacio(h){if(y+h>251){pdf.addPage();cabecera();}}
- function texto(t,{negrita=false,tamano=11,despues=3}={}){
+ function texto(t,{negrita=false,tamano=11,despues=3,mantener=0}={}){
   pdf.setFont(fuente,negrita?'bold':'normal');pdf.setFontSize(tamano);
   const lineas=pdf.splitTextToSize(t,util);const paso=tamano*.35278*1.18;
-  espacio(lineas.length*paso+despues);
+  espacio(lineas.length*paso+despues+mantener);
   // cabecera puede cambiar la fuente al saltar de página.
   pdf.setFont(fuente,negrita?'bold':'normal');pdf.setFontSize(tamano);
   for(const linea of lineas){espacio(paso);pdf.setFont(fuente,negrita?'bold':'normal');pdf.setFontSize(tamano);pdf.text(linea,margen,y);y+=paso;}
@@ -40,32 +45,37 @@ export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fu
  }
  cabecera();
  const fechaCarta=new Intl.DateTimeFormat('es-CO',{timeZone:'America/Bogota',day:'numeric',month:'long',year:'numeric'}).format(fecha);
- texto('Caldas, Antioquia, '+fechaCarta,{despues:5});
- texto(recorrido?'¡Qué alegría contar contigo!':'Un saludo especial para ti,',{despues:1});texto(nombreFeria(jurado.nombre),{negrita:true,despues:0});
- if(limpio(jurado.profesion))texto(limpio(jurado.profesion),{despues:0});
- texto(limpio(jurado.institucion),{despues:5});
+ pdf.setFont(fuente,'normal');pdf.setFontSize(9);pdf.text('Caldas, Antioquia, '+fechaCarta,ancho-margen,y,{align:'right'});y+=10;
+ texto(nombreFeria(jurado.nombre),{negrita:true,tamano:10.5,despues:0});
+ if(limpio(jurado.profesion))texto(limpio(jurado.profesion),{tamano:9.5,despues:0});
+ if(limpio(jurado.institucion))texto(limpio(jurado.institucion),{tamano:9.5,despues:0});
+ y+=5;
  if(recorrido){
-  texto('Gracias por ser parte de nuestra Feria STEAM',{negrita:true,tamano:11,despues:4});
-  const t=(v,o={})=>texto(v,{tamano:9.2,despues:.6,...o});
-  t(`Gracias por acompañarnos en la ${feria.nombre}. Tu mirada y tus palabras de ánimo son un regalo para nuestros estudiantes. ¡Nos alegra contar contigo!`);
-  t(`${feria.fecha} · ${feria.horario} Lugar: ${feria.lugar}.`);
-  t('Tus datos de acceso',{negrita:true});
+  texto('Asunto: Orientaciones y recorrido de evaluación - Feria STEAM 2026',{negrita:true,tamano:10.5,despues:4});
+  texto(saludoJurado(jurado),{tamano:10,despues:3});
+  const t=(v,o={})=>texto(v,{tamano:9.2,despues:.8,...o});
+  const seccion=titulo=>{espacio(16);y+=1.3;texto(titulo,{negrita:true,tamano:9.7,despues:1.5,mantener:12})};
+  t(`Gracias por acompañarnos en la ${feria.nombre}. Tu experiencia y acompañamiento nos ayudan a reconocer el esfuerzo de los estudiantes y a motivarlos a seguir aprendiendo y creando.`);
+  seccion('Datos de la jornada');
+  t(`Fecha: ${feria.fecha} · Horario general: ${feria.horario}`);
+  t('Lugar: '+feria.lugar+'.');
+  seccion('Tus datos de acceso');
   t('Claudina App: '+recorrido.url);
   t('Usuario: '+limpio(jurado.usuario),{negrita:true});
   t(jurado.cambiar_password?'Contraseña inicial: '+recorrido.passwordInicial:'Contraseña: usa tu contraseña personal; la inicial ya fue reemplazada.',{negrita:true});
   t('Guarda esta carta para ti: contiene tus datos de acceso.');
-  t('Cómo evaluar en Claudina App',{negrita:true});
+  seccion('Cómo evaluar en Claudina App');
   t('1. Abre Claudina App e ingresa con tu usuario y contraseña; no necesitas recibir correos.');
   t('2. Si es tu primer ingreso, elige una contraseña personal de al menos 6 caracteres.');
   t('3. En “Mi recorrido como jurado”, encontrarás tus proyectos. Pulsa “Evaluar proyecto” al visitar cada equipo.');
   t('4. Escucha al equipo, valora los cinco criterios de 1 a 5 y escribe un logro y una sugerencia amable.');
-  t('5. Puedes guardar un borrador. Al terminar, pulsa “Enviar evaluación definitiva” y verifica “Evaluación enviada”; después la nota no se puede cambiar.');
-  t('Orientaciones generales',{negrita:true});
+  t('5. Puedes guardar un borrador. Al terminar cada proyecto, pulsa “Enviar evaluación definitiva” y verifica “Evaluación enviada”; después la nota no se puede cambiar.');
+  seccion('Orientaciones generales');
   t('Dedica 10 minutos por equipo. Valora comprensión y aprendizaje según la edad, sin exigir investigación extensa ni materiales costosos. El 3 es un buen cumplimiento. No descuentes automáticamente por nervios, lectura o fallas de la demostración.');
   t('En arte, valora expresión y decisiones propias, no tu gusto personal. En emprendimiento, revisa nombre, logo, eslogan, costos y precio con cuentas sencillas, sin exigir contabilidad formal ni premiar ventas.');
   t('Si hay conflicto de interés o necesitas ayuda, avisa al comité. Sin celular, utiliza tu formato impreso de evaluación.');
-  t('Tu recorrido está en la siguiente página. Revisa posibles ajustes en la app. ¡Gracias por sumar a nuestra comunidad!');
-  espacio(36);t('Con aprecio,');
+  t('El recorrido adjunto corresponde a la asignación vigente al descargar esta carta; consulta los ajustes posteriores en la app. Gracias por tu valioso aporte a nuestra comunidad educativa.');
+  espacio(30);t('Con aprecio,');
   if(firma){pdf.addImage(firma,'JPEG',margen,y-1,43,11.7);y+=12;}
   t('Gustavo Adolfo Restrepo Arboleda',{negrita:true});
   t(feria.cargo+' · C.E.R. Claudina Múnera');
@@ -104,7 +114,7 @@ export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fu
   return pdf;
  }
  texto('Asunto: Invitación como jurado de la Feria STEAM 2026',{negrita:true,despues:5});
- texto('¡Nos encantaría compartir esta jornada contigo!');
+ texto(saludoJurado(jurado),{despues:4});
  texto(`Queremos invitarte a acompañar a nuestros estudiantes como jurado en la ${feria.nombre}, que se realizará el ${feria.fecha}, de ${feria.horario}, en nuestra institución, ubicada en la vereda La Corrala del municipio de Caldas, Antioquia.`);
  texto('Este encuentro integra las ciencias, la tecnología, la ingeniería, las artes y las matemáticas. Estudiantes de primaria y secundaria compartirán sus proyectos y experiencias con las familias, la comunidad y las entidades invitadas.');
  texto('Tu experiencia y tu mirada nos ayudarán a reconocer lo que nuestros estudiantes han aprendido. Para ellos será muy especial conversar contigo, mostrarte sus ideas y recibir palabras de ánimo y sugerencias para seguir creciendo.');

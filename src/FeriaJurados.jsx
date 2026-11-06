@@ -11,7 +11,7 @@ export default function FeriaJurados(){
  const [lista,setLista]=useState([]),[total,setTotal]=useState(0),[pagina,setPagina]=useState(0),[cargando,setCargando]=useState(true),[error,setError]=useState(''),[descargando,setDescargando]=useState(null),[mensaje,setMensaje]=useState('');
  const peticion=useRef(0);
  async function cargar(){const actual=++peticion.current;setCargando(true);setError('');try{
-  const {data,error,count}=await supabase.from('feria_jurados').select('id,nombre,institucion,profesion,correo,telefono,creado_en',{count:'exact'}).is('eliminado_en',null).order('creado_en',{ascending:false}).order('id').range(pagina*porPagina,(pagina+1)*porPagina-1);
+  const {data,error,count}=await supabase.from('feria_jurados').select('*',{count:'exact'}).is('eliminado_en',null).order('creado_en',{ascending:false}).order('id').range(pagina*porPagina,(pagina+1)*porPagina-1);
   if(actual!==peticion.current)return;if(error)throw error;setLista(data||[]);setTotal(count??data?.length??0);
  }catch{if(actual===peticion.current)setError('No se pudieron consultar las postulaciones de jurados. Revisa tu conexión e intenta de nuevo.')}finally{if(actual===peticion.current)setCargando(false)}}
  useEffect(()=>{cargar();return()=>{peticion.current++}},[pagina]);

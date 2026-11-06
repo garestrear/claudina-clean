@@ -1,9 +1,12 @@
 import {jsPDF} from 'jspdf';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-import {construirCartaJurado,prepararRecorridoCarta} from '../src/cartaJurado.js';
+import {construirCartaJurado,prepararRecorridoCarta,saludoJurado} from '../src/cartaJurado.js';
 const opts={escudo:'data:image/png;base64,'+(await readFile('src/assets/escudo-membrete.png')).toString('base64'),firma:'data:image/jpeg;base64,'+(await readFile('src/assets/firma-gustavo-prae.jpg')).toString('base64'),fuenteRegular:(await readFile('src/assets/carta-regular.ttf')).toString('base64'),fuenteNegrita:(await readFile('src/assets/carta-bold.ttf')).toString('base64'),fecha:new Date('2026-11-06T00:30:00Z')};
-const jurado={id:'j1',nombre:'Isabel Osorio Bolívar',institucion:'Tecnológico de Artes Débora Arango',usuario:'jurado01',cuenta_id:'c1',habilitado:true,cambiar_password:true};
+const jurado={id:'j1',nombre:'Isabel Osorio Bolívar',genero:'F',institucion:'Tecnológico de Artes Débora Arango',usuario:'jurado01',cuenta_id:'c1',habilitado:true,cambiar_password:true};
+assert.equal(saludoJurado({nombre:'EVELYN HENAO MORALES',genero:'F'}),'Apreciada Evelyn:');
+assert.equal(saludoJurado({nombre:'Gustavo Restrepo',genero:'M'}),'Apreciado Gustavo:');
+assert.equal(saludoJurado({nombre:'Evelyn Henao Morales'}),'Recibe un cordial saludo, Evelyn:');
 const proyectos=Array.from({length:10},(_,i)=>({id:'p'+i,origen:'claudina',codigo:'C'+(i+1),titulo:i?'Huerta escolar y aprovechamiento de residuos orgánicos':'Weather Scientists: Análisis climático y prevención de riesgos.',integrantes:'Ana María Restrepo, Juan José Osorio',ubicaciones:[{fecha:'2026-11-06',inicio:'08:00',fin:'10:00',espacio_nombre:'Salón '+(i%5+1)}]}));
 const visitas=proyectos.map((p,i)=>({jurado_id:'j1',proyecto_id:p.id,origen:p.origen,fecha:'2026-11-06',inicio:`09:${String(i*5).padStart(2,'0')}`,fin:`09:${String(i*5+5).padStart(2,'0')}`})).reverse();
 const ctx={docente:true,jurados:[jurado],proyectos,visitas:[...visitas,{...visitas[0],jurado_id:'otro'}]};
