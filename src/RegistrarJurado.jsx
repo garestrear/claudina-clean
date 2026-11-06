@@ -1,0 +1,10 @@
+import React,{useRef,useState} from 'react';
+import {supabase} from './lib/supabase';
+import FormularioJurado from './FormularioJurado.jsx';
+import './RegistrarJurado.css';
+export default function RegistrarJurado({onGuardado}){
+ const[abierto,setAbierto]=useState(false),[proyectos,setProyectos]=useState([]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[mensaje,setMensaje]=useState(''),[version,setVersion]=useState(0);const id=useRef(null);
+ async function abrir(){setBusy(true);setError('');setMensaje('');try{const r=await supabase.rpc('feria_evaluacion_contexto');if(r.error)throw r.error;if(!r.data?.docente)throw Error('Solo docentes pueden registrar jurados.');setProyectos(r.data.proyectos||[]);id.current=crypto.randomUUID();setVersion(v=>v+1);setAbierto(true)}catch(e){setError(e.message)}finally{setBusy(false)}}
+ async function guardar(datos){if(busy)return;setBusy(true);setError('');try{const r=await supabase.rpc('feria_jurado_habilitar',{persona:id.current,datos:{...datos,areas:datos.areas||[],conflictos:datos.conflictos||[]},habilitar:true});if(r.error)throw r.error;setAbierto(false);setMensaje('Jurado registrado. Puedes completar sus datos y asignarle un usuario después.');await onGuardado?.()}catch(e){setError(/statement timeout/i.test(e.message||'')?'El registro excedió el tiempo permitido. Aplica la corrección de rendimiento de jurados en Supabase antes de reintentar.':e.message)}finally{setBusy(false)}}
+ return <section className="juryQuickRegister" aria-label="Registro de jurados"><div className="juryQuickRegisterHeading"><div><h3>Registrar jurado</h3><p>Inscripción rápida: solo necesitas su nombre.</p></div><button className="fairPrimary" type="button" disabled={busy} aria-expanded={abierto} onClick={abrir}>＋ Registrar jurado</button></div>{abierto&&<FormularioJurado key={version} persona={{}} proyectos={proyectos} ocupado={busy} onGuardar={guardar} onCancelar={()=>{setAbierto(false);setError('')}}/>}{busy&&<p role="status">{abierto?'Guardando jurado…':'Abriendo registro…'}</p>}{error&&<p className="error" role="alert">{error}</p>}{mensaje&&<p role="status">{mensaje}</p>}</section>
+}
