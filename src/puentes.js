@@ -12,9 +12,9 @@ export const segundosPuente=(fin,ahora)=>Math.max(0,Math.ceil((Date.parse(fin)-a
 export function siguienteCarga(config,mejor){return Math.min(mejor>0?mejor+Number(config?.incremento):Number(config?.inicial),Number(config?.limite))}
 const csvCell=v=>'"'+String(v??'').replaceAll('"','""').replace(/^[=+@-]/,"'$&")+'"';
 export function csvPuentes(datos){
- const filas=[['Categoría','Código','Puente','Integrantes','Masa g','Total válido kg','Intentos consumidos','Mejor carga kg','Puesto provisional','Estado','Motivo descalificación','Ronda','Carga total kg','Resultado','Inicio','Validado por','Motivo']];
+ const filas=[['Fase','Categoría','Código','Puente','Integrantes','Masa g','Total válido kg','Intentos consumidos','Mejor carga kg','Puesto provisional','Estado','Motivo descalificación','Ronda','Carga total kg','Resultado','Inicio','Validado por','Motivo']];
  for(const cat of Object.keys(categoriasPuentes))for(const p of clasificacionPuentes(datos.puentes,datos.rondas,cat)){
-  const rr=datos.rondas.filter(r=>r.puente_id===p.id);for(const r of rr.length?rr:[{}])filas.push([categoriasPuentes[cat],p.codigo,p.titulo,p.integrantes,p.masa_g,p.total,p.intentos,p.mejor,p.puesto,p.estado,p.estado==='descalificado'?p.motivo_fin:'',r.numero,r.carga_kg,r.resultado,r.inicio,r.validado_por,r.motivo||p.motivo_fin]);
+  const rr=datos.rondas.filter(r=>r.puente_id===p.id);for(const r of rr.length?rr:[{}])filas.push([datos.fase==='final'?'Gran final':'Eliminatoria',categoriasPuentes[cat],p.codigo,p.titulo,p.integrantes,p.masa_g,p.total,p.intentos,p.mejor,p.puesto,p.estado,p.estado==='descalificado'?p.motivo_fin:'',r.numero,r.carga_kg,r.resultado,r.inicio,r.validado_por,r.motivo||p.motivo_fin]);
  }
  return '\uFEFF'+filas.map(f=>f.map(csvCell).join(';')).join('\r\n');
 }

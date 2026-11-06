@@ -6,7 +6,7 @@ export function informePuentes(datos,{categoria='',fecha=datos.ahora||new Date()
  const puentes=datos.puentes.filter(p=>!categoria||p.categoria===categoria);
  const activos=puentes.filter(p=>sigueEnCompetencia(p,datos.rondas)).length;
  const fechaTexto=new Intl.DateTimeFormat('es-CO',{timeZone:'America/Bogota',dateStyle:'long',timeStyle:'short'}).format(new Date(fecha));
- const lineas=['🌉 *ASÍ VA EL CONCURSO DE PUENTES*','Feria STEAM · C.E.R. Claudina Múnera',`🕒 Corte: ${fechaTexto} (Colombia)`,'',`📊 ${puentes.length} puentes inscritos · ${activos} ${activos===1?'sigue':'siguen'} en competencia.`, ''];
+ const lineas=['🌉 *ASÍ VA EL CONCURSO DE PUENTES*','Feria STEAM · C.E.R. Claudina Múnera',datos.fase==='final'?'*GRAN FINAL* · Solo cuentan las cargas de esta fase.':'*ELIMINATORIA*',`🕒 Corte: ${fechaTexto} (Colombia)`,'',`📊 ${puentes.length} puentes inscritos · ${activos} ${activos===1?'sigue':'siguen'} en competencia.`, ''];
  for(const [id,nombre] of Object.entries(categoriasPuentes).filter(([id])=>!categoria||id===categoria)){
   const filas=clasificacionPuentes(datos.puentes,datos.rondas,id);
   lineas.push(`*CATEGORÍA ${nombre.toLocaleUpperCase('es')}*`);

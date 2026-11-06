@@ -17,6 +17,7 @@ export function construirInformePuentesPdf(jsPDF,datos,{categoria='',fotos={},fu
  const categorias=Object.entries(categoriasPuentes).filter(([id])=>!categoria||categoria===id);
  const filas=categorias.flatMap(([id])=>clasificacionPuentes(datos.puentes,datos.rondas,id)).sort((a,b)=>{const ga=gradoTurnoPuente(a),gb=gradoTurnoPuente(b);return (ga===gb?0:ga<gb?-1:1)||a.categoria.localeCompare(b.categoria)||(a.puesto??Infinity)-(b.puesto??Infinity)||a.titulo.localeCompare(b.titulo,'es')});
  linea(`${filas.length} puentes inscritos · ${filas.filter(p=>p.estado==='descalificado').length} descalificados`);
+ linea(datos.fase==='final'?'GRAN FINAL · Los resultados eliminatorios no suman.':'ELIMINATORIA');
  linea('Se suman las cargas válidas de los tres intentos. Los fallos y anulaciones aportan cero. En empate se usa la menor masa; si falta registrarla, el desempate queda pendiente. Los descalificados no reciben puesto.');
  // Compact tables keep the official category positions while grouping by grade.
  const columnas=[{titulo:'Grado',ancho:14},{titulo:'Cat.',ancho:17},{titulo:'Puesto*',ancho:15},{titulo:'Puente',ancho:48},{titulo:'I1',ancho:14},{titulo:'I2',ancho:14},{titulo:'I3',ancho:14},{titulo:'Total kg',ancho:22},{titulo:'Estado',ancho:27.9}];
