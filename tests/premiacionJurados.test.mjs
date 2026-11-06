@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {clasificacionPremiacion} from '../src/premiacionJurados.js';
+import {resultadosProyecto} from '../src/evaluacionJurados.js';
+const p=(id,promedio,categoria='stem')=>({id:String(id),origen:'claudina',titulo:'Proyecto '+id,categoria,promedio});
+const entrada=[p(1,80),p(2,100),p(3,90),p(4,70),p(5,60),p(6,60),p(7,50),p(8,null),p(9,85,'arte'),p(10,100,'familias'),{...p(11,100),origen:'invitados'}];
+const copia=JSON.stringify(entrada),grupos=clasificacionPremiacion(entrada);
+assert.equal(grupos.length,2);assert.equal(grupos[0].sinNota,1);
+assert.deepEqual(grupos[0].clasificados.map(p=>[p.id,p.puesto,p.empate]),[['2',1,false],['3',2,false],['1',3,false],['4',4,false],['5',5,true],['6',5,true]]);
+assert.equal(JSON.stringify(entrada),copia,'no altera el orden del seguimiento');
+const proyecto={...p(20,null),integrantes:'Ana y Luis'};
+const resultado=resultadosProyecto(proyecto,[{id:'v1',origen:'claudina',proyecto_id:'20',jurado_id:'j1',evaluacion:{enviada:false,notas:[5,5,5,5,5],rubrica_version:2}},{id:'v2',origen:'claudina',proyecto_id:'20',jurado_id:'j2',evaluacion:{enviada:true,registro_manual:true,puntaje:80}}],[]);
+assert.equal(clasificacionPremiacion([resultado])[0].clasificados[0].promedio,90);
+assert.equal(resultado.borradores,1);
+assert.deepEqual(clasificacionPremiacion([]),[]);
+console.log('PASS premiación: categorías, cinco puestos, empates en el corte, pendientes y promedio con papel/borradores');
