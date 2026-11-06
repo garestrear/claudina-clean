@@ -3,12 +3,12 @@ import {AccionesJurado} from './AdministrarJurado.jsx';
 import React,{useEffect,useRef,useState} from 'react';
 import {supabase} from './lib/supabase';
 import {areasSteam} from './feriaCiencia.js';
-import {categoriasEvaluacion,claveProyecto,csvResultados,generarRecorrido,rubricas,puntajeEvaluacion} from './evaluacionJurados.js';
+import {categoriasEvaluacion,claveProyecto,csvResultados,generarRecorrido,rubricas,rubricasAnteriores,descripcionesRubricas,nivelesEvaluacion,orientacionesEvaluacion,puntajeEvaluacion} from './evaluacionJurados.js';
 import escudo from './assets/escudo-claudina.png';
 import './EvaluacionJurados.css';
 const mensajeError=e=>/function.*schema cache|does not exist/i.test(e?.message||'')?'Falta activar la actualización feria-evaluacion-jurados.sql en Supabase.':e?.message||'No se pudo completar la operación. Intenta de nuevo.';
 const hora=v=>String(v||'').slice(0,5);
-const opcionesNotas=['Sin calificar','1 · Inicial','2 · En desarrollo','3 · Satisfactorio','4 · Destacado','5 · Excelente'];
+const opcionesNotas=['Sin calificar',...nivelesEvaluacion.map(([n],i)=>`${i+1} · ${n}`)];
 
 async function accesoManual(accion,datos={},autenticado=false){
  const headers={'Content-Type':'application/json'};
@@ -59,8 +59,9 @@ function EditorEvaluacion({visita,proyecto,juradoId,onGuardada,onCerrar}){
  const clave=`claudina:jurado:v1:${juradoId}:${visita.id}`;
  const [restaurado]=useState(()=>{try{return JSON.parse(localStorage.getItem(clave))}catch{return null}});
  const remota=visita.evaluacion;
- const restaurable=restaurado&&restaurado.versionBase===(remota?.version||0)&&!remota?.enviada;
- const [datos,setDatos]=useState(()=>restaurable?restaurado.datos:{notas:remota?.notas||[null,null,null,null,null],destacado:remota?.destacado||'',sugerencia:remota?.sugerencia||''});
+ const rubricaVersion=remota?(remota.rubrica_version||1):2;
+ const restaurable=restaurado&&(restaurado.datos?.rubrica_version||1)===rubricaVersion&&restaurado.versionBase===(remota?.version||0)&&!remota?.enviada;
+ const [datos,setDatos]=useState(()=>restaurable?restaurado.datos:{rubrica_version:rubricaVersion,notas:remota?.notas||[null,null,null,null,null],destacado:remota?.destacado||'',sugerencia:remota?.sugerencia||''});
  const [estado,setEstado]=useState(restaurable?'Borrador recuperado; pendiente de sincronizar.':remota?.enviada?'Evaluación enviada.':''),[error,setError]=useState(''),[enviada,setEnviada]=useState(Boolean(remota?.enviada)),[ocupado,setOcupado]=useState(false);
  const version=useRef(remota?.version||0),cola=useRef(Promise.resolve()),ultimo=useRef(JSON.stringify(remota?{notas:remota.notas,destacado:remota.destacado,sugerencia:remota.sugerencia}:null)),actual=useRef(datos),mounted=useRef(true),timeout=useRef();
  const solicitudPendiente=useRef(null);
@@ -73,7 +74,7 @@ function EditorEvaluacion({visita,proyecto,juradoId,onGuardada,onCerrar}){
    // Conserva la misma solicitud tras un fallo de red: reintento idempotente.
    const firma=JSON.stringify({d,enviar});
    if(!solicitudPendiente.current||solicitudPendiente.current.firma!==firma)solicitudPendiente.current={firma,id:crypto.randomUUID()};
-   const{data,error}=await supabase.rpc('feria_evaluacion_guardar',{visita:visita.id,datos:d,enviar,version_esperada:version.current,solicitud_id:solicitudPendiente.current.id});
+   const{data,error}=await supabase.rpc('feria_evaluacion_guardar',{visita:visita.id,datos:{...d,rubrica_version:rubricaVersion},enviar,version_esperada:version.current,solicitud_id:solicitudPendiente.current.id});
    if(error)throw error;version.current=data.version;ultimo.current=JSON.stringify(d);solicitudPendiente.current=null;
    if(enviar){try{localStorage.removeItem(clave)}catch{}if(mounted.current)setEnviada(true)}else persistir(actual.current);
    onGuardada(visita.id,data);if(mounted.current){setError('');setEstado(enviar?'Evaluación enviada y sincronizada.':'Borrador guardado en Claudina App.');}
@@ -88,12 +89,12 @@ function EditorEvaluacion({visita,proyecto,juradoId,onGuardada,onCerrar}){
   return()=>clearTimeout(timeout.current);
  },[datos,enviada]);
  useEffect(()=>{const online=()=>{if(!enviada)sincronizar(actual.current,false).catch(e=>mounted.current&&setError(mensajeError(e)))};window.addEventListener('online',online);return()=>window.removeEventListener('online',online)},[enviada]);
- async function guardar(enviar){if(ocupado)return;if(enviar&&puntajeEvaluacion(proyecto.categoria,datos.notas)===null){setError('Califica los cinco criterios antes de enviar.');return}if(enviar&&!window.confirm('¿Enviar la evaluación definitiva? Después no podrás modificarla.'))return;clearTimeout(timeout.current);setOcupado(true);try{await sincronizar(datos,enviar)}catch(e){setError(mensajeError(e));setEstado('Pendiente de sincronizar.')}finally{if(mounted.current)setOcupado(false)}}
- const rubrica=rubricas[proyecto.categoria]||rubricas.stem;
- return <article className="juryEditor"><button type="button" onClick={onCerrar} disabled={ocupado}>← Volver al recorrido</button><h3>{proyecto.codigo} · {proyecto.titulo}</h3><p>{categoriasEvaluacion[proyecto.categoria]} · {hora(visita.inicio)}–{hora(visita.fin)}</p><p className="fairHint">Escucha al equipo y dedica al menos 10 minutos a la visita. Valora el proceso y la comprensión según la edad de sus integrantes.</p><p>1: evidencia inicial · 2: evidencia parcial · 3: cumple lo esperado · 4: evidencia sólida y bien explicada · 5: evidencia sobresaliente y reflexión propia.</p>
+ async function guardar(enviar){if(ocupado)return;if(enviar&&puntajeEvaluacion(proyecto.categoria,datos.notas,rubricaVersion)===null){setError('Califica los cinco criterios antes de enviar.');return}if(enviar&&!window.confirm('¿Enviar la evaluación definitiva? Después no podrás modificarla.'))return;clearTimeout(timeout.current);setOcupado(true);try{await sincronizar(datos,enviar)}catch(e){setError(mensajeError(e));setEstado('Pendiente de sincronizar.')}finally{if(mounted.current)setOcupado(false)}}
+ const rubrica=(rubricaVersion===1?rubricasAnteriores:rubricas)[proyecto.categoria]||rubricas.stem;
+ return <article className="juryEditor"><button type="button" onClick={onCerrar} disabled={ocupado}>← Volver al recorrido</button><h3>{proyecto.codigo} · {proyecto.titulo}</h3><p>{categoriasEvaluacion[proyecto.categoria]} · {hora(visita.inicio)}–{hora(visita.fin)}</p><p className="fairHint">Escucha al equipo y dedica al menos 10 minutos a la visita. Valora el proceso y la comprensión según la edad de sus integrantes.</p><details><summary>Cómo acompañar y valorar a los estudiantes</summary>{orientacionesEvaluacion.map(t=><p key={t}>{t}</p>)}{nivelesEvaluacion.map(([n,t],i)=><p key={n}><b>{i+1} · {n}:</b> {t}</p>)}</details>{rubricaVersion===1&&<p>Esta evaluación conserva la rúbrica anterior con la que se inició.</p>}
  {proyecto.categoria.startsWith('puentes')&&<p>Esta rúbrica valora el proyecto. La carga soportada en el concurso debe registrarse y compararse conforme a sus reglas.</p>}
- <fieldset disabled={enviada||ocupado}><legend>Rúbrica de evaluación</legend>{rubrica.map(([label,peso],i)=><label key={i}>{label} <strong>({peso} %)</strong><select aria-label={label} value={datos.notas[i]??''} onChange={e=>setDatos(d=>({...d,notas:d.notas.map((n,k)=>k===i?(e.target.value?Number(e.target.value):null):n)}))}>{opcionesNotas.map((n,k)=><option key={k} value={k||''}>{n}</option>)}</select></label>)}<label>Lo más destacado<textarea maxLength={2000} value={datos.destacado} onChange={e=>setDatos(d=>({...d,destacado:e.target.value}))}/></label><label>Una sugerencia para mejorar<textarea maxLength={2000} value={datos.sugerencia} onChange={e=>setDatos(d=>({...d,sugerencia:e.target.value}))}/></label></fieldset>
- <p><strong>Puntaje: {puntajeEvaluacion(proyecto.categoria,datos.notas)??'Completa los cinco criterios'}{puntajeEvaluacion(proyecto.categoria,datos.notas)!==null?' / 100':''}</strong></p><p role="status">{estado}</p>{restaurado&&!restaurable&&!enviada&&<p role="alert">Hay un borrador anterior en este dispositivo; la versión de la app es más reciente. Se muestra la versión de la app.</p>}{error&&<p role="alert" className="error">{error}</p>}
+ <fieldset disabled={enviada||ocupado}><legend>Rúbrica de evaluación</legend>{rubrica.map(([label,peso],i)=><label key={i}>{label} <strong>({peso} %)</strong>{rubricaVersion===2&&descripcionesRubricas[proyecto.categoria]&&<small>{descripcionesRubricas[proyecto.categoria][i]}</small>}<select aria-label={label} value={datos.notas[i]??''} onChange={e=>setDatos(d=>({...d,notas:d.notas.map((n,k)=>k===i?(e.target.value?Number(e.target.value):null):n)}))}>{opcionesNotas.map((n,k)=><option key={k} value={k||''}>{n}</option>)}</select></label>)}<label>Lo más destacado<textarea maxLength={2000} value={datos.destacado} onChange={e=>setDatos(d=>({...d,destacado:e.target.value}))}/></label><label>Una sugerencia para mejorar<textarea maxLength={2000} value={datos.sugerencia} onChange={e=>setDatos(d=>({...d,sugerencia:e.target.value}))}/></label></fieldset>
+ <p><strong>Puntaje: {puntajeEvaluacion(proyecto.categoria,datos.notas,rubricaVersion)??'Completa los cinco criterios'}{puntajeEvaluacion(proyecto.categoria,datos.notas,rubricaVersion)!==null?' / 100':''}</strong></p><p role="status">{estado}</p>{restaurado&&!restaurable&&!enviada&&<p role="alert">Hay un borrador anterior en este dispositivo; la versión de la app es más reciente. Se muestra la versión de la app.</p>}{error&&<p role="alert" className="error">{error}</p>}
  {!enviada&&<div className="juryActions"><button type="button" disabled={ocupado} onClick={()=>guardar(false)}>Guardar / reintentar sincronización</button><button type="button" disabled={ocupado} className="fairPrimary" onClick={()=>guardar(true)}>Enviar evaluación definitiva</button></div>}
  </article>;
 }
@@ -101,6 +102,7 @@ function EditorEvaluacion({visita,proyecto,juradoId,onGuardada,onCerrar}){
 export function RecorridoJurado({contexto,onGuardada}){
  const [seleccion,setSeleccion]=useState(null);const visitas=contexto.visitas.filter(v=>v.jurado_id===contexto.mi_jurado);
  const proyectos=new Map(contexto.proyectos.map(p=>[claveProyecto(p),p]));const elegida=visitas.find(v=>v.id===seleccion),proyecto=elegida&&proyectos.get(claveProyecto(elegida));
+ if(elegida&&proyecto&&!elegida.evaluacion&&contexto.config?.rubrica_version!==2)return <article><p>El comité debe activar feria-rubrica-experiencias.sql en Supabase antes de iniciar la evaluación con los nuevos criterios.</p><button onClick={()=>setSeleccion(null)}>Volver al recorrido</button></article>;
  if(elegida&&proyecto)return <EditorEvaluacion key={elegida.id} visita={elegida} proyecto={proyecto} juradoId={contexto.mi_jurado} onGuardada={onGuardada} onCerrar={()=>setSeleccion(null)}/>;
  return <section><h2>Mi recorrido como jurado</h2><p>{contexto.config.fecha} · {hora(contexto.config.inicio)}–{hora(contexto.config.fin)} · {visitas.filter(v=>v.evaluacion?.enviada).length}/{visitas.length} evaluaciones enviadas</p>{!contexto.mi_jurado?<p>El comité debe habilitar tu correo como jurado para asignarte proyectos.</p>:!visitas.length?<p>Tu cuenta está habilitada. El comité todavía no ha asignado tu recorrido.</p>:<div className="juryVisitList">{visitas.map(v=>{const p=proyectos.get(claveProyecto(v));const ubicacion=p?.ubicaciones.find(u=>u.fecha===v.fecha&&hora(u.inicio)<=hora(v.inicio)&&hora(u.fin)>=hora(v.fin));return <article className="fairCard" key={v.id}><strong>{hora(v.inicio)}–{hora(v.fin)}</strong><h3>{p?.codigo} · {p?.titulo||'Proyecto no disponible'}</h3><p>{ubicacion?.espacio_nombre||'Ubicación pendiente de revisión'}</p><p>{v.evaluacion?.enviada?'Evaluación enviada':v.evaluacion?'Borrador':'Pendiente'}</p>{p&&<details><summary>Ver información del proyecto</summary><p><b>Integrantes:</b> {p.integrantes}</p><p>{p.propuesta}</p><p>{p.procedimiento}</p></details>}<button type="button" disabled={!p||!ubicacion} onClick={()=>setSeleccion(v.id)}>{v.evaluacion?.enviada?'Ver mi evaluación':'Evaluar proyecto'}</button></article>})}</div>}</section>;
 }

@@ -12,5 +12,5 @@ assert.throws(()=>generarRecorrido(proyectos(2),jurados(4),{...config,fin:'10:01
 assert.throws(()=>generarRecorrido([{...proyectos(1)[0],ubicaciones:[]}],jurados(4),config),/Amplía la reserva/);
 const bloqueados=jurados(4).map(j=>({...j,conflictos:ps.map(claveProyecto)}));assert.throws(()=>generarRecorrido(ps,bloqueados,config),/al menos|conflictos/);
 for(const c of Object.keys(rubricas)){assert.equal(puntajeEvaluacion(c,[5,5,5,5,5]),100);assert.equal(puntajeEvaluacion(c,[1,1,1,1,1]),20);assert.equal(puntajeEvaluacion(c,[0,5,5,5,5]),null);assert.equal(puntajeEvaluacion(c,[null,5,5,5,5]),null)}
-assert.equal(puntajeEvaluacion('stem',[1,2,3,4,5]),62);
+assert.equal(puntajeEvaluacion('stem',[1,2,3,4,5]),50);assert.equal(puntajeEvaluacion('stem',[1,2,3,4,5],1),62);
 console.log('PASS: asignación completa 3 jurados, 10 visitas máximo, conflictos, simultaneidad, capacidad, 2 horas y rúbricas');
