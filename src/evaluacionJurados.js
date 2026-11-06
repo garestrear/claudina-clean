@@ -1,8 +1,8 @@
-export const categoriasEvaluacion={stem:'Ciencia y Tecnología',arte:'Arte y Creatividad',emprendimiento:'Emprendimientos',familias:'Emprendimientos de familias',puentes_juvenil:'Puentes juvenil',puentes_infantil:'Puentes infantil'};
+export const categoriasEvaluacion={stem:'Experiencias de ciencia y tecnología',arte:'Arte y Creatividad',emprendimiento:'Emprendimientos',familias:'Emprendimientos de familias',puentes_juvenil:'Puentes juvenil',puentes_infantil:'Puentes infantil'};
 export const claveProyecto=p=>`${p.origen}:${p.proyecto_id||p.id}`;
 export const minutosHora=h=>Number(h.slice(0,2))*60+Number(h.slice(3,5));
 export const horaMinutos=m=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
-export const rubricas={
+export const rubricasAnteriores={
  stem:[['Problema y propósito',15],['Investigación y comprensión',20],['Desarrollo, pruebas y evidencias',25],['Creatividad y pertinencia',20],['Exposición y respuestas',20]],
  arte:[['Intención y concepto',15],['Exploración e investigación',15],['Técnica y proceso creativo',25],['Originalidad y expresión',25],['Presentación y reflexión',20]],
  emprendimiento:[['Necesidad y público',20],['Propuesta de valor',25],['Desarrollo del producto o servicio',20],['Viabilidad y uso de recursos',20],['Presentación y respuestas',15]],
@@ -10,7 +10,15 @@ export const rubricas={
  puentes_juvenil:[['Diseño y fundamentos',25],['Construcción y cumplimiento de reglas',25],['Pruebas y evidencias de resistencia',25],['Creatividad y uso de materiales',10],['Exposición y respuestas',15]],
  puentes_infantil:[['Idea y comprensión del puente',20],['Construcción y cuidado',25],['Pruebas y aprendizaje',25],['Creatividad y uso de materiales',15],['Explicación del equipo',15]]
 };
-export function puntajeEvaluacion(categoria,notas){const r=rubricas[categoria];return r&&notas?.length===5&&notas.every(n=>Number.isInteger(n)&&n>=1&&n<=5)?Math.round(r.reduce((s,[,peso],i)=>s+notas[i]*peso/5,0)*100)/100:null}
+export const rubricas={
+ stem:[['Comprensión de la experiencia',30],['Realización y funcionamiento',25],['Observación y aprendizaje',20],['Comunicación y participación',15],['Creatividad y aprovechamiento de materiales',10]],
+ arte:[['Intención y expresión',25],['Exploración de materiales y técnicas',25],['Realización y cuidado',20],['Creatividad y aporte propio',15],['Comunicación y aprendizaje',15]],
+ emprendimiento:[['Identidad del emprendimiento',20],['Producto y utilidad',25],['Costos y precio de venta',25],['Elaboración y aprovechamiento de recursos',15],['Comunicación y aprendizaje',15]],
+ familias:[['Necesidad y público',20],['Propuesta de valor',25],['Desarrollo del producto o servicio',20],['Viabilidad y uso de recursos',20],['Presentación y respuestas',15]],
+ puentes_juvenil:[['Diseño y fundamentos',25],['Construcción y cumplimiento de reglas',25],['Pruebas y evidencias de resistencia',25],['Creatividad y uso de materiales',10],['Exposición y respuestas',15]],
+ puentes_infantil:[['Idea y comprensión del puente',20],['Construcción y cuidado',25],['Pruebas y aprendizaje',25],['Creatividad y uso de materiales',15],['Explicación del equipo',15]]
+};
+export function puntajeEvaluacion(categoria,notas,version=2){const r=(version===1?rubricasAnteriores:rubricas)[categoria];return r&&notas?.length===5&&notas.every(n=>Number.isInteger(n)&&n>=1&&n<=5)?Math.round(r.reduce((s,[,peso],i)=>s+notas[i]*peso/5,0)*100)/100:null}
 
 // Flujo máximo: tres personas diferentes por proyecto, carga mínima viable y
 // exclusión de asesores/conflictos. No modifica los datos de origen.
@@ -51,3 +59,26 @@ export function generarRecorrido(proyectos,jurados,{fecha,inicio='08:00',fin='10
  return visitas.sort((a,b)=>a.ronda-b.ronda||a.jurado_id.localeCompare(b.jurado_id));
 }
 export function csvResultados(proyectos){const q=v=>'"'+String(/^[=+@\-\t\r]/.test(String(v??''))?"'"+v:v??'').replaceAll('"','""')+'"';return '\ufeff'+[['Código','Proyecto','Categoría','Evaluaciones','Promedio /100','Estado'],...proyectos.map(p=>[p.codigo,p.titulo,categoriasEvaluacion[p.categoria],p.evaluadas,p.evaluadas===3?p.promedio:'',p.evaluadas===3?'Completo':'Pendiente'])].map(f=>f.map(q).join(';')).join('\r\n')}
+
+export const descripcionesExperiencia=[
+ 'Explica con sus propias palabras qué hizo, qué ocurrió y una posible razón.',
+ 'Muestra la experiencia o sus pasos. Si falla, explica qué esperaba observar.',
+ 'Cuenta qué aprendió, qué le sorprendió o qué cambiaría al repetirla.',
+ 'Comunica lo principal y participa según sus posibilidades; se respeta el nerviosismo.',
+ 'Aporta un detalle propio o utiliza ingeniosamente los materiales disponibles.'
+];
+export const nivelesEvaluacion=[['Primer acercamiento','Necesita bastante acompañamiento para mostrar o explicar lo realizado.'],['En proceso','Reconoce algunos elementos, aunque todavía le cuesta relacionarlos.'],['Logrado','Muestra y explica lo principal de manera acorde a su edad.'],['Muy logrado','Explica con claridad, relaciona lo observado y responde preguntas sencillas.'],['Destacado','Aporta una reflexión, una explicación propia o una posible mejora.']];
+export const orientacionesEvaluacion=[
+ 'Valora la comprensión y el aprendizaje según la edad; no exijas una investigación extensa ni resultados novedosos.',
+ 'A los pequeños puedes preguntarles qué pasó y qué aprendieron; a los jóvenes, por qué creen que ocurrió y qué cambiarían.',
+ 'Una explicación sencilla puede ser excelente. No premies la memorización, el costo de los materiales o la ayuda adulta por sí mismos.',
+ 'No descuentes automáticamente por nervios, lectura o una falla: pueden explicar el proceso, mostrar fotos o contar lo observado antes.',
+ 'El nivel 3 representa un buen cumplimiento. Para un 5 no se requieren conocimientos universitarios ni materiales costosos.',
+ 'Cierra con un logro concreto y una sugerencia amable. Los registros de proyectos prolongados son evidencia adicional, no una exigencia para todos.'
+];
+
+export const descripcionesRubricas={
+ stem:descripcionesExperiencia,
+ arte:['Cuenta qué quiso representar, comunicar o hacer sentir.','Reconoce sus materiales y explica qué probó o descubrió.','Muestra dedicación según su edad y los recursos disponibles.','Identifica decisiones propias: colores, formas, personajes o adaptaciones.','Comparte cómo lo hizo, qué disfrutó, qué le costó o qué probaría después.'],
+ emprendimiento:['Presenta nombre, logo y eslogan, y explica su relación con lo que ofrece; pueden estar hechos a mano.','Muestra qué ofrece, a quién puede servir y cómo se utiliza o disfruta.','Explica gastos, costo por unidad y precio con cuentas sencillas; distingue ventas y ganancia.','Cuenta cómo elaboró el producto, sus cuidados y el uso de materiales.','Explica su propuesta con sus palabras y cuenta qué aprendió o mejoraría.']
+};

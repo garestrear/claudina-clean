@@ -46,8 +46,8 @@ export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fu
  texto(limpio(jurado.institucion),{despues:5});
  if(recorrido){
   texto('Gracias por ser parte de nuestra Feria STEAM',{negrita:true,tamano:11,despues:4});
-  const t=(v,o={})=>texto(v,{tamano:9.2,despues:1.2,...o});
-  t(`Gracias por acompañarnos en la ${feria.nombre}. Nos alegra mucho contar contigo. Tu mirada y tus palabras de ánimo son un regalo para nuestros estudiantes, que han preparado sus proyectos con ilusión y esfuerzo.`);
+  const t=(v,o={})=>texto(v,{tamano:9.2,despues:.6,...o});
+  t(`Gracias por acompañarnos en la ${feria.nombre}. Tu mirada y tus palabras de ánimo son un regalo para nuestros estudiantes. ¡Nos alegra contar contigo!`);
   t(`${feria.fecha} · ${feria.horario} Lugar: ${feria.lugar}.`);
   t('Tus datos de acceso',{negrita:true});
   t('Claudina App: '+recorrido.url);
@@ -58,11 +58,13 @@ export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fu
   t('1. Abre Claudina App e ingresa con tu usuario y contraseña; no necesitas recibir correos.');
   t('2. Si es tu primer ingreso, elige una contraseña personal de al menos 6 caracteres.');
   t('3. En “Mi recorrido como jurado”, encontrarás tus proyectos. Pulsa “Evaluar proyecto” al visitar cada equipo.');
-  t('4. Escucha al equipo y conversa con sus integrantes. Valora los cinco criterios de 1 a 5; destaca un logro y comparte una sugerencia que les ayude a seguir aprendiendo.');
-  t('5. Puedes guardar un borrador. Cuando estés conforme, pulsa “Enviar evaluación definitiva” y confirma que aparezca “Evaluación enviada”. Una vez enviada, la nota no se puede cambiar.');
+  t('4. Escucha al equipo, valora los cinco criterios de 1 a 5 y escribe un logro y una sugerencia amable.');
+  t('5. Puedes guardar un borrador. Al terminar, pulsa “Enviar evaluación definitiva” y verifica “Evaluación enviada”; después la nota no se puede cambiar.');
   t('Orientaciones generales',{negrita:true});
-  t('Reserva 10 minutos para cada equipo y ten presente la edad de sus integrantes. Si conoces un proyecto de cerca, no encuentras un aula o necesitas ayuda con la app, acércate al equipo organizador: con gusto te acompañamos.');
-  t('En la siguiente página encontrarás tu recorrido en orden de visita. Revisa la app por si hay algún ajuste. Gracias por ayudarnos a hacer de esta feria una experiencia especial para nuestra comunidad.');
+  t('Dedica 10 minutos por equipo. Valora comprensión y aprendizaje según la edad, sin exigir investigación extensa ni materiales costosos. El 3 es un buen cumplimiento. No descuentes automáticamente por nervios, lectura o fallas de la demostración.');
+  t('En arte, valora expresión y decisiones propias, no tu gusto personal. En emprendimiento, revisa nombre, logo, eslogan, costos y precio con cuentas sencillas, sin exigir contabilidad formal ni premiar ventas.');
+  t('Si hay conflicto de interés o necesitas ayuda, avisa al comité. Sin celular, utiliza tu formato impreso de evaluación.');
+  t('Tu recorrido está en la siguiente página. Revisa posibles ajustes en la app. ¡Gracias por sumar a nuestra comunidad!');
   espacio(36);t('Con aprecio,');
   if(firma){pdf.addImage(firma,'JPEG',margen,y-1,43,11.7);y+=12;}
   t('Gustavo Adolfo Restrepo Arboleda',{negrita:true});
