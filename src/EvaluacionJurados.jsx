@@ -100,8 +100,10 @@ function EditorEvaluacion({visita,proyecto,juradoId,onGuardada,onCerrar}){
  </article>;
 }
 
-export function RecorridoJurado({contexto,onGuardada}){
- const [seleccion,setSeleccion]=useState(null);const visitas=contexto.visitas.filter(v=>v.jurado_id===contexto.mi_jurado);
+export function RecorridoJurado({contexto,onGuardada,onEdicion}){
+ const [seleccion,setSeleccion]=useState(null);
+ useEffect(()=>{onEdicion?.(Boolean(seleccion));return()=>onEdicion?.(false)},[seleccion,onEdicion]);
+ const visitas=contexto.visitas.filter(v=>v.jurado_id===contexto.mi_jurado);
  const proyectos=new Map(contexto.proyectos.map(p=>[claveProyecto(p),p]));const elegida=visitas.find(v=>v.id===seleccion),proyecto=elegida&&proyectos.get(claveProyecto(elegida));
  if(elegida&&proyecto&&!elegida.evaluacion&&contexto.config?.rubrica_version!==2)return <article><p>El comité debe activar feria-rubrica-experiencias.sql en Supabase antes de iniciar la evaluación con los nuevos criterios.</p><button onClick={()=>setSeleccion(null)}>Volver al recorrido</button></article>;
  if(elegida&&proyecto)return <EditorEvaluacion key={elegida.id} visita={elegida} proyecto={proyecto} juradoId={contexto.mi_jurado} onGuardada={onGuardada} onCerrar={()=>setSeleccion(null)}/>;
@@ -110,9 +112,22 @@ export function RecorridoJurado({contexto,onGuardada}){
 
 export default function EvaluacionJurados({portal=false,onVolver}){
  const [ctx,setCtx]=useState(null),[error,setError]=useState(''),[mensaje,setMensaje]=useState(''),[ocupado,setOcupado]=useState(false),[formulario,setFormulario]=useState(null),[credenciales,setCredenciales]=useState(null),[vista,setVista]=useState('organizar'),[plan,setPlan]=useState(null),[franja,setFranja]=useState({fecha:'2026-11-06',inicio:'08:00',fin:'10:00'});
- const seq=useRef(0);
+ const seq=useRef(0),editando=useRef(false),refrescando=useRef(false);
  async function cargar(){const n=++seq.current;setError('');const{data,error}=await supabase.rpc('feria_evaluacion_contexto');if(n!==seq.current)return;if(error){setError(mensajeError(error));return}setCtx(data);if(data.config)setFranja({fecha:data.config.fecha,inicio:hora(data.config.inicio),fin:hora(data.config.fin)});setPlan(null)}
  useEffect(()=>{cargar();return()=>{seq.current++}},[]);
+ useEffect(()=>{
+  if(!ctx?.mi_jurado||ctx.requiere_cambio_password||(!portal&&vista!=='recorrido'))return;
+  let activo=true;
+  async function refrescar(){
+   if(!activo||document.visibilityState==='hidden'||editando.current||refrescando.current)return;
+   refrescando.current=true;const n=seq.current;
+   try{const{data,error}=await supabase.rpc('feria_evaluacion_contexto');if(activo&&!error&&data&&n===seq.current&&!editando.current)setCtx(data)}catch{/* Se reintenta al recuperar conexión o en el siguiente ciclo. */}finally{refrescando.current=false}
+  }
+  const visible=()=>{if(document.visibilityState==='visible')refrescar()};
+  const timer=setInterval(refrescar,15000);window.addEventListener('focus',refrescar);window.addEventListener('online',refrescar);document.addEventListener('visibilitychange',visible);
+  refrescar();
+  return()=>{activo=false;clearInterval(timer);window.removeEventListener('focus',refrescar);window.removeEventListener('online',refrescar);document.removeEventListener('visibilitychange',visible)};
+ },[ctx?.mi_jurado,ctx?.requiere_cambio_password,portal,vista]);
  async function operacion(fn,texto){if(ocupado)return;setOcupado(true);setError('');setMensaje('');try{await fn();await cargar();setMensaje(texto)}catch(e){setError(mensajeError(e))}finally{setOcupado(false)}}
  async function rpc(nombre,args){const r=await supabase.rpc(nombre,args);if(r.error)throw new Error(nombre==='feria_jurados_asignar_automaticamente'&&/function|schema cache|does not exist/i.test(r.error.message||'')?'Activa supabase/feria-jurados-asignacion-automatica.sql en Supabase para habilitar la asignación automática.':r.error.message);return r.data}
  async function habilitar(d){await operacion(async()=>{await rpc('feria_jurado_habilitar',{persona:d.id||crypto.randomUUID(),datos:{...d,areas:d.areas||[],conflictos:d.conflictos||[]},habilitar:true});setFormulario(null)},'Jurado habilitado. Asígnale uno de los usuarios disponibles para ingresar sin correo.')}
@@ -123,7 +138,7 @@ export default function EvaluacionJurados({portal=false,onVolver}){
  const resultados=evaluables.map(p=>{const vs=ctx.visitas.filter(v=>claveProyecto(v)===claveProyecto(p)),notas=vs.filter(v=>v.evaluacion?.enviada).map(v=>Number(v.evaluacion.puntaje));return {...p,asignadas:vs.length,evaluadas:notas.length,promedio:notas.length===3?Math.round(notas.reduce((a,b)=>a+b,0)/3*100)/100:null,diferencia:notas.length?Math.max(...notas)-Math.min(...notas):0}})||[];
  const contenido=<div className="juryEvaluation"><div className="juryActions"><h2>Evaluación de proyectos STEAM</h2><button type="button" disabled={ocupado} onClick={cargar}>Actualizar</button>{portal&&onVolver&&<button type="button" onClick={onVolver}>Volver a mi cuenta</button>}</div>{error&&<p role="alert" className="error">{error}</p>}{mensaje&&<p role="status">{mensaje}</p>}{!ctx?(!error&&<p>Cargando evaluación…</p>):ctx.requiere_cambio_password?<CambioPasswordJurado onListo={cargar}/>:<>
  {ctx.docente&&<nav className="juryActions" aria-label="Evaluación de jurados"><button onClick={()=>setVista('organizar')} aria-pressed={vista==='organizar'}>Organizar evaluación</button><button onClick={()=>setVista('recorrido')} aria-pressed={vista==='recorrido'}>Mi recorrido</button></nav>}
- {!ctx.docente||vista==='recorrido'?<RecorridoJurado contexto={ctx} onGuardada={guardada}/>:<>
+ {!ctx.docente||vista==='recorrido'?<RecorridoJurado contexto={ctx} onGuardada={guardada} onEdicion={v=>{editando.current=v}}/>:<>
  <p>3 jurados por proyecto · máximo 10 visitas por jurado · 10 minutos de evaluación y 1 de traslado · franja máxima de 2 horas.</p>
  <p className="jurySummary"><strong>{evaluables.length}</strong> proyectos para evaluar · <strong>{ctx.jurados.filter(j=>j.habilitado).length}</strong> jurados habilitados · Se necesitan al menos <strong>{Math.max(3,Math.ceil(evaluables.length*3/10))}</strong> jurados.</p>
  <ImpresionJurados/><BancoCuentasJurados jurados={ctx.jurados} onListo={cargar}/><details open={!ctx.visitas.length}><summary>Cuentas y conflictos de jurados</summary><p>Acceso de jurados: <a href="/?ingreso=jurado">{window.location.origin}/?ingreso=jurado</a>. Puede ingresar con usuario y contraseña, sin correos; el enlace por correo queda como alternativa.</p><button type="button" onClick={()=>setFormulario({})}>Registrar jurado externo o docente</button>{formulario&&<FormularioJurado key={formulario.id||'nuevo'} persona={formulario} proyectos={ctx.proyectos} onGuardar={habilitar} onCancelar={()=>setFormulario(null)} ocupado={ocupado}/>}
