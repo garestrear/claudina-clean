@@ -86,7 +86,7 @@ begin
  insert into public.feria_jurados(id,nombre,correo,institucion,profesion,telefono,habilitado,areas,conflictos)
  values(persona,trim(datos->>'nombre'),correo_n,coalesce(datos->>'institucion',''),coalesce(datos->>'profesion',''),coalesce(datos->>'telefono',''),habilitar,array(select jsonb_array_elements_text(datos->'areas')),array(select jsonb_array_elements_text(datos->'conflictos')))
  on conflict(id) do update set nombre=excluded.nombre,institucion=excluded.institucion,profesion=excluded.profesion,telefono=excluded.telefono,habilitado=excluded.habilitado,areas=excluded.areas,conflictos=excluded.conflictos;
- update public.feria_evaluacion_config set version=version+1;
+ update public.feria_evaluacion_config set version=version+1 where id=true;
 end $$;
 
 create or replace function public.feria_evaluacion_categoria(fuente text,proyecto uuid,categoria_nueva text)
@@ -97,7 +97,7 @@ begin
  if categoria_nueva is null or categoria_nueva not in('stem','arte','emprendimiento','familias','puentes_juvenil','puentes_infantil') or not exists(select 1 from jsonb_array_elements(public.feria_evaluacion_proyectos())p where p->>'origen'=fuente and (p->>'id')::uuid=proyecto) then raise exception 'Proyecto o categoría no válidos';end if;
  if exists(select 1 from public.feria_evaluacion_visitas v join public.feria_evaluaciones e on e.visita_id=v.id where v.origen=fuente and v.proyecto_id=proyecto) then raise exception 'Ya hay evaluaciones; no se puede cambiar la rúbrica';end if;
  insert into public.feria_evaluacion_categorias values(fuente,proyecto,categoria_nueva) on conflict(origen,proyecto_id) do update set categoria=excluded.categoria;
- update public.feria_evaluacion_config set version=version+1;
+ update public.feria_evaluacion_config set version=version+1 where id=true;
 end $$;
 
 create or replace function public.feria_evaluacion_plan(dia date,desde time,hasta time,visitas jsonb,version_esperada integer)
@@ -125,7 +125,7 @@ begin
   insert into public.feria_evaluacion_visitas(jurado_id,origen,proyecto_id,ronda,fecha,inicio,fin) values(v.jurado_id,v.origen,v.proyecto_id,v.ronda,dia,desde+v.ronda*interval '11 minutes',desde+v.ronda*interval '11 minutes'+interval '10 minutes');
  end loop;
  if exists(select 1 from jsonb_array_elements(proyectos) zz where (select count(*) from public.feria_evaluacion_visitas vv where vv.origen=zz->>'origen' and vv.proyecto_id=(zz->>'id')::uuid)<>3) then raise exception 'Cada proyecto necesita tres jurados distintos';end if;
- update public.feria_evaluacion_config set fecha=dia,inicio=desde,fin=hasta,version=version+1;
+ update public.feria_evaluacion_config set fecha=dia,inicio=desde,fin=hasta,version=version+1 where id=true;
 end $$;
 
 create or replace function public.feria_evaluacion_reasignar(visita uuid,nuevo_jurado uuid)
@@ -142,7 +142,7 @@ begin
  select id into u from auth.users where lower(trim(email))=lower(trim(j.correo));
  if p is null or (u is not null and (u=nullif(p->>'asesor_id','')::uuid or u=nullif(p->>'autor_id','')::uuid)) or (v.origen||':'||v.proyecto_id)=any(j.conflictos) then raise exception 'Proyecto no vigente o conflicto del jurado';end if;
  update public.feria_evaluacion_visitas set jurado_id=nuevo_jurado where id=visita;
- update public.feria_evaluacion_config set version=version+1;
+ update public.feria_evaluacion_config set version=version+1 where id=true;
 end $$;
 
 create or replace function public.feria_evaluacion_guardar(visita uuid,datos jsonb,enviar boolean,version_esperada integer,solicitud_id uuid)

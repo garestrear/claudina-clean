@@ -26,7 +26,7 @@ begin
  if not exists(select 1 from auth.users u where u.id=cuenta and u.email=usuario_nuevo||'@jurados.claudina.invalid' and u.email_confirmed_at is not null) or exists(select 1 from public.perfiles p where p.id=cuenta) then raise exception 'Cuenta de jurado no válida';end if;
  update public.feria_jurados set cuenta_id=cuenta,usuario=usuario_nuevo,cambiar_password=true where id=persona and habilitado and cuenta_id is null;
  if not found then raise exception 'Cuenta ya vinculada o jurado no habilitado';end if;
- update public.feria_evaluacion_config set version=version+1;
+ update public.feria_evaluacion_config set version=version+1 where id=true;
 end $$;
 create or replace function public.feria_jurado_password_cambiada(cuenta uuid)
 returns void language plpgsql security definer set search_path='' as $$

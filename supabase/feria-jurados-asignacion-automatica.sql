@@ -6,7 +6,7 @@ begin;
 do $$begin
  if not exists(select 1 from information_schema.columns where table_schema='public' and table_name='feria_evaluacion_config' and column_name='asignacion_automatica') then
   alter table public.feria_evaluacion_config add column asignacion_automatica boolean not null default true;
-  update public.feria_jurados set habilitado=true;
+  update public.feria_jurados set habilitado=true where not habilitado;
  end if;
 end $$;
 alter table public.feria_jurados add column if not exists cuenta_id uuid unique references auth.users(id) on delete set null;
@@ -57,7 +57,7 @@ begin
  end loop;
  total:=jsonb_array_length(proyectos)*3;
  select coalesce(sum(greatest(0,3-(select count(*) from public.feria_evaluacion_visitas v where v.origen=p->>'origen' and v.proyecto_id=(p->>'id')::uuid))),0) into faltantes from jsonb_array_elements(proyectos)p;
- update public.feria_evaluacion_config set version=version+1;
+ update public.feria_evaluacion_config set version=version+1 where id=true;
  return jsonb_build_object('automatica',true,'visitas_repartidas',agregadas,'visitas_objetivo',total,'pendientes',faltantes);
 end $$;
 revoke all on function public.feria_asignar_jurados_interno() from public,anon,authenticated;
@@ -101,7 +101,7 @@ begin
  insert into public.feria_jurados(id,nombre,correo,institucion,profesion,telefono,habilitado,areas,conflictos)
  values(persona,trim(datos->>'nombre'),correo_n,coalesce(datos->>'institucion',''),coalesce(datos->>'profesion',''),coalesce(datos->>'telefono',''),habilitar,array(select jsonb_array_elements_text(datos->'areas')),array(select jsonb_array_elements_text(datos->'conflictos')))
  on conflict(id) do update set nombre=excluded.nombre,institucion=excluded.institucion,profesion=excluded.profesion,telefono=excluded.telefono,habilitado=excluded.habilitado,areas=excluded.areas,conflictos=excluded.conflictos;
- update public.feria_evaluacion_config set version=version+1;
+ update public.feria_evaluacion_config set version=version+1 where id=true;
 end $$;
 
 

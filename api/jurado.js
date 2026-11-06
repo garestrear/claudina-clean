@@ -40,9 +40,23 @@ export function crearHandlerJurado(factory=createClient,env=process.env){return 
    if(marcar)return res.status(503).json({error:'La contraseña cambió, pero falta habilitar la evaluación. Ingresa con la nueva contraseña y vuelve a cambiarla.'});
    return res.status(200).json({mensaje:'Contraseña actualizada. Ya puedes evaluar tus proyectos.'});
   }
-  if(!['crear','restablecer'].includes(accion))return res.status(400).json({error:'Acción no válida'});
+  if(!['crear','restablecer','preparar-cuenta'].includes(accion))return res.status(400).json({error:'Acción no válida'});
   const {data:perfil,error:perfilError}=await admin.from('perfiles').select('rol').eq('id',identidad.user.id).maybeSingle();
   if(perfilError||perfil?.rol!=='profesor')return res.status(403).json({error:'Solo docentes pueden crear o restablecer cuentas de jurados.'});
+  if(accion==='preparar-cuenta'){
+   const numero=req.body.numero,password=req.body.password;
+   if(!passwordValida(password))return res.status(400).json({error:'La contraseña inicial debe tener entre 10 y 128 caracteres.'});
+   if(!Number.isInteger(numero)||numero<1||numero>20)return res.status(400).json({error:'Cuenta fuera del rango de 1 a 20.'});
+   const usuario='jurado'+String(numero).padStart(2,'0');
+   const {data:existente,error:buscar}=await admin.from('feria_jurado_cuentas_disponibles').select('usuario').eq('usuario',usuario).maybeSingle();
+   if(buscar)return res.status(503).json({error:'Activa feria-jurados-banco-cuentas.sql en Supabase.'});
+   if(existente)return res.status(200).json({usuario,existente:true});
+   const {data:nueva,error:crear}=await admin.auth.admin.createUser({email:usuario+'@jurados.claudina.invalid',password,email_confirm:true,user_metadata:{tipo_cuenta:'jurado',referencia:randomUUID()}});
+   if(crear||!nueva.user)return res.status(409).json({error:'No se pudo preparar '+usuario+'. Puede estar ocupado. No se cambió ninguna contraseña existente.'});
+   const {error:vincular}=await admin.rpc('feria_jurado_banco_registrar',{usuario_nuevo:usuario,cuenta:nueva.user.id});
+   if(vincular){await admin.auth.admin.deleteUser(nueva.user.id);return res.status(409).json({error:'No se pudo guardar '+usuario+'. Reintenta preparar las cuentas.'});}
+   return res.status(200).json({usuario,existente:false});
+  }
   const persona=req.body.persona,password=req.body.password;
   if(typeof persona!=='string'||!/^[a-f0-9-]{36}$/i.test(persona)||!passwordValida(password))return res.status(400).json({error:'Selecciona el jurado y una contraseña inicial de 10 a 128 caracteres.'});
   const {data:j,error:consulta}=await admin.from('feria_jurados').select('id,nombre,correo,habilitado,cuenta_id,usuario').eq('id',persona).maybeSingle();
