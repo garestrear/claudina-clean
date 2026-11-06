@@ -11,9 +11,9 @@ export function saludoJurado(jurado){
  return jurado?.genero==='F'?`Apreciada ${nombre}:`:jurado?.genero==='M'?`Apreciado ${nombre}:`:`Recibe un cordial saludo, ${nombre}:`;
 }
 // Texto nativo en PDF, sin depender de imprimir ni de una captura de pantalla.
-export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fuenteNegrita,fecha=new Date(),recorrido}={}){
+export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fuenteNegrita,fecha=new Date(),recorrido,pdf:documento}={}){
  if(!limpio(jurado?.nombre)||(!recorrido&&!limpio(jurado?.institucion)))throw new Error('Falta el nombre o la institución de la persona inscrita.');
- const pdf=new jsPDF({unit:'mm',format:'letter',compress:true});
+ const pdf=documento||new jsPDF({unit:'mm',format:'letter',compress:true});const primeraPagina=documento?pdf.getNumberOfPages()+1:1;if(documento)pdf.addPage('letter','portrait');
  if(fuenteRegular&&fuenteNegrita){pdf.addFileToVFS('carta-regular.ttf',fuenteRegular);pdf.addFont('carta-regular.ttf','Carta','normal');pdf.addFileToVFS('carta-bold.ttf',fuenteNegrita);pdf.addFont('carta-bold.ttf','Carta','bold');}
  const fuente=fuenteRegular&&fuenteNegrita?'Carta':'helvetica';
  const ancho=215.9,alto=279.4,margen=19,util=ancho-2*margen;let y;
@@ -59,6 +59,8 @@ export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fu
   seccion('Datos de la jornada');
   t(`Fecha: ${feria.fecha} · Horario general: ${feria.horario}`);
   t('Lugar: '+feria.lugar+'.');
+  if(recorrido.sinAcceso){seccion('Evaluación en papel');t('El comité te entregará tus datos de acceso a Claudina App. Mientras tanto, utiliza tus fichas impresas y entrégalas al finalizar.');}
+  else{
   seccion('Tus datos de acceso');
   t('Claudina App: '+recorrido.url);
   t('Usuario: '+limpio(jurado.usuario),{negrita:true});
@@ -70,6 +72,7 @@ export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fu
   t('3. En “Mi recorrido como jurado”, encontrarás tus proyectos. Pulsa “Evaluar proyecto” al visitar cada equipo.');
   t('4. Escucha al equipo, valora los cinco criterios de 1 a 5 y escribe un logro y una sugerencia amable.');
   t('5. Puedes guardar un borrador. Al terminar cada proyecto, pulsa “Enviar evaluación definitiva” y verifica “Evaluación enviada”; después la nota no se puede cambiar.');
+  }
   seccion('Orientaciones generales');
   t('Dedica 10 minutos por equipo. Valora comprensión y aprendizaje según la edad, sin exigir investigación extensa ni materiales costosos. El 3 es un buen cumplimiento. No descuentes automáticamente por nervios, lectura o fallas de la demostración.');
   t('En arte, valora expresión y decisiones propias, no tu gusto personal. En emprendimiento, revisa nombre, logo, eslogan, costos y precio con cuentas sencillas, sin exigir contabilidad formal ni premiar ventas.');
@@ -82,7 +85,7 @@ export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fu
   t(`Contacto: ${feria.contacto} · ${feria.correo}`);
   pdf.addPage();cabecera();
   texto('Tu recorrido de evaluación',{negrita:true,tamano:13,despues:4});
-  t(limpio(jurado.nombre)+' · Usuario: '+limpio(jurado.usuario),{negrita:true});
+  t(limpio(jurado.nombre)+(jurado.usuario?' · Usuario: '+limpio(jurado.usuario):''),{negrita:true});
   t(`${recorrido.visitas.length} proyectos asignados · ${feria.fecha}`);
   if(!recorrido.visitas.length)t('Aún estamos preparando tus proyectos. Acércate al equipo organizador antes de empezar; con gusto te orientamos.');
   const columnas=[29,108,util-137],paso=4.2;
@@ -109,7 +112,7 @@ export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fu
    pdf.setFont(fuente,'normal');if(puesto.length)pdf.text(puesto,margen+columnas[0]+columnas[1]+3,y+6+lugar.length*paso,{lineHeightFactor:paso/(9.5*.35278)});
    y+=altura;
   }
-  for(let pagina=1;pagina<=pdf.getNumberOfPages();pagina++){pdf.setPage(pagina);pdf.setFont(fuente,'normal');pdf.setFontSize(8);pdf.text(`Documento personal · Página ${pagina} de ${pdf.getNumberOfPages()}`,ancho/2,250,{align:'center'});}
+  for(let pagina=primeraPagina;pagina<=pdf.getNumberOfPages();pagina++){pdf.setPage(pagina);pdf.setFont(fuente,'normal');pdf.setFontSize(8);pdf.text(`Documento personal · Página ${pagina-primeraPagina+1} de ${pdf.getNumberOfPages()-primeraPagina+1}`,ancho/2,250,{align:'center'});}
   pdf.setProperties({title:`Recorrido y orientaciones como jurado - ${limpio(jurado.nombre)}`,author:'Gustavo Adolfo Restrepo Arboleda',subject:'Feria STEAM 2026 - Acceso y proyectos asignados'});
   return pdf;
  }
@@ -136,10 +139,17 @@ async function imagen(url){
  const r=await fetch(url);if(!r.ok)throw new Error('No se pudo cargar el membrete o la firma. Revisa tu conexión e intenta de nuevo.');
  const blob=await r.blob();return await new Promise((resolve,reject)=>{const lector=new FileReader();lector.onload=()=>resolve(lector.result);lector.onerror=()=>reject(new Error('No se pudo cargar la imagen institucional.'));lector.readAsDataURL(blob)});
 }
-export async function descargarCartaJurado(jurado,opciones={}){
+let recursosCartaPromise;
+export async function cargarRecursosCarta(){
+ if(!recursosCartaPromise)recursosCartaPromise=(async()=>{
  const [{jsPDF},escudoModulo,firmaModulo,regularModulo,boldModulo]=await Promise.all([import('jspdf'),import('./assets/escudo-membrete.png'),import('./assets/firma-gustavo-prae.jpg'),import('./assets/carta-regular.ttf?url'),import('./assets/carta-bold.ttf?url')]);
  const [escudo,firma,regular,bold]=await Promise.all([imagen(escudoModulo.default),imagen(firmaModulo.default),imagen(regularModulo.default),imagen(boldModulo.default)]);
- const pdf=construirCartaJurado(jsPDF,jurado,{...opciones,escudo,firma,fuenteRegular:regular.split(',')[1],fuenteNegrita:bold.split(',')[1]});pdf.save(opciones.recorrido?nombreArchivoJurado(jurado.nombre).replace('Invitacion-Jurado-','Recorrido-Jurado-'):nombreArchivoJurado(jurado.nombre));
+ return {jsPDF,recursos:{escudo,firma,fuenteRegular:regular.split(',')[1],fuenteNegrita:bold.split(',')[1]}};
+ })().catch(e=>{recursosCartaPromise=null;throw e});return recursosCartaPromise;
+}
+export async function descargarCartaJurado(jurado,opciones={}){
+ const {jsPDF,recursos}=await cargarRecursosCarta();
+ const pdf=construirCartaJurado(jsPDF,jurado,{...opciones,...recursos});pdf.save(opciones.recorrido?nombreArchivoJurado(jurado.nombre).replace('Invitacion-Jurado-','Recorrido-Jurado-'):nombreArchivoJurado(jurado.nombre));
 }
 
 export function prepararRecorridoCarta(contexto,personaId,passwordInicial='',url='https://claudina-clean.vercel.app/?ingreso=jurado'){

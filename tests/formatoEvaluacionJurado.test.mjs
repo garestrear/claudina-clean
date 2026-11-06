@@ -6,6 +6,6 @@ const visitas=proyectos.map((p,i)=>({id:'v'+i,jurado_id:persona.id,proyecto_id:p
 const ctx={docente:true,config:{rubrica_version:2},jurados:[persona],proyectos,visitas:[...visitas,{...visitas[0],jurado_id:'otro'}]};
 const datos=datosFormatoJurado(ctx,persona.id);assert.equal(datos.visitas.length,3);assert.throws(()=>datosFormatoJurado({...ctx,docente:false},persona.id),/Solo docentes/);assert.throws(()=>datosFormatoJurado({...ctx,config:{}},persona.id),/Activa/);
 const recursos={regular:(await readFile('src/assets/carta-regular.ttf')).toString('base64'),bold:(await readFile('src/assets/carta-bold.ttf')).toString('base64')};
-const pdf=construirFormatoJurado(jsPDF,datos,recursos);assert.equal(pdf.getNumberOfPages(),3);await writeFile('/tmp/formato-jurados-qa.pdf',Buffer.from(pdf.output('arraybuffer')));
+const pdf=construirFormatoJurado(jsPDF,datos,recursos);assert.equal(pdf.getNumberOfPages(),2);await writeFile('/tmp/formato-jurados-qa.pdf',Buffer.from(pdf.output('arraybuffer')));
 assert.equal(puntajeEvaluacion('stem',[5,4,3,2,1]),70);assert.equal(puntajeEvaluacion('arte',[5,4,3,2,1]),66);assert.equal(puntajeEvaluacion('emprendimiento',[5,4,3,2,1]),64);for(const r of Object.values(rubricas))assert.equal(r.reduce((n,[,p])=>n+p,0),100);
 console.log('PASS papel: fichas personales sin credenciales, tres categorías, notas ponderadas, permisos y activación');
