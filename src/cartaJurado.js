@@ -1,3 +1,4 @@
+import {nombreFeria,textoFeria} from './estiloTextoFeria.js';
 import {claveProyecto} from './evaluacionJurados.js';
 import {feriaEvento as feria} from './feriaEvento.js';
 const limpio=v=>String(v||'').replace(/[\r\n\t]+/g,' ').replace(/\s+/g,' ').trim();
@@ -40,59 +41,73 @@ export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fu
  cabecera();
  const fechaCarta=new Intl.DateTimeFormat('es-CO',{timeZone:'America/Bogota',day:'numeric',month:'long',year:'numeric'}).format(fecha);
  texto('Caldas, Antioquia, '+fechaCarta,{despues:5});
- texto('Señor(a)',{despues:0});texto(limpio(jurado.nombre),{negrita:true,despues:0});
+ texto(recorrido?'¡Qué alegría contar contigo!':'Un saludo especial para ti,',{despues:1});texto(nombreFeria(jurado.nombre),{negrita:true,despues:0});
  if(limpio(jurado.profesion))texto(limpio(jurado.profesion),{despues:0});
  texto(limpio(jurado.institucion),{despues:5});
  if(recorrido){
-  texto('Asunto: Orientaciones y recorrido personal como jurado',{negrita:true,tamano:11,despues:4});
+  texto('Gracias por ser parte de nuestra Feria STEAM',{negrita:true,tamano:11,despues:4});
   const t=(v,o={})=>texto(v,{tamano:9.2,despues:1.2,...o});
-  t(`Gracias por acompañarnos en la ${feria.nombre}. Su tiempo y experiencia nos ayudan a reconocer el trabajo de los estudiantes y a motivar sus procesos de investigación, creatividad y emprendimiento.`);
+  t(`Gracias por acompañarnos en la ${feria.nombre}. Nos alegra mucho contar contigo. Tu mirada y tus palabras de ánimo son un regalo para nuestros estudiantes, que han preparado sus proyectos con ilusión y esfuerzo.`);
   t(`${feria.fecha} · ${feria.horario} Lugar: ${feria.lugar}.`);
-  t('Sus datos de acceso',{negrita:true});
+  t('Tus datos de acceso',{negrita:true});
   t('Claudina App: '+recorrido.url);
   t('Usuario: '+limpio(jurado.usuario),{negrita:true});
-  t(jurado.cambiar_password?'Contraseña inicial: '+recorrido.passwordInicial:'Contraseña: utilice la contraseña personal que eligió. La inicial ya fue reemplazada.',{negrita:true});
-  t('Este documento es personal. No comparta sus datos de acceso.');
+  t(jurado.cambiar_password?'Contraseña inicial: '+recorrido.passwordInicial:'Contraseña: usa tu contraseña personal; la inicial ya fue reemplazada.',{negrita:true});
+  t('Guarda esta carta para ti: contiene tus datos de acceso.');
   t('Cómo evaluar en Claudina App',{negrita:true});
-  t('1. Abra el enlace e ingrese con su usuario y contraseña. No necesita recibir correos.');
-  t('2. En el primer ingreso debe cambiar la contraseña inicial por una personal de al menos 10 caracteres, antes de evaluar.');
-  t('3. En “Mi recorrido como jurado”, abra “Evaluar proyecto” en cada visita asignada.');
-  t('4. Escuche al equipo y califique los cinco criterios de 1 a 5. La app muestra los pesos y el puntaje sobre 100. Escriba lo más destacado y una sugerencia constructiva.');
-  t('5. Use “Guardar / reintentar sincronización” para conservar el borrador. Al terminar, pulse “Enviar evaluación definitiva” y confirme. Verifique el mensaje “Evaluación enviada”; después no podrá modificarla.');
+  t('1. Abre Claudina App e ingresa con tu usuario y contraseña; no necesitas recibir correos.');
+  t('2. Si es tu primer ingreso, elige una contraseña personal de al menos 10 caracteres.');
+  t('3. En “Mi recorrido como jurado”, encontrarás tus proyectos. Pulsa “Evaluar proyecto” al visitar cada equipo.');
+  t('4. Escucha al equipo y conversa con sus integrantes. Valora los cinco criterios de 1 a 5; destaca un logro y comparte una sugerencia que les ayude a seguir aprendiendo.');
+  t('5. Puedes guardar un borrador. Cuando estés conforme, pulsa “Enviar evaluación definitiva” y confirma que aparezca “Evaluación enviada”. Una vez enviada, la nota no se puede cambiar.');
   t('Orientaciones generales',{negrita:true});
-  t('Dedique al menos 10 minutos por proyecto y respete el horario. Valore el proceso según la edad. Informe al comité sobre conflictos de interés, ubicaciones faltantes o fallas de conexión. Confirme la sincronización antes de cerrar.');
-  t('El recorrido corresponde a la asignación vigente al descargar la carta. Consulte los ajustes posteriores en la app. Gracias por su aporte a nuestra comunidad educativa.');
+  t('Reserva 10 minutos para cada equipo y ten presente la edad de sus integrantes. Si conoces un proyecto de cerca, no encuentras un aula o necesitas ayuda con la app, acércate al equipo organizador: con gusto te acompañamos.');
+  t('En la siguiente página encontrarás tu recorrido en orden de visita. Revisa la app por si hay algún ajuste. Gracias por ayudarnos a hacer de esta feria una experiencia especial para nuestra comunidad.');
   espacio(36);t('Con aprecio,');
   if(firma){pdf.addImage(firma,'JPEG',margen,y-1,43,11.7);y+=12;}
   t('Gustavo Adolfo Restrepo Arboleda',{negrita:true});
   t(feria.cargo+' · C.E.R. Claudina Múnera');
   t(`Contacto: ${feria.contacto} · ${feria.correo}`);
   pdf.addPage();cabecera();
-  texto('Su recorrido de evaluación',{negrita:true,tamano:13,despues:4});
+  texto('Tu recorrido de evaluación',{negrita:true,tamano:13,despues:4});
   t(limpio(jurado.nombre)+' · Usuario: '+limpio(jurado.usuario),{negrita:true});
   t(`${recorrido.visitas.length} proyectos asignados · ${feria.fecha}`);
-  if(!recorrido.visitas.length)t('Todavía no tiene proyectos asignados. Consulte al comité antes de iniciar su recorrido.');
+  if(!recorrido.visitas.length)t('Aún estamos preparando tus proyectos. Acércate al equipo organizador antes de empezar; con gusto te orientamos.');
+  const columnas=[29,108,util-137],paso=4.2;
+  function encabezadoTabla(){
+   pdf.setFillColor('#edf4ef');pdf.rect(margen,y,util,9,'F');pdf.setDrawColor('#bdcdbf');pdf.rect(margen,y,util,9);
+   pdf.setFont(fuente,'bold');pdf.setFontSize(9.5);let x=margen;
+   ['Hora','Proyecto','Aula y puesto'].forEach((titulo,i)=>{pdf.text(titulo,x+3,y+5.8);x+=columnas[i]});y+=9;
+  }
+  if(recorrido.visitas.length)encabezadoTabla();
   for(const [i,v] of recorrido.visitas.entries()){
-   const p=recorrido.proyectos.find(p=>claveProyecto(p)===claveProyecto(v));
-   const h=x=>String(x||'').slice(0,5);
+   const p=recorrido.proyectos.find(p=>claveProyecto(p)===claveProyecto(v)),h=x=>String(x||'').slice(0,5);
    const u=p?.ubicaciones?.find(u=>u.fecha===v.fecha&&h(u.inicio)<=h(v.inicio)&&h(u.fin)>=h(v.fin));
-   espacio(19);
-   t(`${i+1}. ${h(v.inicio)} - ${h(v.fin)} · ${limpio(p?.codigo)} ${limpio(p?.titulo)||'Proyecto pendiente de revisión'}`,{negrita:true});
-   t('Ubicación: '+(limpio(u?.espacio_nombre)||'Pendiente de confirmar con el comité')+(u?.puesto?' · Puesto: '+limpio(u.puesto):''));
-   if(p?.integrantes)t('Integrantes: '+limpio(p.integrantes));
-   y+=2;
+   pdf.setFont(fuente,'normal');pdf.setFontSize(9.5);
+   const titulo=pdf.splitTextToSize((limpio(p?.codigo)?limpio(p.codigo)+' · ':'')+(textoFeria(p?.titulo)||'Proyecto por confirmar'),columnas[1]-6);
+   const lugar=pdf.splitTextToSize(nombreFeria(u?.espacio_nombre)||'Por confirmar',columnas[2]-6);
+   const puesto=u?.puesto?pdf.splitTextToSize('Puesto: '+limpio(u.puesto),columnas[2]-6):[];
+   const altura=Math.max(15,6+Math.max(titulo.length,lugar.length+puesto.length)*paso);
+   if(y+altura>244){pdf.addPage();cabecera();t('Tu recorrido (continuación)',{negrita:true});encabezadoTabla()}
+   pdf.setFillColor(i%2?'#f5f8f5':'#ffffff');pdf.rect(margen,y,util,altura,'F');pdf.setDrawColor('#bdcdbf');pdf.setLineWidth(.2);
+   let x=margen;columnas.forEach(w=>{pdf.rect(x,y,w,altura);x+=w});
+   pdf.setTextColor(0);pdf.setFont(fuente,'bold');pdf.setFontSize(9.5);pdf.text(h(v.inicio),margen+3,y+6);pdf.setFont(fuente,'normal');pdf.text('a '+h(v.fin),margen+3,y+11);
+   pdf.setFont(fuente,'normal');pdf.text(titulo,margen+columnas[0]+3,y+6,{lineHeightFactor:paso/(9.5*.35278)});
+   pdf.setFont(fuente,'bold');pdf.text(lugar,margen+columnas[0]+columnas[1]+3,y+6,{lineHeightFactor:paso/(9.5*.35278)});
+   pdf.setFont(fuente,'normal');if(puesto.length)pdf.text(puesto,margen+columnas[0]+columnas[1]+3,y+6+lugar.length*paso,{lineHeightFactor:paso/(9.5*.35278)});
+   y+=altura;
   }
   for(let pagina=1;pagina<=pdf.getNumberOfPages();pagina++){pdf.setPage(pagina);pdf.setFont(fuente,'normal');pdf.setFontSize(8);pdf.text(`Documento personal · Página ${pagina} de ${pdf.getNumberOfPages()}`,ancho/2,250,{align:'center'});}
   pdf.setProperties({title:`Recorrido y orientaciones como jurado - ${limpio(jurado.nombre)}`,author:'Gustavo Adolfo Restrepo Arboleda',subject:'Feria STEAM 2026 - Acceso y proyectos asignados'});
   return pdf;
  }
  texto('Asunto: Invitación como jurado de la Feria STEAM 2026',{negrita:true,despues:5});
- texto('Cordial saludo:');
- texto(`El Centro Educativo Rural Claudina Múnera tiene el gusto de invitarle a participar como jurado en nuestra ${feria.nombre}, que se realizará el ${feria.fecha}, de ${feria.horario}, en nuestra institución, ubicada en la vereda La Corrala del municipio de Caldas, Antioquia.`);
+ texto('¡Nos encantaría compartir esta jornada contigo!');
+ texto(`Queremos invitarte a acompañar a nuestros estudiantes como jurado en la ${feria.nombre}, que se realizará el ${feria.fecha}, de ${feria.horario}, en nuestra institución, ubicada en la vereda La Corrala del municipio de Caldas, Antioquia.`);
  texto('Este encuentro integra las ciencias, la tecnología, la ingeniería, las artes y las matemáticas. Estudiantes de primaria y secundaria compartirán sus proyectos y experiencias con las familias, la comunidad y las entidades invitadas.');
- texto('Su experiencia será un valioso aporte para valorar los proyectos, reconocer los aprendizajes y ofrecer recomendaciones que motiven a nuestros estudiantes a continuar sus procesos de investigación y creación.');
- texto(`En caso de ser posible contar con su participación, le agradeceríamos confirmar su disponibilidad al correo ${feria.correo} o al celular ${feria.contacto}, para coordinar la evaluación y compartir las orientaciones de la jornada.`);
- texto('Agradecemos su atención y esperamos contar con su acompañamiento.',{despues:4});
+ texto('Tu experiencia y tu mirada nos ayudarán a reconocer lo que nuestros estudiantes han aprendido. Para ellos será muy especial conversar contigo, mostrarte sus ideas y recibir palabras de ánimo y sugerencias para seguir creciendo.');
+ texto(`Si puedes acompañarnos, por favor cuéntanos al correo ${feria.correo} o al celular ${feria.contacto}. Con gusto te compartiremos tu recorrido y te acompañaremos durante la jornada.`);
+ texto('Gracias por regalarle tu tiempo a nuestra comunidad. ¡Será una alegría contar contigo!',{despues:4});
  espacio(46);
  texto('Con aprecio,',{despues:2});
  texto('Equipo PRAE C.E.R. Claudina Múnera.',{despues:0});
