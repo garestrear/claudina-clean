@@ -2,7 +2,7 @@ import {createClient} from '@supabase/supabase-js';
 import {createHmac,randomUUID} from 'node:crypto';
 const opciones={auth:{persistSession:false,autoRefreshToken:false}};
 const usuarioValido=v=>typeof v==='string'&&/^[a-z0-9][a-z0-9._-]{2,39}$/.test(v);
-const passwordValida=v=>typeof v==='string'&&v.length>=10&&v.length<=128;
+const passwordValida=v=>typeof v==='string'&&v.length>=6&&v.length<=128;
 const denegado='Usuario o contraseña incorrectos, o cuenta de jurado no habilitada.';
 export function crearHandlerJurado(factory=createClient,env=process.env){return async function handler(req,res){
  res.setHeader('Cache-Control','no-store');
@@ -30,7 +30,7 @@ export function crearHandlerJurado(factory=createClient,env=process.env){return 
   if(identidadError||!identidad.user)return res.status(401).json({error:'La sesión no es válida. Ingresa de nuevo.'});
   if(accion==='cambiar-password'){
    const nueva=req.body.password,actual=req.body.actual;
-   if(!passwordValida(nueva)||typeof actual!=='string'||!actual||actual.length>128||nueva===actual)return res.status(400).json({error:'La nueva contraseña debe ser diferente y tener entre 10 y 128 caracteres.'});
+   if(!passwordValida(nueva)||typeof actual!=='string'||!actual||actual.length>128||nueva===actual)return res.status(400).json({error:'La nueva contraseña debe ser diferente y tener entre 6 y 128 caracteres.'});
    const {data:j,error}=await admin.from('feria_jurados').select('id,habilitado,usuario,cuenta_id').eq('cuenta_id',identidad.user.id).maybeSingle();
    if(error||!j?.habilitado||identidad.user.email!==j.usuario+'@jurados.claudina.invalid')return res.status(403).json({error:'Esta cuenta no dispone de acceso manual de jurado.'});
    const {error:verificar}=await auth.auth.signInWithPassword({email:identidad.user.email,password:actual});
@@ -45,7 +45,7 @@ export function crearHandlerJurado(factory=createClient,env=process.env){return 
   if(perfilError||perfil?.rol!=='profesor')return res.status(403).json({error:'Solo docentes pueden crear o restablecer cuentas de jurados.'});
   if(accion==='preparar-cuenta'){
    const numero=req.body.numero,password=req.body.password;
-   if(!passwordValida(password))return res.status(400).json({error:'La contraseña inicial debe tener entre 10 y 128 caracteres.'});
+   if(!passwordValida(password))return res.status(400).json({error:'La contraseña inicial debe tener entre 6 y 128 caracteres.'});
    if(!Number.isInteger(numero)||numero<1||numero>20)return res.status(400).json({error:'Cuenta fuera del rango de 1 a 20.'});
    const usuario='jurado'+String(numero).padStart(2,'0');
    const {data:existente,error:buscar}=await admin.from('feria_jurado_cuentas_disponibles').select('usuario').eq('usuario',usuario).maybeSingle();
@@ -58,7 +58,7 @@ export function crearHandlerJurado(factory=createClient,env=process.env){return 
    return res.status(200).json({usuario,existente:false});
   }
   const persona=req.body.persona,password=req.body.password;
-  if(typeof persona!=='string'||!/^[a-f0-9-]{36}$/i.test(persona)||!passwordValida(password))return res.status(400).json({error:'Selecciona el jurado y una contraseña inicial de 10 a 128 caracteres.'});
+  if(typeof persona!=='string'||!/^[a-f0-9-]{36}$/i.test(persona)||!passwordValida(password))return res.status(400).json({error:'Selecciona el jurado y una contraseña inicial de 6 a 128 caracteres.'});
   const {data:j,error:consulta}=await admin.from('feria_jurados').select('id,nombre,correo,habilitado,cuenta_id,usuario').eq('id',persona).maybeSingle();
   if(consulta)return res.status(503).json({error:'Activa feria-jurados-cuentas.sql en Supabase.'});
   if(!j?.habilitado)return res.status(400).json({error:'Primero habilita al jurado en el panel de evaluación.'});

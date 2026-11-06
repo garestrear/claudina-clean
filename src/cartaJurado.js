@@ -56,7 +56,7 @@ export function construirCartaJurado(jsPDF,jurado,{escudo,firma,fuenteRegular,fu
   t('Guarda esta carta para ti: contiene tus datos de acceso.');
   t('Cómo evaluar en Claudina App',{negrita:true});
   t('1. Abre Claudina App e ingresa con tu usuario y contraseña; no necesitas recibir correos.');
-  t('2. Si es tu primer ingreso, elige una contraseña personal de al menos 10 caracteres.');
+  t('2. Si es tu primer ingreso, elige una contraseña personal de al menos 6 caracteres.');
   t('3. En “Mi recorrido como jurado”, encontrarás tus proyectos. Pulsa “Evaluar proyecto” al visitar cada equipo.');
   t('4. Escucha al equipo y conversa con sus integrantes. Valora los cinco criterios de 1 a 5; destaca un logro y comparte una sugerencia que les ayude a seguir aprendiendo.');
   t('5. Puedes guardar un borrador. Cuando estés conforme, pulsa “Enviar evaluación definitiva” y confirma que aparezca “Evaluación enviada”. Una vez enviada, la nota no se puede cambiar.');
@@ -134,6 +134,6 @@ export function prepararRecorridoCarta(contexto,personaId,passwordInicial='',url
  if(!contexto?.docente)throw new Error('Solo docentes pueden descargar las cartas de acceso.');
  const jurado=contexto.jurados?.find(j=>j.id===personaId);
  if(!jurado?.habilitado||!jurado.usuario||!jurado.cuenta_id)throw new Error('Primero habilita al jurado y asígnale un usuario.');
- if(jurado.cambiar_password&&(passwordInicial.length<10||passwordInicial.length>128))throw new Error('Introduce la contraseña inicial que asignaste a esta cuenta.');
+ if(jurado.cambiar_password&&(passwordInicial.length<6||passwordInicial.length>128))throw new Error('Introduce la contraseña inicial que asignaste a esta cuenta.');
  return {jurado,recorrido:{passwordInicial:jurado.cambiar_password?passwordInicial:'',url,proyectos:contexto.proyectos||[],visitas:(contexto.visitas||[]).filter(v=>v.jurado_id===personaId).sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha))||String(a.inicio).localeCompare(String(b.inicio)))}};
 }

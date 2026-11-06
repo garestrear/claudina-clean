@@ -8,7 +8,7 @@ La preparación hace una petición por cuenta y permite reintentar si se interru
 
 Registrar al jurado con su nombre y datos habituales, habilitarlo y seleccionar su nombre junto al usuario disponible. Pulsar **Asignar usuario** y entregarle ese usuario con la contraseña inicial y el enlace `https://claudina-clean.vercel.app/?ingreso=jurado`. El correo registrado queda como contacto, no se usa para este acceso.
 
-La cuenta no permite ingresar hasta estar vinculada a una persona habilitada. Al primer ingreso se exige una contraseña diferente de al menos 10 caracteres, antes de mostrar el recorrido. El servidor verifica la contraseña actual y la base de datos bloquea guardar evaluaciones hasta completar el cambio. Las notas siguen perteneciendo al jurado registrado. Las reservas no crean jurados ficticios ni reciben visitas. Las asignadas no se reutilizan, incluso si se retira al jurado. Para recuperar acceso usar el restablecimiento individual existente.
+La cuenta no permite ingresar hasta estar vinculada a una persona habilitada. Al primer ingreso se exige una contraseña diferente de al menos 6 caracteres, antes de mostrar el recorrido. El servidor verifica la contraseña actual y la base de datos bloquea guardar evaluaciones hasta completar el cambio. Las notas siguen perteneciendo al jurado registrado. Las reservas no crean jurados ficticios ni reciben visitas. Las asignadas no se reutilizan, incluso si se retira al jurado. Para recuperar acceso usar el restablecimiento individual existente.
 
 ## Carta de acceso y recorrido
 
