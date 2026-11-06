@@ -129,7 +129,7 @@ begin
   end loop;
   if to_regclass('pg_temp.feria_ruta_movidas') is not null then
    insert into public.feria_evaluacion_visitas select * from pg_temp.feria_ruta_movidas;
-   delete from pg_temp.feria_ruta_movidas;
+   delete from pg_temp.feria_ruta_movidas where id is not null;
   end if;
  end loop;
  return cambios;

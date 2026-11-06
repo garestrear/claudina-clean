@@ -61,6 +61,7 @@ await db.exec('set role anon');await assert.rejects(db.query('select feria_optim
 console.log('PASS recorridos: agrupa aulas, conserva ids y evaluaciones, repetición segura y optimización en futuros repartos');
 
 await actor(1);const rapido=await readFile('supabase/feria-jurados-rendimiento.sql','utf8');await db.exec(rapido);await db.exec(rapido);
+const seguro=await readFile('supabase/feria-jurados-delete-seguro.sql','utf8');await db.exec(seguro);await db.exec(seguro);assert(!/delete\s+from\s+[\w.]+\s*;/i.test(rapido),'sin DELETE sin condición en funciones de rendimiento');
 await rpc('feria_jurados_asignar_automaticamente');assert((await ctx()).visitas.some(v=>v.id===fija.id),'el reparto rápido conserva notas e ids');
 // Volumen comparable a la feria: 36 proyectos y 12 jurados; no repetir el
 // reparto al preparar cada fila de la prueba.
