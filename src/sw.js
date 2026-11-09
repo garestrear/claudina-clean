@@ -1,3 +1,9 @@
+import {registerRoute} from 'workbox-routing';
+import {CacheFirst} from 'workbox-strategies';
+import {ExpirationPlugin} from 'workbox-expiration';
+import {RangeRequestsPlugin} from 'workbox-range-requests';
+import {CacheableResponsePlugin} from 'workbox-cacheable-response';
+import {esAudioPublico,solicitudAudioCompleto} from './cacheAudio.js';
 import {precacheAndRoute} from 'workbox-precaching';
 import {clientsClaim} from 'workbox-core';
 clientsClaim();
@@ -6,6 +12,14 @@ clientsClaim();
 // El receptor activo sigue atendiendo push mientras se termina de editar.
 
 precacheAndRoute(self.__WB_MANIFEST);
+// Solo el bucket público de canciones, nunca evidencias, sesiones ni API.
+const origenAudio=import.meta.env.VITE_SUPABASE_URL?new URL(import.meta.env.VITE_SUPABASE_URL).origin:null;
+registerRoute(({url})=>esAudioPublico(url,origenAudio),new CacheFirst({
+ cacheName:'claudina-audios-v1',
+ plugins:[{requestWillFetch:async({request})=>solicitudAudioCompleto(request)},
+  new CacheableResponsePlugin({statuses:[200]}),new RangeRequestsPlugin(),
+  new ExpirationPlugin({maxEntries:8,maxAgeSeconds:7*24*60*60,purgeOnQuotaError:true})]
+}));
 self.addEventListener('message',event=>{if(event.data?.type==='SKIP_WAITING')self.skipWaiting()});
 
 self.addEventListener('push',event=>{

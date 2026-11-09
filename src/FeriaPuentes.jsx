@@ -1,3 +1,4 @@
+import {sondearVisible} from './sondeoVisible.js';
 import PuentesImportar from './PuentesImportar';
 import InformePuentes from './InformePuentes';
 import PuentesProyeccion from './PuentesProyeccion';
@@ -30,10 +31,11 @@ export default function FeriaPuentes({pantalla=false}){
  const[ampliado,setAmpliado]=useState(false);
  useEffect(()=>{if(typeof document==='undefined')return;const sincronizar=()=>setAmpliado(document.fullscreenElement===panelPrueba.current);const salir=e=>{if(e.key==='Escape')setAmpliado(false)};document.addEventListener('fullscreenchange',sincronizar);document.addEventListener('keydown',salir);return()=>{document.removeEventListener('fullscreenchange',sincronizar);document.removeEventListener('keydown',salir)}},[]);
  async function alternarPantalla(){try{if(ampliado){if(document.fullscreenElement===panelPrueba.current)await document.exitFullscreen();setAmpliado(false)}else{setAmpliado(true);if(panelPrueba.current?.requestFullscreen)await panelPrueba.current.requestFullscreen()}}catch{setAmpliado(true)}}
+ const estadoSondeo=useRef(null);
  const vivo=useRef(false),ocupado=useRef(false),leyendo=useRef(false),desfase=useRef(0),ultimoIntento=useRef(null),versionVista=useRef(-1);
- function recibir(data){if(!vivo.current||data.mesa.version<versionVista.current)return;versionVista.current=data.mesa.version;desfase.current=Date.parse(data.ahora)-Date.now();setDatos(data);setUltima(Date.now());setError('')}
+ function recibir(data){if(!vivo.current||data.mesa.version<versionVista.current)return;estadoSondeo.current=data;versionVista.current=data.mesa.version;desfase.current=Date.parse(data.ahora)-Date.now();setDatos(data);setUltima(Date.now());setError('')}
  async function cargar(){if(leyendo.current||ocupado.current)return;leyendo.current=true;try{const{data,error:e}=await supabase.rpc('feria_puentes_contexto');if(e)throw e;if(!ocupado.current)recibir(data)}catch(e){if(vivo.current)setError(/function|schema cache|does not exist/i.test(e.message||'')?'Activa supabase/feria-puentes-inscripcion.sql en Supabase para habilitar el concurso.':e.message||'No se pudo consultar el concurso.')}finally{leyendo.current=false}}
- useEffect(()=>{vivo.current=true;cargar();const poll=setInterval(cargar,1000),reloj=setInterval(()=>setAhora(Date.now()),100);return()=>{vivo.current=false;clearInterval(poll);clearInterval(reloj)}},[]);
+ useEffect(()=>{vivo.current=true;const detener=sondearVisible(cargar,{intervalo:()=>estadoSondeo.current?.rondas.some(r=>r.id===estadoSondeo.current.mesa.ronda_id&&r.resultado==='pendiente')?2000:5000}),reloj=setInterval(()=>{if(globalThis.document?.visibilityState!=='hidden')setAhora(Date.now())},100);return()=>{vivo.current=false;detener();clearInterval(reloj)}},[]);
  async function actuar(accion,campos={}){
   if(ocupado.current||!datos)return;ocupado.current=true;setBusy(true);setError('');
   const firma=JSON.stringify([accion,campos]);let req=ultimoIntento.current;
@@ -43,7 +45,7 @@ export default function FeriaPuentes({pantalla=false}){
  function conMotivo(accion,extra={},pregunta='Escribe el motivo de esta acción'){
   const motivo=window.prompt(pregunta);if(motivo===null)return;if(motivo.trim().length<5){setError('Escribe un motivo de al menos cinco caracteres.');return}actuar(accion,{...extra,motivo:motivo.trim()});
  }
- const fresco=ultima>0&&ahora-ultima<5000;
+ const fresco=ultima>0&&ahora-ultima<12000;
  const puente=datos?.puentes.find(p=>p.id===datos.mesa.puente_id),ronda=datos?.rondas.find(r=>r.id===datos.mesa.ronda_id);
  const cat=puente?.categoria||categoria,config=datos?.config.find(c=>c.categoria===cat),ranking=datos?clasificacionPuentes(datos.puentes,datos.rondas,cat):[];
  const marca=ranking.find(p=>p.id===puente?.id),total=marca?.total||0,intentos=marca?.intentos||0,lider=ranking.find(p=>p.puesto===1),pendiente=ronda?.resultado==='pendiente',segundos=pendiente?segundosPuente(ronda.fin,ahora+desfase.current):0;
