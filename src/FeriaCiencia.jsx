@@ -1,4 +1,5 @@
 import FeriaInscripciones from './FeriaInscripciones';
+import FeriaComentariosJurados from './FeriaComentariosJurados';
 import PuentesInscripcion from './PuentesInscripcion';
 import FeriaPuentes from './FeriaPuentes';
 import {useVistaFeria} from './useVistaFeria.js';
@@ -90,6 +91,7 @@ function Detalle({id,perfil,docentes,ficha,companeros,onVolver,onCambiar,onMensa
   {p.estado==='aprobado'&&<><PlacaProyecto key={p.id+':'+p.version} proyecto={p}/><DocumentosProyecto key={'documentos:'+p.id+':'+p.version} proyecto={p}/></>}
   <div className="fairProjectAreas"><h4>Áreas STEAM</h4><Areas areas={p.areas}/></div>
   {profesor?<CorreccionProyecto integrantes={datos.integrantes||[]} key={p.id+':'+p.version} proyecto={p} onGuardar={guardado} onVolver={onVolver}/>:<><div className="fairProjectText">{(esEmprendimiento(p)?camposEmprendimiento:camposFeria).filter(c=>c.id!=='titulo').map(c=><div key={c.id}><h4>{c.titulo}</h4><p>{c.id==='poster_url'&&enlacePosterValido(p[c.id])?<a href={p[c.id]} target="_blank" rel="noopener noreferrer">Abrir póster para imprimir ↗</a>:p[c.id]||(c.obligatorio?'Todavía no lo han completado.':'No indicado (opcional).')}</p></div>)}</div></>}
+  <FeriaComentariosJurados key={p.id+':'+p.version+':'+busy} proyecto={p.id}/>
   <HistorialCorrecciones proyecto={p}/>
   <div className="fairHistory"><h3>Observaciones de los docentes</h3>{datos.revisiones.length?datos.revisiones.map(r=><article key={r.id}><div><Estado estado={r.estado}/><small>Versión del texto: {r.revision_contenido}</small></div><p>{r.observacion||('Estado actualizado a '+(estadosFeria[r.estado]||r.estado)+'.')}</p><small>{r.nombre_revisor} · {fecha(r.creado_en)}</small></article>):<p>Aún no hay observaciones. {p.estado==='enviado'?'El proyecto está esperando revisión.':''}</p>}</div>
  </article>;

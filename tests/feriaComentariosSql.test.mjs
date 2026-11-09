@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';
+import {PGlite} from '@electric-sql/pglite';
+import {readFile} from 'node:fs/promises';
+const db=new PGlite();
+await db.exec(`create role anon;create role authenticated;
+create function feria_proyecto(uuid) returns jsonb language plpgsql as $$begin
+ if current_setting('test.autorizado',true) is distinct from 'si' then raise exception 'Proyecto no disponible';end if;return '{}';end$$;
+create table feria_jurados(id uuid,nombre text);
+create table feria_evaluacion_visitas(id uuid,jurado_id uuid,origen text,proyecto_id uuid);
+create table feria_evaluaciones(visita_id uuid,destacado text,sugerencia text,enviada boolean);
+insert into feria_jurados values('00000000-0000-0000-0000-000000000001','Jurado');
+insert into feria_evaluacion_visitas select ('00000000-0000-0000-0000-'||lpad(n::text,12,'0'))::uuid,'00000000-0000-0000-0000-000000000001',case when n=4 then 'invitados' else 'claudina' end,'00000000-0000-0000-0000-000000000010' from generate_series(1,4) n;
+insert into feria_evaluaciones select id,case when id::text like '%3' then ' ' else 'Buen trabajo' end,'',id::text not like '%2' from feria_evaluacion_visitas;`);
+await db.exec(await readFile('supabase/feria-comentarios-estudiantes.sql','utf8'));
+const consultar=()=>db.query("select feria_comentarios_jurados('00000000-0000-0000-0000-000000000010') comentarios");
+await assert.rejects(consultar,/Proyecto no disponible/);
+await db.exec("set test.autorizado='si'");
+const comentarios=(await consultar()).rows[0].comentarios;
+assert.equal(comentarios.length,1);
+assert.deepEqual(Object.keys(comentarios[0]).sort(),['destacado','id','jurado','sugerencia']);
+assert.equal(comentarios[0].destacado,'Buen trabajo');
+assert.deepEqual((await db.query("select feria_comentarios_jurados('00000000-0000-0000-0000-000000000011') c")).rows[0].c,[]);
+await db.close();
+console.log('PASS comentarios: autorización delegada, solo enviados, aislamiento por origen/proyecto y campos limitados');
