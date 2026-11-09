@@ -1,3 +1,4 @@
+import {sondearVisible} from './sondeoVisible.js';
 import React,{useEffect,useRef,useState} from 'react';
 import {supabase} from './lib/supabase';
 const horaLocal=iso=>iso?new Date(new Date(iso).getTime()-5*3600000).toISOString().slice(0,16):'';
@@ -7,7 +8,7 @@ export default function FeriaInscripciones({profesor,onEstado}){
  async function cargar(){
   try{const{data,error}=await supabase.rpc('feria_inscripciones_estado');if(error)throw error;setConfig(data);if(!inicial.current){setLimite(horaLocal(data.fecha_limite));inicial.current=true;}setError('');onEstado(!data.abierta)}catch(e){setError(e.message);onEstado(true)}
  }
- useEffect(()=>{cargar();const timer=setInterval(cargar,30000);return()=>clearInterval(timer)},[]);
+ useEffect(()=>sondearVisible(cargar,{intervalo:120000}),[]);
  useEffect(()=>{if(!config?.abierta||!config.fecha_limite)return;const timer=setInterval(()=>{if(Date.now()>=Date.parse(config.fecha_limite)){setConfig(c=>({...c,abierta:false}));onEstado(true)}},1000);return()=>clearInterval(timer)},[config]);
  async function guardar(cerrada){
   setBusy(true);setError('');

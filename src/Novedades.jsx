@@ -11,12 +11,13 @@ export function useNovedades(perfil,tab,{ficha,grupos=[]}={}){
  const activo=useRef(tab),pendiente=useRef(true);
  useEffect(()=>{activo.current=tab;pendiente.current=true;window.dispatchEvent(new Event('claudina:revisar-novedades'))},[tab]);
  useEffect(()=>{
-  let vigente=true,ocupado=false;pendiente.current=true;setEstado({});
+  let vigente=true,ocupado=false,ultima=0,guardados=null;pendiente.current=true;setEstado({});
   async function revisar(){
    if(ocupado||document.visibilityState==='hidden')return;
    ocupado=true;const entrada=activo.current;
    try{
-    const datos=await cargarNovedades(supabase,{rol:perfil.rol,id:perfil.id,ficha,grupos});
+    if(!guardados||Date.now()-ultima>=60000){guardados=await cargarNovedades(supabase,{rol:perfil.rol,id:perfil.id,ficha,grupos});ultima=Date.now()}
+    const datos=guardados;
     if(!vigente)return;
     const indicadores={};
     for(const[seccion,{filas,silencioso}]of Object.entries(datos)){
@@ -30,7 +31,7 @@ export function useNovedades(perfil,tab,{ficha,grupos=[]}={}){
    }finally{ocupado=false;if(vigente&&activo.current!==entrada)queueMicrotask(refrescar)}
   }
   const refrescar=()=>{revisar().catch(()=>{})};
-  refrescar();const reloj=setInterval(refrescar,60000);
+  refrescar();const reloj=setInterval(refrescar,120000);
   window.addEventListener('focus',refrescar);window.addEventListener('claudina:revisar-novedades',refrescar);document.addEventListener('visibilitychange',refrescar);
   return()=>{vigente=false;clearInterval(reloj);window.removeEventListener('focus',refrescar);window.removeEventListener('claudina:revisar-novedades',refrescar);document.removeEventListener('visibilitychange',refrescar)};
  },[identidad]);

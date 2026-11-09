@@ -10,7 +10,7 @@ let ctx={modalidad:'tres_intentos',usuario:'docente',ahora:new Date().toISOStrin
 let calls=[],perder=true;
 globalThis.__puentesSupabase={rpc:async(nombre,args)=>{if(nombre==='feria_puentes_contexto')return {data:ctx};calls.push(args);if(perder){perder=false;throw Error('Respuesta perdida')}ctx={...ctx,mesa:{...ctx.mesa,version:2,ronda_id:'r'},rondas:[{id:'r',puente_id:'a',numero:1,carga_kg:args.datos.carga_kg,resultado:'pendiente',cuenta_intento:true,fin:new Date(Date.now()+5000).toISOString()}]};return {data:ctx}}};
 try{
- await build({entryPoints:['src/FeriaPuentes.jsx'],bundle:true,platform:'node',format:'esm',outfile:dir+'/app.mjs',external:['react'],loader:{'.css':'empty'},plugins:[{name:'mocks',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:'export const supabase=globalThis.__puentesSupabase;'}));b.onLoad({filter:/PuentesInscripcion.jsx$/},()=>({contents:'export default function Inscripcion(){return null};export function FotoPuente(){return null}'}))}}]});
+ await build({entryPoints:['src/FeriaPuentes.jsx'],bundle:true,platform:'node',format:'esm',outfile:dir+'/app.mjs',external:['react'],loader:{'.css':'empty','.ttf':'dataurl'},plugins:[{name:'mocks',setup(b){b.onLoad({filter:/lib\/supabase.js$/},()=>({contents:'export const supabase=globalThis.__puentesSupabase;'}));b.onLoad({filter:/PuentesInscripcion.jsx$/},()=>({contents:'export default function Inscripcion(){return null};export function FotoPuente(){return null}'}))}}]});
  const {default:Panel}=await import(dir+'/app.mjs');let tree;const tick=()=>new Promise(r=>setTimeout(r,15));
  await act(async()=>{tree=create(React.createElement(Panel));await tick()});
  const btn=t=>tree.root.findAllByType('button').find(b=>b.children.join('')===t);
