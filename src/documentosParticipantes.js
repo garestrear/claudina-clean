@@ -75,8 +75,8 @@ export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=
   if(!recursos.fondoCertificado)throw new Error('No se pudo cargar el diseño del certificado. Actualiza la app e inténtalo otra vez.');
   pdf.addImage(recursos.fondoCertificado,'PNG',0,0,279.4,215.9);
   // Fondo ilustrado aprobado; escudo, textos y firmas se añaden como datos independientes.
-  pdf.addImage(escudoOriginal,'PNG',37,21,18,23.4);
-  pdf.setTextColor(tinta);pdf.setFont(fuente,'bold');pdf.setFontSize(13);pdf.text('Centro Educativo Rural Claudina Múnera',139.7,30,{align:'center'});
+  pdf.addImage(escudoOriginal,'PNG',32,18,24,31.2);
+  pdf.setTextColor(tinta);pdf.setFont(fuente,'bold');pdf.setFontSize(16);pdf.text('Centro Educativo Rural Claudina Múnera',139.7,30,{align:'center'});
   pdf.setFont(fuente,'normal');pdf.setFontSize(8);pdf.text('Vereda La Corrala · Caldas, Antioquia',139.7,38,{align:'center'});
   const resolucion=ajustar(pdf,'Aprobado por Resolución Departamental n.º S201500094400 del 12 de marzo de 2015',184,7,{size:7.5,min:6.5,bold:false,fuente,color:tinta});pdf.text(resolucion.lineas,139.7,44,{align:'center',lineHeightFactor:1.15});
   pdf.setFillColor(azul);pdf.roundedRect(99.7,55,80,10,5,5,'F');pdf.setFont(fuente,'bold');pdf.setFontSize(12);pdf.setTextColor('#ffffff');pdf.text('Feria STEAM 2026',139.7,61.8,{align:'center'});
