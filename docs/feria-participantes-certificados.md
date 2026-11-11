@@ -87,3 +87,11 @@ El diseño juvenil usa el marco ilustrado de ciencia, tecnología, arte y matem�
 ### Encabezado ampliado
 
 Se aplica la propuesta aprobada con mayor zona blanca superior y decoración del cohete desplazada hacia la esquina. El nombre institucional aparece centrado en la página a 13 puntos (antes 9,5), con ubicación y resolución centradas debajo. El escudo se conserva desde el original. Se redistribuyen título, nombre, cuerpo y firmas para las versiones de una y dos filas; BORRADOR se sitúa bajo la resolución sobre blanco. No requiere SQL.
+
+## Mención de honor por proyecto
+
+En Feria STEAM → Proyectos Claudina → Revisar proyecto → Mención de honor, cualquier docente puede reconocer el proyecto según su criterio, sin restricciones por calificación, puesto o asesor. También está disponible en el detalle de los proyectos de instituciones invitadas.
+
+El docente puede escribir un motivo opcional (hasta 300 caracteres), descargar una vista previa y confirmar que considera destacado el proyecto antes de generar el PDF. El certificado es colectivo: título del proyecto, integrantes, fecha de la feria, fecha de expedición y las firmas configuradas en Participantes y certificados. Para emprendimientos familiares usa los responsables y familiares participantes.
+
+Esta opción descarga el PDF para imprimir o compartir. No registra una distinción en la base de datos ni incorpora el archivo a los certificados personales del estudiante. No utiliza ni modifica los folios de participación. No requiere SQL adicional.

@@ -1,3 +1,4 @@
+import FeriaMencionHonor from './FeriaMencionHonor';
 import FeriaInscripciones from './FeriaInscripciones';
 import FeriaComentariosJurados from './FeriaComentariosJurados';
 import PuentesInscripcion from './PuentesInscripcion';
@@ -89,6 +90,7 @@ function Detalle({id,perfil,docentes,ficha,companeros,onVolver,onCambiar,onMensa
   {!profesor&&p.estado==='rechazado'&&<p className="fairHint">Este proyecto fue rechazado y está disponible solo para consulta. Puedes leer las observaciones, pero no editarlo. Un docente puede cambiar su estado para habilitar la edición.</p>}
   {p.estado==='borrador'&&<p className="fairHint">Este borrador lo pueden ver los integrantes del equipo y sus acudientes vinculados. Al enviarlo, los docentes podrán consultarlo.</p>}
   {p.estado==='aprobado'&&<><PlacaProyecto key={p.id+':'+p.version} proyecto={p}/><DocumentosProyecto key={'documentos:'+p.id+':'+p.version} proyecto={p}/></>}
+  <FeriaMencionHonor proyecto={p} docente={profesor}/>
   <div className="fairProjectAreas"><h4>Áreas STEAM</h4><Areas areas={p.areas}/></div>
   {profesor?<CorreccionProyecto integrantes={datos.integrantes||[]} key={p.id+':'+p.version} proyecto={p} onGuardar={guardado} onVolver={onVolver}/>:<><div className="fairProjectText">{(esEmprendimiento(p)?camposEmprendimiento:camposFeria).filter(c=>c.id!=='titulo').map(c=><div key={c.id}><h4>{c.titulo}</h4><p>{c.id==='poster_url'&&enlacePosterValido(p[c.id])?<a href={p[c.id]} target="_blank" rel="noopener noreferrer">Abrir póster para imprimir ↗</a>:p[c.id]||(c.obligatorio?'Todavía no lo han completado.':'No indicado (opcional).')}</p></div>)}</div></>}
   <FeriaComentariosJurados key={p.id+':'+p.version+':'+busy} proyecto={p.id}/>

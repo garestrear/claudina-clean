@@ -66,8 +66,8 @@ export function textoCertificado(p){
  const accion={expositor:`participó como expositor(a)${p.proyecto_titulo?' con el proyecto «'+textoFeria(p.proyecto_titulo)+'»':''}`,evaluador:'participó como jurado de los proyectos',profesor:'participó como docente',logistica:'integró el equipo de logística y apoyó la organización',ponente:`participó como ponente${p.detalle?' con la actividad «'+textoFeria(p.detalle)+'»':''}`,asistente:'participó como asistente'}[p.tipo];
  if(!accion)throw new Error('Tipo de participante no válido.');return `${accion.charAt(0).toLocaleUpperCase('es')+accion.slice(1)} en la ${evento}, realizada el ${dia} en el C.E.R. Claudina Múnera, vereda La Corrala, Caldas, Antioquia.`;
 }
-export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=false}={}){
- if(!certificados.length||certificados.some(c=>!c.contenido?.nombre||!tiposParticipante[c.contenido.tipo]||(!borrador&&(!c.folio||!c.emitido_en||c.anulado_en))))throw new Error('El certificado debe estar emitido y vigente.');
+export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=false,mencion=false}={}){
+ if(!certificados.length||certificados.some(c=>!c.contenido?.nombre||!tiposParticipante[c.contenido.tipo]||(!borrador&&((!mencion&&!c.folio)||!c.emitido_en||c.anulado_en))))throw new Error('El certificado debe estar emitido y vigente.');
  const pdf=new jsPDF({unit:'mm',format:'letter',orientation:'landscape',compress:true}),fuente=fuentes(pdf,recursos);
  certificados.forEach((cert,i)=>{
   if(i)pdf.addPage('letter','landscape');const p=cert.contenido,c=temaParticipante(p);
@@ -81,15 +81,15 @@ export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=
   const resolucion=ajustar(pdf,'Aprobado por Resolución Departamental n.º S201500094400 del 12 de marzo de 2015',184,7,{size:7.5,min:6.5,bold:false,fuente,color:tinta});pdf.text(resolucion.lineas,139.7,44,{align:'center',lineHeightFactor:1.15});
   pdf.setFillColor(azul);pdf.roundedRect(99.7,55,80,10,5,5,'F');pdf.setFont(fuente,'bold');pdf.setFontSize(12);pdf.setTextColor('#ffffff');pdf.text('Feria STEAM 2026',139.7,61.8,{align:'center'});
   pdf.setTextColor(azul);pdf.setFontSize(34);pdf.text('Certificado',139.7,81,{align:'center'});
-  pdf.setTextColor(tinta);pdf.setFont(fuente,'bold');pdf.setFontSize(10);pdf.text('De participación',139.7,90,{align:'center'});
+  pdf.setTextColor(tinta);pdf.setFont(fuente,'bold');pdf.setFontSize(10);pdf.text(mencion?'Mención de honor':'De participación',139.7,90,{align:'center'});
   pdf.setDrawColor('#ffc31a');pdf.setLineWidth(1);pdf.line(103,101,176.4,101);
   pdf.setFont(fuente,'bold');pdf.setFontSize(11);pdf.text('¡Tus ideas pueden cambiar el mundo!',139.7,98,{align:'center'});
   const nombre=ajustar(pdf,nombreFeria(p.nombre),184,16,{size:25,min:10,fuente,color:tinta});pdf.text(nombre.lineas,139.7,112,{align:'center',lineHeightFactor:1.15});
-  const institucion=ajustar(pdf,nombreFeria(p.institucion),184,6,{size:9,min:6,bold:false,fuente,color:tinta});pdf.text(institucion.lineas,139.7,128,{align:'center',lineHeightFactor:1.15});
+  const institucion=ajustar(pdf,mencion?textoFeria(p.integrantes):nombreFeria(p.institucion),184,mencion?10:6,{size:9,min:mencion?5:6,bold:false,fuente,color:tinta});if(mencion&&institucion.lineas.length*institucion.size*.35278*1.15>10)throw new Error('La lista de integrantes es demasiado extensa para el certificado. Revisa los nombres del proyecto.');pdf.text(institucion.lineas,139.7,mencion?124:128,{align:'center',lineHeightFactor:1.15});
   const firmantes=Array.isArray(p.firmantes)&&p.firmantes.length>=1&&p.firmantes.length<=6?p.firmantes:firmantesPredeterminados.map((f,n)=>({...f,firma:n===1?recursos.firmaTransparente:null}));
   const dosFilas=firmantes.length>3;
-  const cuerpo=ajustar(pdf,textoCertificado(p),184,dosFilas?12:17,{size:dosFilas?10:11,min:6,bold:false,fuente,color:tinta});pdf.text(cuerpo.lineas,139.7,138,{align:'center',lineHeightFactor:1.15});
-  pdf.setFont(fuente,'normal');pdf.setFontSize(7);pdf.setTextColor(tinta);pdf.text(borrador?'Vista previa para revisión. Pendiente de confirmar la participación.':`Se expide en Caldas, Antioquia, el ${fecha(cert.emitido_en)}.`,139.7,dosFilas?153:161,{align:'center'});
+  const cuerpo=ajustar(pdf,mencion?`Por su destacada participación en la Feria STEAM 2026, realizada el 6 de noviembre de 2026 en el C.E.R. Claudina Múnera, vereda La Corrala, Caldas, Antioquia. ${limpio(p.motivo)}`:textoCertificado(p),184,dosFilas?12:17,{size:dosFilas?10:11,min:6,bold:false,fuente,color:tinta});pdf.text(cuerpo.lineas,139.7,138,{align:'center',lineHeightFactor:1.15});
+  pdf.setFont(fuente,'normal');pdf.setFontSize(7);pdf.setTextColor(tinta);pdf.text(borrador?(mencion?'Vista previa para revisión. Pendiente de emisión.':'Vista previa para revisión. Pendiente de confirmar la participación.'):`Se expide en Caldas, Antioquia, el ${fecha(cert.emitido_en)}.`,139.7,dosFilas?153:161,{align:'center'});
   pdf.setFillColor('#ffffff');pdf.roundedRect(47.7,dosFilas?155:166,184,dosFilas?47:36,3,3,'F');
   firmantes.forEach((f,n)=>{
    const fila=Math.floor(n/3),cantidadFila=Math.min(3,firmantes.length-fila*3),anchoCelda=184/cantidadFila,ancho=Math.min(84,anchoCelda-7);
@@ -100,7 +100,7 @@ export function construirCertificados(jsPDF,certificados,recursos={}, {borrador=
    const cargo=ajustar(pdf,textoFeria(f.cargo),ancho,dosFilas?5:7,{size:7,min:4.5,bold:false,fuente,color:tinta});pdf.text(cargo.lineas,centro,linea+(dosFilas?9:11),{align:'center',lineHeightFactor:1.15});
   });
   pdf.setFillColor('#ffffff');pdf.roundedRect(47.7,203,184,5,1,1,'F');
-  pdf.setFont(fuente,'normal');pdf.setFontSize(5.3);pdf.setTextColor(tinta);pdf.text(borrador?'Vista previa · Sin emitir':codigoCertificado(cert),47.7,206);
+  pdf.setFont(fuente,'normal');pdf.setFontSize(5.3);pdf.setTextColor(tinta);pdf.text(borrador?'Vista previa · Sin emitir':mencion?'Reconocimiento al proyecto · Feria STEAM 2026':codigoCertificado(cert),47.7,206);
   pdf.text('Ciencia · Tecnología · Ingeniería · Arte · Matemáticas',231.7,206,{align:'right'});
   if(borrador){pdf.setTextColor('#aa4555');pdf.setFont(fuente,'bold');pdf.setFontSize(9);pdf.text('Borrador',229,50,{align:'right'});}
  });pdf.setProperties({title:'Certificados - Feria STEAM 2026',author:'C.E.R. Claudina Múnera'});return pdf;
@@ -115,3 +115,21 @@ async function cargarFondoCertificado(){if(!fondoCertificadoPromise)fondoCertifi
 export async function descargarCertificados(certificados,{borrador=false}={}){const[r,fondoCertificado]=await Promise.all([recursos(),cargarFondoCertificado()]);construirCertificados(r.jsPDF,certificados,{...r.recursos,fondoCertificado},{borrador}).save(borrador?'Vista-previa-certificado-STEAM.pdf':certificados.length===1?`Certificado-${codigoCertificado(certificados[0])}.pdf`:'Certificados-Feria-STEAM-2026.pdf')}
 
 export async function descargarEscarapelasEnBlanco(tipo,cantidad){const personas=prepararEscarapelasEnBlanco(tipo,cantidad),r=await recursos();construirEscarapelas(r.jsPDF,personas,r.recursos).save(`Escarapelas-en-blanco-${tipo}.pdf`)}
+
+// Reconocimiento colectivo por decisión docente; no usa folios de participación.
+export function prepararMencion(proyecto,{motivo='',firmantes}={}){
+ const p=proyecto.datos||proyecto;
+ const nombre=limpio(p.titulo).replace(/^\[Emprendimiento familiar\] /,'');
+ const integrantes=limpio(p.titulo).startsWith('[Emprendimiento familiar] ')?limpio(p.materiales):limpio(p.integrantes);
+ if(!nombre||!integrantes)throw new Error('Completa el título y los integrantes del proyecto antes de generar la mención.');
+ if(limpio(motivo).length>300)throw new Error('El motivo debe tener como máximo 300 caracteres.');
+ if(!Array.isArray(firmantes)||firmantes.length<1||firmantes.length>6||firmantes.some(f=>!limpio(f.nombre)||!limpio(f.cargo)))throw new Error('Revisa los firmantes en Participantes y certificados.');
+ return {emitido_en:new Date().toISOString(),contenido:{tipo:'expositor',nombre,integrantes,motivo:limpio(motivo),firmantes}};
+}
+export async function descargarMencion(proyecto,opciones={}){
+ const certificado=prepararMencion(proyecto,opciones);
+ const [r,fondoCertificado]=await Promise.all([recursos(),cargarFondoCertificado()]);
+ const pdf=construirCertificados(r.jsPDF,[certificado],{...r.recursos,fondoCertificado},{mencion:true,borrador:!!opciones.borrador});
+ pdf.setProperties({title:'Mención de honor - '+certificado.contenido.nombre,author:'C.E.R. Claudina Múnera'});
+ pdf.save(opciones.borrador?'Vista-previa-mencion-de-honor.pdf':'Mencion-de-honor-STEAM-2026.pdf');
+}
