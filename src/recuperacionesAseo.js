@@ -31,3 +31,11 @@ export function notasConRecuperaciones(filas){
     return {...p,notaEfectiva:recuperacion?recuperacion.calificacion:['ausente','no_cumplio'].includes(p.estado)?2:p.calificacion,recuperacion};
   });
 }
+
+export async function cargarLimiteNotasAseo(){
+  const {data,error}=await supabase.rpc('aseo_mejores_notas');
+  // El frontend puede publicarse antes de ejecutar la migración SQL.
+  if(error?.code==='PGRST202')return null;
+  if(error)throw error;
+  return data;
+}
