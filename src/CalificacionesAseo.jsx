@@ -41,9 +41,9 @@ export function CalificacionesEstudiante({ficha}){
   return <article className="card"><h3>📈 Mis calificaciones de aseo</h3>
     {error?<p className="error">No se pudieron cargar las calificaciones: {error}</p>
       :!filas?<p>Cargando notas…</p>
-      :filas.length?<><p><b>Promedio: {formatoPromedioAseo(resumen.promedio)}/10</b> · {resumen.usadas} de {resumen.total} notas</p>
-        <DetalleNotas filas={filas} elegidas={resumen.elegidas}/></>
-      :<p>Aún no tienes aseos calificados.</p>}
+      :<>{resumen.promedio!=null&&<p><b>Promedio: {formatoPromedioAseo(resumen.promedio)}/10</b> · {resumen.usadas} de {resumen.total} notas registradas
+        {resumen.faltantes>0&&<> · {resumen.faltantes} por completar (0/10 cada una)</>}</p>}
+        {filas.length?<DetalleNotas filas={filas} elegidas={resumen.elegidas}/>:<p>Aún no tienes aseos calificados.</p>}</>}
   </article>;
 }
 
@@ -130,7 +130,7 @@ export function ConsolidadoAseo(){
           <input type="number" min="1" max="2147483647" step="1" value={cantidad}
             disabled={guardando} onChange={e=>setCantidad(e.target.value)}/>
         </label>
-        <p>Déjalo vacío para usar todas las notas. Si hay menos notas que la cantidad indicada, se usan las disponibles. El criterio se aplica a todos los grupos.</p>
+        <p>Déjalo vacío para usar todas las notas. Cada nota faltante cuenta como 0/10 hasta completar la cantidad indicada. El criterio se aplica a todos los grupos.</p>
         <button type="submit" disabled={guardando||exportando||cantidad===(limite==null?'':String(limite))}>
           {guardando?'Guardando…':'Guardar criterio'}
         </button>
@@ -149,12 +149,12 @@ export function ConsolidadoAseo(){
       {!fechasValidas?<p role="alert">La fecha inicial debe ser anterior o igual a la final.</p>
         :!resultados.length?<p>No hay estudiantes en el grupo seleccionado.</p>:<>
         <div className="gradesTableWrap"><table className="gradesTable">
-          <thead><tr><th>Estudiante</th><th>Grado</th><th>Aseos</th><th>Notas usadas</th>
+          <thead><tr><th>Estudiante</th><th>Grado</th><th>Aseos</th><th>Notas usadas</th><th>Por completar</th>
             <th>Cumplió</th><th>No cumplió</th><th>Ausente</th><th>Promedio</th></tr></thead>
-          <tbody>{resultados.map(({estudiante:s,total,usadas,cumplio,noCumplio,ausente,promedio})=>
+          <tbody>{resultados.map(({estudiante:s,total,usadas,faltantes,cumplio,noCumplio,ausente,promedio})=>
             <tr key={s.id}><td><button type="button" onClick={()=>setSeleccion(s.id)}>{s.nombre}</button>
               {!s.activo?' (retirado)':''}</td><td>{nombreGrupo(String(s.grado))}</td>
-              <td>{total}</td><td>{usadas}</td><td>{cumplio}</td><td>{noCumplio}</td><td>{ausente}</td>
+              <td>{total}</td><td>{usadas}</td><td>{faltantes}</td><td>{cumplio}</td><td>{noCumplio}</td><td>{ausente}</td>
               <td><b>{formatoPromedioAseo(promedio)}</b></td></tr>
           )}</tbody>
         </table></div>

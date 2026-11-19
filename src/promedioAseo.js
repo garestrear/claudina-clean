@@ -5,10 +5,12 @@ export function resumirNotasAseo(filas, limite) {
     String(a.id).localeCompare(String(b.id))
   );
   const elegidas = limite == null ? ordenadas : ordenadas.slice(0, limite);
-  const promedio = elegidas.length
-    ? elegidas.reduce((suma, fila) => suma + Number(fila.notaEfectiva), 0) / elegidas.length
+  const cantidad = limite ?? elegidas.length;
+  const faltantes = cantidad - elegidas.length;
+  const promedio = cantidad
+    ? elegidas.reduce((suma, fila) => suma + Number(fila.notaEfectiva), 0) / cantidad
     : null;
-  return { total: notas.length, usadas: elegidas.length, promedio, elegidas: new Set(elegidas) };
+  return { total: notas.length, usadas: elegidas.length, faltantes, promedio, elegidas: new Set(elegidas) };
 }
 
 export function formatoPromedioAseo(promedio) {
