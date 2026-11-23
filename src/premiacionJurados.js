@@ -10,7 +10,7 @@ export function clasificacionPremiacion(resultados){
 }
 
 // Cada estudiante se cuenta una vez, en el proyecto con su mejor promedio.
-export function estudiantesPremiacion(resultados, participantes){
+export function estudiantesPremiacion(resultados, participantes, limite=30){
  const equipos=new Map();
  for(const persona of participantes){
   if(persona.tipo!=='expositor'||persona.proyecto_origen!=='claudina'||!persona.estudiante_id||!persona.activo||!persona.habilitado)continue;
@@ -33,5 +33,5 @@ export function estudiantesPremiacion(resultados, participantes){
    estudiantes.push({persona,proyecto});
   }
  }
- return {estudiantes:estudiantes.slice(0,30),sinEquipo,empateCorte:estudiantes.length>30&&estudiantes[29].proyecto.promedio===estudiantes[30].proyecto.promedio};
+ return {estudiantes:estudiantes.slice(0,limite),sinEquipo,empateCorte:limite>0&&estudiantes.length>limite&&estudiantes[limite-1].proyecto.promedio===estudiantes[limite].proyecto.promedio};
 }

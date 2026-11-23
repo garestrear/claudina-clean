@@ -9,6 +9,7 @@ function ListaEstudiantesPremiacion({resultados}){
  const [participantes,setParticipantes]=useState(null);
  const [error,setError]=useState(false);
  const [intento,reintentar]=useState(0);
+ const [cantidad,setCantidad]=useState("30");
  useEffect(()=>{
   let vigente=true;
   async function cargar(){
@@ -23,15 +24,19 @@ function ListaEstudiantesPremiacion({resultados}){
   cargar();
   return ()=>{vigente=false};
  },[intento]);
- const lista=participantes&&estudiantesPremiacion(resultados,participantes);
+ const limite=Number(cantidad);
+ const cantidadValida=Number.isSafeInteger(limite)&&limite>0;
+ const lista=participantes&&cantidadValida?estudiantesPremiacion(resultados,participantes,limite):null;
  return <details className="juryAwardCategory">
-  <summary>Primeros 30 estudiantes para la entrega</summary>
+  <summary>Estudiantes para la entrega de premios</summary>
+  <div className="juryActions"><label>Cantidad de premios<input type="number" min="1" step="1" value={cantidad} onChange={e=>setCantidad(e.target.value)}/></label></div>
   <p>Lista general por promedio del proyecto. Cada estudiante aparece una vez, con su mejor resultado. A igual nota, se ordena por título del proyecto y luego por nombre del estudiante.</p>
   {error?<p role="alert">No se pudieron cargar los participantes. <button type="button" onClick={()=>{setError(false);reintentar(n=>n+1)}}>Reintentar</button></p>
+   :!cantidadValida?<p role="status">Ingresa una cantidad entera mayor que cero.</p>
    :!lista?<p role="status">Cargando participantes…</p>
    :<>
-    <p>{lista.estudiantes.length} de 30 estudiantes.</p>
-    {lista.empateCorte&&<p role="status">Hay empate de promedio en el corte de 30. Revisa el orden antes de la entrega.</p>}
+    <p>{lista.estudiantes.length} de {limite} estudiantes.</p>
+    {lista.empateCorte&&<p role="status">Hay empate de promedio en el corte de {limite}. Revisa el orden antes de la entrega.</p>}
     {!!lista.sinEquipo.length&&<p role="status">Revisa los proyectos calificados sin expositores vinculados: {lista.sinEquipo.join('; ')}.</p>}
     <ol>{lista.estudiantes.map(({persona,proyecto})=><li key={persona.estudiante_id}><strong>{nombreFeria(persona.nombre)}</strong>{persona.grado?' · '+persona.grado:''} · {proyecto.titulo} · {puntaje(proyecto.promedio)} / 100</li>)}</ol>
    </>}
