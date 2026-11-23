@@ -64,7 +64,7 @@ export function resultadosProyecto(proyecto,visitas,jurados){
  const notas=calificaciones.map(c=>c.puntaje),borradores=calificaciones.filter(c=>c.borrador).length;
  return {...proyecto,asignadas:vs.length,evaluadas:notas.length,enviadas:notas.length-borradores,borradores,calificaciones,promedio:notas.length?Math.round(notas.reduce((a,b)=>a+b,0)/notas.length*100)/100:null,diferencia:notas.length?Math.max(...notas)-Math.min(...notas):0};
 }
-export function csvResultados(proyectos){const q=v=>'"'+String(/^[=+@\-\t\r]/.test(String(v??''))?"'"+v:v??'').replaceAll('"','""')+'"';return '\ufeff'+[['Código','Proyecto','Categoría','Evaluaciones','Promedio /100','Estado','Calificaciones de jurados'],...proyectos.map(p=>[p.codigo,p.titulo,categoriasEvaluacion[p.categoria],p.evaluadas,p.promedio??'',p.evaluadas>=3&&!p.borradores?'Completo':p.evaluadas?'Parcial':'Pendiente',(p.calificaciones||[]).map(c=>`${c.jurado}: ${c.puntaje}/100${c.manual?' (papel)':''}${c.borrador?' (borrador)':''}`).join(' | ')])].map(f=>f.map(q).join(';')).join('\r\n')}
+export function csvResultados(proyectos){const q=v=>'"'+String(/^[=+@\-\t\r]/.test(String(v??''))?"'"+v:v??'').replaceAll('"','""')+'"';return '\ufeff'+[['Código','Proyecto','Categoría','Evaluaciones','Promedio /100','Estado','Calificaciones de jurados','Integrantes'],...proyectos.map(p=>[p.codigo,p.titulo,categoriasEvaluacion[p.categoria],p.evaluadas,p.promedio??'',p.evaluadas>=3&&!p.borradores?'Completo':p.evaluadas?'Parcial':'Pendiente',(p.calificaciones||[]).map(c=>`${c.jurado}: ${c.puntaje}/100${c.manual?' (papel)':''}${c.borrador?' (borrador)':''}`).join(' | '),p.integrantes])].map(f=>f.map(q).join(';')).join('\r\n')}
 
 
 export const descripcionesExperiencia=[
